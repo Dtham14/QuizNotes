@@ -6,6 +6,7 @@ export type Note = {
   keys: string[];
   duration: string;
   accidental?: string;
+  accidentals?: (string | null)[]; // Per-key accidentals for chords
 };
 
 type MusicNotationProps = {
@@ -68,8 +69,16 @@ export default function MusicNotation({
             clef: clef,
           });
 
-          // Add accidentals if specified
-          if (note.accidental) {
+          // Add per-key accidentals if specified (for chords)
+          if (note.accidentals && note.accidentals.length > 0) {
+            note.accidentals.forEach((acc, index) => {
+              if (acc) {
+                vfNote.addModifier(new VF.Accidental(acc), index);
+              }
+            });
+          }
+          // Fall back to single accidental for all keys (backwards compatibility)
+          else if (note.accidental) {
             note.keys.forEach((_, index) => {
               vfNote.addModifier(new VF.Accidental(note.accidental!), index);
             });

@@ -3,12 +3,24 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import TeacherNav from '@/components/TeacherNav';
+import MusicNotation, { Note } from '@/components/MusicNotation';
+import {
+  intervalOptions,
+  chordOptions,
+  noteOptions,
+  generateIntervalDistractors,
+  generateChordDistractors,
+  generateNoteDistractors,
+} from '@/lib/musicTheoryOptions';
 
 type QuizQuestion = {
   type: 'interval' | 'note' | 'chord';
   question: string;
   correctAnswer: number;
   options: string[];
+  notes?: Note[];
+  clef?: 'treble' | 'bass';
 };
 
 export default function CreateQuizPage() {
@@ -24,7 +36,7 @@ export default function CreateQuizPage() {
     correctAnswer: 0,
     options: ['', '', '', ''],
   });
-  const [optionInput, setOptionInput] = useState('');
+  const [selectedMusicOption, setSelectedMusicOption] = useState<string>('');
 
   useEffect(() => {
     fetchCurrentUser();
@@ -44,6 +56,87 @@ export default function CreateQuizPage() {
     }
   };
 
+  const getMusicOptions = () => {
+    switch (currentQuestion.type) {
+      case 'interval':
+        return intervalOptions;
+      case 'chord':
+        return chordOptions;
+      case 'note':
+        return noteOptions;
+      default:
+        return [];
+    }
+  };
+
+  const handleMusicOptionChange = (optionName: string) => {
+    setSelectedMusicOption(optionName);
+
+    if (!optionName) {
+      setCurrentQuestion({
+        ...currentQuestion,
+        notes: undefined,
+        clef: undefined,
+        options: ['', '', '', ''],
+        correctAnswer: 0,
+      });
+      return;
+    }
+
+    const musicData = getMusicOptions().find(opt => opt.name === optionName);
+    if (!musicData) return;
+
+    let distractors: string[] = [];
+    if (currentQuestion.type === 'interval') {
+      distractors = generateIntervalDistractors(optionName);
+    } else if (currentQuestion.type === 'chord') {
+      distractors = generateChordDistractors(optionName);
+    } else if (currentQuestion.type === 'note') {
+      const noteName = optionName.split(' ')[0].charAt(0);
+      distractors = generateNoteDistractors(noteName, musicData.clef);
+    }
+
+    const allOptions = [optionName, ...distractors];
+    const shuffledOptions = [...allOptions].sort(() => Math.random() - 0.5);
+    const correctIndex = shuffledOptions.indexOf(optionName);
+
+    let defaultQuestion = currentQuestion.question;
+    if (!defaultQuestion) {
+      switch (currentQuestion.type) {
+        case 'interval':
+          defaultQuestion = 'What interval is shown?';
+          break;
+        case 'chord':
+          defaultQuestion = 'What type of chord is this?';
+          break;
+        case 'note':
+          defaultQuestion = 'What note is shown on the ' + musicData.clef + ' clef?';
+          break;
+      }
+    }
+
+    setCurrentQuestion({
+      ...currentQuestion,
+      question: defaultQuestion,
+      notes: musicData.notes,
+      clef: musicData.clef,
+      options: shuffledOptions,
+      correctAnswer: correctIndex,
+    });
+  };
+
+  const handleTypeChange = (newType: 'interval' | 'note' | 'chord') => {
+    setSelectedMusicOption('');
+    setCurrentQuestion({
+      type: newType,
+      question: '',
+      correctAnswer: 0,
+      options: ['', '', '', ''],
+      notes: undefined,
+      clef: undefined,
+    });
+  };
+
   const handleAddQuestion = () => {
     if (!currentQuestion.question.trim()) {
       alert('Please enter a question');
@@ -56,13 +149,21 @@ export default function CreateQuizPage() {
       return;
     }
 
-    setQuestions([...questions, { ...currentQuestion, options: validOptions }]);
+    const correctOption = currentQuestion.options[currentQuestion.correctAnswer];
+    const newCorrectIndex = validOptions.indexOf(correctOption);
+
+    setQuestions([...questions, {
+      ...currentQuestion,
+      options: validOptions,
+      correctAnswer: newCorrectIndex >= 0 ? newCorrectIndex : 0,
+    }]);
     setCurrentQuestion({
       type: 'interval',
       question: '',
       correctAnswer: 0,
       options: ['', '', '', ''],
     });
+    setSelectedMusicOption('');
     setShowQuestionModal(false);
   };
 
@@ -139,18 +240,7 @@ export default function CreateQuizPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
-      <nav className="border-b bg-white/80 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16 items-center">
-            <Link href="/teacher">
-              <h1 className="text-2xl font-bold text-indigo-600 cursor-pointer">QuizNotes Teacher</h1>
-            </Link>
-            <Link href="/teacher/quizzes" className="text-indigo-600 hover:text-indigo-700">
-              Back to Quizzes
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <TeacherNav />
 
       <main className="max-w-4xl mx-auto px-4 py-8">
         <div className="bg-white rounded-xl shadow-lg p-8">
@@ -210,10 +300,20 @@ export default function CreateQuizPage() {
                             {q.type.toUpperCase()}
                           </span>
                           <p className="text-gray-900 font-medium mb-2">{q.question}</p>
+                          {q.notes && (
+                            <div className="mb-3">
+                              <MusicNotation
+                                notes={q.notes}
+                                clef={q.clef || 'treble'}
+                                width={300}
+                                height={120}
+                              />
+                            </div>
+                          )}
                           <div className="text-sm space-y-1">
                             {q.options.map((opt, optIdx) => (
-                              <div key={optIdx} className={`${optIdx === q.correctAnswer ? 'text-green-600 font-semibold' : 'text-gray-600'}`}>
-                                {optIdx === q.correctAnswer && '✓ '}
+                              <div key={optIdx} className={optIdx === q.correctAnswer ? 'text-green-600 font-semibold' : 'text-gray-600'}>
+                                {optIdx === q.correctAnswer && '\u2713 '}
                                 {opt}
                               </div>
                             ))}
@@ -252,7 +352,7 @@ export default function CreateQuizPage() {
 
       {showQuestionModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
-          <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full my-8">
+          <div className="bg-white rounded-2xl shadow-xl p-8 max-w-lg w-full my-8">
             <h3 className="text-2xl font-bold text-gray-900 mb-4">Add Question</h3>
             <div className="space-y-4">
               <div>
@@ -261,7 +361,7 @@ export default function CreateQuizPage() {
                 </label>
                 <select
                   value={currentQuestion.type}
-                  onChange={(e) => setCurrentQuestion({ ...currentQuestion, type: e.target.value as 'interval' | 'note' | 'chord' })}
+                  onChange={(e) => handleTypeChange(e.target.value as 'interval' | 'note' | 'chord')}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-gray-900"
                 >
                   <option value="interval">Interval</option>
@@ -269,6 +369,38 @@ export default function CreateQuizPage() {
                   <option value="chord">Chord</option>
                 </select>
               </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Select {currentQuestion.type === 'interval' ? 'Interval' : currentQuestion.type === 'chord' ? 'Chord' : 'Note'}
+                </label>
+                <select
+                  value={selectedMusicOption}
+                  onChange={(e) => handleMusicOptionChange(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-gray-900"
+                >
+                  <option value="">-- Select an option --</option>
+                  {getMusicOptions().map((opt) => (
+                    <option key={opt.name} value={opt.name}>
+                      {opt.name}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Selecting an option will auto-generate the music notation and answer choices
+                </p>
+              </div>
+
+              {currentQuestion.notes && currentQuestion.notes.length > 0 && (
+                <div className="flex justify-center bg-gray-50 rounded-lg p-4">
+                  <MusicNotation
+                    notes={currentQuestion.notes}
+                    clef={currentQuestion.clef || 'treble'}
+                    width={350}
+                    height={130}
+                  />
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -295,14 +427,14 @@ export default function CreateQuizPage() {
                         name="correctAnswer"
                         checked={currentQuestion.correctAnswer === index}
                         onChange={() => setCurrentQuestion({ ...currentQuestion, correctAnswer: index })}
-                        className="mt-1"
+                        className="mt-3"
                       />
                       <input
                         type="text"
                         value={option}
                         onChange={(e) => handleUpdateOption(index, e.target.value)}
                         className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-gray-900"
-                        placeholder={`Option ${index + 1}`}
+                        placeholder={'Option ' + (index + 1)}
                       />
                       {currentQuestion.options.length > 2 && (
                         <button
@@ -334,6 +466,7 @@ export default function CreateQuizPage() {
                       correctAnswer: 0,
                       options: ['', '', '', ''],
                     });
+                    setSelectedMusicOption('');
                   }}
                   className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
                 >

@@ -199,7 +199,7 @@ export default function QuizPage() {
 
   const submitQuiz = async (finalAnswers: (number | null)[]) => {
     setLoading(true);
-    const calculatedScore = finalAnswers.reduce((acc, answer, index) => {
+    const calculatedScore = finalAnswers.reduce<number>((acc, answer, index) => {
       return answer === questions[index].correctAnswer ? acc + 1 : acc;
     }, 0);
     setScore(calculatedScore);

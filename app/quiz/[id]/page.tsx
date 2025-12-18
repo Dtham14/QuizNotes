@@ -3,11 +3,14 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
+import MusicNotation, { Note } from '@/components/MusicNotation';
 
 type Question = {
   question: string;
   options: string[];
   correctAnswer: number;
+  notes?: Note[];
+  clef?: 'treble' | 'bass';
 };
 
 type CustomQuiz = {
@@ -233,6 +236,16 @@ export default function CustomQuizPage() {
                       </span>
                       <p className="font-semibold text-gray-900">{question.question}</p>
                     </div>
+                    {question.notes && (
+                      <div className="ml-9 mb-3">
+                        <MusicNotation
+                          notes={question.notes}
+                          clef={question.clef || 'treble'}
+                          width={300}
+                          height={120}
+                        />
+                      </div>
+                    )}
                     <div className="ml-9 space-y-2">
                       {question.options.map((option, optionIndex) => {
                         const isUserAnswer = userAnswer === optionIndex;
@@ -309,6 +322,17 @@ export default function CustomQuizPage() {
 
         <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
           <h3 className="text-xl font-semibold text-gray-900 mb-6">{currentQuestion.question}</h3>
+
+          {currentQuestion.notes && (
+            <div className="flex justify-center mb-6">
+              <MusicNotation
+                notes={currentQuestion.notes}
+                clef={currentQuestion.clef || 'treble'}
+                width={350}
+                height={130}
+              />
+            </div>
+          )}
 
           <div className="space-y-3">
             {currentQuestion.options.map((option, index) => (

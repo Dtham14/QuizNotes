@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import TeacherNav from '@/components/TeacherNav';
 
 type Class = {
   id: string;
@@ -79,7 +80,10 @@ export default function TeacherPage() {
     }
   };
 
-  const handleDeleteClass = async (classId: string) => {
+  const handleDeleteClass = async (e: React.MouseEvent, classId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+
     if (!confirm('Are you sure you want to delete this class? This will remove all students and assignments.')) {
       return;
     }
@@ -109,32 +113,13 @@ export default function TeacherPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
-      <nav className="border-b bg-white/80 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16 items-center">
-            <Link href="/">
-              <h1 className="text-2xl font-bold text-indigo-600 cursor-pointer">QuizNotes Teacher</h1>
-            </Link>
-            <div className="flex gap-4">
-              <Link href="/teacher/quizzes" className="text-indigo-600 hover:text-indigo-700">
-                Quizzes
-              </Link>
-              <Link href="/teacher/assignments" className="text-indigo-600 hover:text-indigo-700">
-                Assignments
-              </Link>
-              <Link href="/dashboard" className="text-indigo-600 hover:text-indigo-700">
-                Dashboard
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <TeacherNav />
 
       <main className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
           <div>
             <h2 className="text-3xl font-bold text-gray-900 mb-2">My Classes</h2>
-            <p className="text-gray-600">Manage your classes and assignments</p>
+            <p className="text-gray-600">Manage your classes and view student progress</p>
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
@@ -157,11 +142,15 @@ export default function TeacherPage() {
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {classes.map((cls) => (
-              <div key={cls.id} className="bg-white rounded-xl shadow-lg p-6">
+              <Link
+                key={cls.id}
+                href={`/teacher/classes/${cls.id}`}
+                className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow cursor-pointer block"
+              >
                 <div className="flex justify-between items-start mb-4">
                   <h3 className="text-xl font-bold text-gray-900">{cls.name}</h3>
                   <button
-                    onClick={() => handleDeleteClass(cls.id)}
+                    onClick={(e) => handleDeleteClass(e, cls.id)}
                     className="text-red-600 hover:text-red-700 text-sm"
                   >
                     Delete
@@ -178,7 +167,10 @@ export default function TeacherPage() {
                   <span>{cls.studentCount} students</span>
                   <span>Created {new Date(cls.createdAt).toLocaleDateString()}</span>
                 </div>
-              </div>
+                <div className="mt-4 pt-4 border-t border-gray-100">
+                  <span className="text-indigo-600 text-sm font-medium">View student progress →</span>
+                </div>
+              </Link>
             ))}
           </div>
         )}

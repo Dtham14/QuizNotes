@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import TeacherNav from '@/components/TeacherNav';
 
 type CustomQuiz = {
   id: string;
@@ -82,23 +83,7 @@ export default function TeacherQuizzesPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
-      <nav className="border-b bg-white/80 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16 items-center">
-            <Link href="/teacher">
-              <h1 className="text-2xl font-bold text-indigo-600 cursor-pointer">QuizNotes Teacher</h1>
-            </Link>
-            <div className="flex gap-4">
-              <Link href="/teacher" className="text-indigo-600 hover:text-indigo-700">
-                Classes
-              </Link>
-              <Link href="/dashboard" className="text-indigo-600 hover:text-indigo-700">
-                Dashboard
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <TeacherNav />
 
       <main className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
