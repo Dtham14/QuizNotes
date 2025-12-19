@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import TeacherNav from '@/components/TeacherNav';
 import MusicNotation, { Note } from '@/components/MusicNotation';
+import AudioPlayer from '@/components/AudioPlayer';
 import {
   intervalOptions,
   chordOptions,
@@ -13,14 +14,26 @@ import {
   generateChordDistractors,
   generateNoteDistractors,
 } from '@/lib/musicTheoryOptions';
+import {
+  noteOptions as earNoteOptions,
+  chordTypes,
+  intervalTypes,
+  buildChord,
+  buildInterval,
+} from '@/lib/earTrainingOptions';
+import type { EarTrainingSubtype, EarTrainingAudioData } from '@/lib/types/earTraining';
 
 type QuizQuestion = {
-  type: 'interval' | 'note' | 'chord';
+  type: 'interval' | 'note' | 'chord' | 'ear-training';
   question: string;
   correctAnswer: number;
   options: string[];
   notes?: Note[];
   clef?: 'treble' | 'bass';
+  earTraining?: {
+    subtype: EarTrainingSubtype;
+    audioData: EarTrainingAudioData;
+  };
 };
 
 export default function CreateQuizPage() {
@@ -37,6 +50,12 @@ export default function CreateQuizPage() {
     options: ['', '', '', ''],
   });
   const [selectedMusicOption, setSelectedMusicOption] = useState<string>('');
+
+  // Ear training state
+  const [earTrainingSubtype, setEarTrainingSubtype] = useState<EarTrainingSubtype>('note');
+  const [selectedEarNote, setSelectedEarNote] = useState<string>('C4');
+  const [selectedChordType, setSelectedChordType] = useState<keyof typeof chordTypes>('Major');
+  const [selectedIntervalType, setSelectedIntervalType] = useState<keyof typeof intervalTypes>('M3');
 
   useEffect(() => {
     fetchCurrentUser();
@@ -86,19 +105,28 @@ export default function CreateQuizPage() {
     const musicData = getMusicOptions().find(opt => opt.name === optionName);
     if (!musicData) return;
 
+    let correctAnswerDisplay: string;
     let distractors: string[] = [];
+
     if (currentQuestion.type === 'interval') {
+      correctAnswerDisplay = optionName;
       distractors = generateIntervalDistractors(optionName);
     } else if (currentQuestion.type === 'chord') {
+      correctAnswerDisplay = optionName;
       distractors = generateChordDistractors(optionName);
     } else if (currentQuestion.type === 'note') {
-      const noteName = optionName.split(' ')[0].charAt(0);
-      distractors = generateNoteDistractors(noteName, musicData.clef);
+      // Strip octave number from note name for display (e.g., "D#4" -> "D#", "C4 (Middle C)" -> "C")
+      const noteWithoutOctave = optionName.split(' ')[0].replace(/\d+$/, '');
+      correctAnswerDisplay = noteWithoutOctave;
+      const noteLetter = optionName.charAt(0);
+      distractors = generateNoteDistractors(noteLetter, musicData.clef);
+    } else {
+      correctAnswerDisplay = optionName;
     }
 
-    const allOptions = [optionName, ...distractors];
+    const allOptions = [correctAnswerDisplay, ...distractors];
     const shuffledOptions = [...allOptions].sort(() => Math.random() - 0.5);
-    const correctIndex = shuffledOptions.indexOf(optionName);
+    const correctIndex = shuffledOptions.indexOf(correctAnswerDisplay);
 
     let defaultQuestion = currentQuestion.question;
     if (!defaultQuestion) {
@@ -125,7 +153,7 @@ export default function CreateQuizPage() {
     });
   };
 
-  const handleTypeChange = (newType: 'interval' | 'note' | 'chord') => {
+  const handleTypeChange = (newType: 'interval' | 'note' | 'chord' | 'ear-training') => {
     setSelectedMusicOption('');
     setCurrentQuestion({
       type: newType,
@@ -134,6 +162,76 @@ export default function CreateQuizPage() {
       options: ['', '', '', ''],
       notes: undefined,
       clef: undefined,
+      earTraining: undefined,
+    });
+
+    // Reset ear training state when switching to ear training
+    if (newType === 'ear-training') {
+      setEarTrainingSubtype('note');
+      setSelectedEarNote('C4');
+      setSelectedChordType('Major');
+      setSelectedIntervalType('M3');
+    }
+  };
+
+  const handleEarTrainingConfig = () => {
+    let audioData: EarTrainingAudioData;
+    let correctOption: string;
+    let distractors: string[];
+    let defaultQuestion: string;
+
+    switch (earTrainingSubtype) {
+      case 'note': {
+        audioData = { notes: [selectedEarNote] };
+        correctOption = selectedEarNote.replace(/\d/, '');
+        const allNotes = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+        distractors = allNotes
+          .filter(n => n !== correctOption)
+          .sort(() => Math.random() - 0.5)
+          .slice(0, 3);
+        defaultQuestion = 'What note is being played?';
+        break;
+      }
+      case 'chord': {
+        const chordNotes = buildChord(selectedEarNote, selectedChordType);
+        audioData = { notes: chordNotes };
+        correctOption = selectedChordType;
+        const allChordTypes = Object.keys(chordTypes);
+        distractors = allChordTypes
+          .filter(c => c !== correctOption)
+          .sort(() => Math.random() - 0.5)
+          .slice(0, 3);
+        defaultQuestion = 'What type of chord is being played?';
+        break;
+      }
+      case 'interval': {
+        const intervalNotes = buildInterval(selectedEarNote, selectedIntervalType);
+        audioData = { notes: intervalNotes };
+        correctOption = intervalTypes[selectedIntervalType].name;
+        const allIntervals = Object.entries(intervalTypes).map(([, val]) => val.name);
+        distractors = allIntervals
+          .filter(i => i !== correctOption)
+          .sort(() => Math.random() - 0.5)
+          .slice(0, 3);
+        defaultQuestion = 'What interval is being played?';
+        break;
+      }
+    }
+
+    // Combine correct answer with distractors and shuffle
+    const allOptions = [correctOption, ...distractors];
+    const shuffledOptions = [...allOptions].sort(() => Math.random() - 0.5);
+    const newCorrectIndex = shuffledOptions.indexOf(correctOption);
+
+    setCurrentQuestion({
+      type: 'ear-training',
+      question: currentQuestion.question || defaultQuestion,
+      correctAnswer: newCorrectIndex,
+      options: shuffledOptions,
+      earTraining: {
+        subtype: earTrainingSubtype,
+        audioData,
+      },
     });
   };
 
@@ -232,14 +330,14 @@ export default function CreateQuizPage() {
 
   if (!currentUser) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <p className="text-gray-600">Loading...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
+    <div className="min-h-screen bg-white">
       <TeacherNav />
 
       <main className="max-w-4xl mx-auto px-4 py-8">
@@ -256,7 +354,7 @@ export default function CreateQuizPage() {
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-gray-900"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-transparent text-gray-900"
                 placeholder="e.g., Week 3 Intervals Quiz"
               />
             </div>
@@ -270,7 +368,7 @@ export default function CreateQuizPage() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-gray-900"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-transparent text-gray-900"
                 placeholder="Brief description of what this quiz covers"
               />
             </div>
@@ -280,7 +378,7 @@ export default function CreateQuizPage() {
                 <h3 className="text-xl font-bold text-gray-900">Questions ({questions.length})</h3>
                 <button
                   onClick={() => setShowQuestionModal(true)}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                  className="px-4 py-2 bg-brand text-white rounded-lg hover:bg-brand-dark transition-colors"
                 >
                   Add Question
                 </button>
@@ -296,8 +394,8 @@ export default function CreateQuizPage() {
                     <div key={index} className="bg-gray-50 rounded-lg p-4">
                       <div className="flex justify-between items-start mb-2">
                         <div className="flex-1">
-                          <span className="inline-block px-2 py-1 bg-indigo-100 text-indigo-700 text-xs font-semibold rounded mb-2">
-                            {q.type.toUpperCase()}
+                          <span className="inline-block px-2 py-1 bg-brand/20 text-brand text-xs font-semibold rounded mb-2">
+                            {q.type === 'ear-training' ? `EAR TRAINING (${q.earTraining?.subtype?.toUpperCase()})` : q.type.toUpperCase()}
                           </span>
                           <p className="text-gray-900 font-medium mb-2">{q.question}</p>
                           {q.notes && (
@@ -307,6 +405,14 @@ export default function CreateQuizPage() {
                                 clef={q.clef || 'treble'}
                                 width={300}
                                 height={120}
+                              />
+                            </div>
+                          )}
+                          {q.earTraining && (
+                            <div className="mb-3">
+                              <AudioPlayer
+                                subtype={q.earTraining.subtype}
+                                audioData={q.earTraining.audioData}
                               />
                             </div>
                           )}
@@ -341,7 +447,7 @@ export default function CreateQuizPage() {
               </Link>
               <button
                 onClick={handleSaveQuiz}
-                className="flex-1 px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors"
+                className="flex-1 px-6 py-3 bg-brand text-white font-semibold rounded-lg hover:bg-brand-dark transition-colors"
               >
                 Save Quiz
               </button>
@@ -361,45 +467,133 @@ export default function CreateQuizPage() {
                 </label>
                 <select
                   value={currentQuestion.type}
-                  onChange={(e) => handleTypeChange(e.target.value as 'interval' | 'note' | 'chord')}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-gray-900"
+                  onChange={(e) => handleTypeChange(e.target.value as 'interval' | 'note' | 'chord' | 'ear-training')}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-transparent text-gray-900"
                 >
-                  <option value="interval">Interval</option>
-                  <option value="note">Note</option>
-                  <option value="chord">Chord</option>
+                  <option value="interval">Interval (Visual)</option>
+                  <option value="note">Note (Visual)</option>
+                  <option value="chord">Chord (Visual)</option>
+                  <option value="ear-training">Ear Training (Audio)</option>
                 </select>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Select {currentQuestion.type === 'interval' ? 'Interval' : currentQuestion.type === 'chord' ? 'Chord' : 'Note'}
-                </label>
-                <select
-                  value={selectedMusicOption}
-                  onChange={(e) => handleMusicOptionChange(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-gray-900"
-                >
-                  <option value="">-- Select an option --</option>
-                  {getMusicOptions().map((opt) => (
-                    <option key={opt.name} value={opt.name}>
-                      {opt.name}
-                    </option>
-                  ))}
-                </select>
-                <p className="text-xs text-gray-500 mt-1">
-                  Selecting an option will auto-generate the music notation and answer choices
-                </p>
-              </div>
+              {currentQuestion.type === 'ear-training' ? (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Ear Training Type
+                    </label>
+                    <select
+                      value={earTrainingSubtype}
+                      onChange={(e) => setEarTrainingSubtype(e.target.value as EarTrainingSubtype)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-transparent text-gray-900"
+                    >
+                      <option value="note">Single Note</option>
+                      <option value="chord">Chord</option>
+                      <option value="interval">Interval</option>
+                    </select>
+                  </div>
 
-              {currentQuestion.notes && currentQuestion.notes.length > 0 && (
-                <div className="flex justify-center bg-gray-50 rounded-lg p-4">
-                  <MusicNotation
-                    notes={currentQuestion.notes}
-                    clef={currentQuestion.clef || 'treble'}
-                    width={350}
-                    height={130}
-                  />
-                </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {earTrainingSubtype === 'note' ? 'Note' : 'Root Note'}
+                    </label>
+                    <select
+                      value={selectedEarNote}
+                      onChange={(e) => setSelectedEarNote(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-transparent text-gray-900"
+                    >
+                      {earNoteOptions.map((note) => (
+                        <option key={note} value={note}>{note}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {earTrainingSubtype === 'chord' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Chord Type
+                      </label>
+                      <select
+                        value={selectedChordType}
+                        onChange={(e) => setSelectedChordType(e.target.value as keyof typeof chordTypes)}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-transparent text-gray-900"
+                      >
+                        {Object.keys(chordTypes).map((type) => (
+                          <option key={type} value={type}>{type}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {earTrainingSubtype === 'interval' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Interval Type
+                      </label>
+                      <select
+                        value={selectedIntervalType}
+                        onChange={(e) => setSelectedIntervalType(e.target.value as keyof typeof intervalTypes)}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-transparent text-gray-900"
+                      >
+                        {Object.entries(intervalTypes).map(([key, val]) => (
+                          <option key={key} value={key}>{val.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={handleEarTrainingConfig}
+                    className="w-full px-4 py-2 bg-brand/20 text-brand rounded-lg hover:bg-brand/30 transition-colors font-medium"
+                  >
+                    Generate Question
+                  </button>
+
+                  {currentQuestion.earTraining && (
+                    <div className="flex justify-center bg-gray-50 rounded-lg p-4">
+                      <AudioPlayer
+                        subtype={currentQuestion.earTraining.subtype}
+                        audioData={currentQuestion.earTraining.audioData}
+                      />
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Select {currentQuestion.type === 'interval' ? 'Interval' : currentQuestion.type === 'chord' ? 'Chord' : 'Note'}
+                    </label>
+                    <select
+                      value={selectedMusicOption}
+                      onChange={(e) => handleMusicOptionChange(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-transparent text-gray-900"
+                    >
+                      <option value="">-- Select an option --</option>
+                      {getMusicOptions().map((opt) => (
+                        <option key={opt.name} value={opt.name}>
+                          {opt.name}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Selecting an option will auto-generate the music notation and answer choices
+                    </p>
+                  </div>
+
+                  {currentQuestion.notes && currentQuestion.notes.length > 0 && (
+                    <div className="flex justify-center bg-gray-50 rounded-lg p-4">
+                      <MusicNotation
+                        notes={currentQuestion.notes}
+                        clef={currentQuestion.clef || 'treble'}
+                        width={350}
+                        height={130}
+                      />
+                    </div>
+                  )}
+                </>
               )}
 
               <div>
@@ -410,7 +604,7 @@ export default function CreateQuizPage() {
                   type="text"
                   value={currentQuestion.question}
                   onChange={(e) => setCurrentQuestion({ ...currentQuestion, question: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-gray-900"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-transparent text-gray-900"
                   placeholder="e.g., What interval is shown?"
                 />
               </div>
@@ -433,7 +627,7 @@ export default function CreateQuizPage() {
                         type="text"
                         value={option}
                         onChange={(e) => handleUpdateOption(index, e.target.value)}
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-gray-900"
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-transparent text-gray-900"
                         placeholder={'Option ' + (index + 1)}
                       />
                       {currentQuestion.options.length > 2 && (
@@ -448,7 +642,7 @@ export default function CreateQuizPage() {
                   ))}
                   <button
                     onClick={handleAddOption}
-                    className="w-full px-3 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-indigo-400 hover:text-indigo-600 transition-colors"
+                    className="w-full px-3 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-brand hover:text-brand transition-colors"
                   >
                     + Add Option
                   </button>
@@ -474,7 +668,7 @@ export default function CreateQuizPage() {
                 </button>
                 <button
                   onClick={handleAddQuestion}
-                  className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                  className="flex-1 px-4 py-2 bg-brand text-white rounded-lg hover:bg-brand-dark transition-colors"
                 >
                   Add Question
                 </button>

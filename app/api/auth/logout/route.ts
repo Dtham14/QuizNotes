@@ -1,29 +1,25 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { deleteSession } from '@/lib/auth';
+import { NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get('session')?.value;
+    const supabase = await createClient()
 
-    if (token) {
-      await deleteSession(token);
+    const { error } = await supabase.auth.signOut()
+
+    if (error) {
+      console.error('Logout error:', error)
     }
 
-    const response = NextResponse.json(
+    return NextResponse.json(
       { message: 'Logged out successfully' },
       { status: 200 }
-    );
-
-    response.cookies.delete('session');
-
-    return response;
+    )
   } catch (error) {
-    console.error('Logout error:', error);
+    console.error('Logout error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
-    );
+    )
   }
 }

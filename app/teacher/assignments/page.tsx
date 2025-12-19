@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import TeacherNav from '@/components/TeacherNav';
 
 type Assignment = {
@@ -14,7 +15,14 @@ type Assignment = {
   title: string;
   description: string | null;
   dueDate: Date | null;
+  maxAttempts: number | null;
   createdAt: Date;
+  stats: {
+    totalStudents: number;
+    studentsCompleted: number;
+    completionRate: number;
+    averageScore: number | null;
+  };
 };
 
 type Class = {
@@ -42,6 +50,7 @@ export default function TeacherAssignmentsPage() {
     title: '',
     description: '',
     dueDate: '',
+    maxAttempts: '', // empty string means unlimited
   });
 
   useEffect(() => {
@@ -127,6 +136,7 @@ export default function TeacherAssignmentsPage() {
           title: newAssignment.title,
           description: newAssignment.description,
           dueDate: newAssignment.dueDate || null,
+          maxAttempts: newAssignment.maxAttempts || null,
         }),
       });
 
@@ -139,6 +149,7 @@ export default function TeacherAssignmentsPage() {
           title: '',
           description: '',
           dueDate: '',
+          maxAttempts: '',
         });
         fetchAssignments();
       } else {
@@ -172,17 +183,17 @@ export default function TeacherAssignmentsPage() {
 
   if (loading || !currentUser) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <p className="text-gray-600">Loading...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
+    <div className="min-h-screen bg-white flex flex-col">
       <TeacherNav />
 
-      <main className="max-w-7xl mx-auto px-4 py-8">
+      <main className="max-w-7xl mx-auto px-4 py-8 flex-grow">
         <div className="flex justify-between items-center mb-6">
           <div>
             <h2 className="text-3xl font-bold text-gray-900 mb-2">Assignments</h2>
@@ -190,7 +201,7 @@ export default function TeacherAssignmentsPage() {
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors"
+            className="px-6 py-3 bg-brand text-white font-semibold rounded-lg hover:bg-brand-dark transition-colors"
           >
             Create Assignment
           </button>
@@ -201,7 +212,7 @@ export default function TeacherAssignmentsPage() {
             <p className="text-gray-500 mb-4">You haven't created any assignments yet</p>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors"
+              className="px-6 py-3 bg-brand text-white font-semibold rounded-lg hover:bg-brand-dark transition-colors"
             >
               Create Your First Assignment
             </button>
@@ -220,25 +231,68 @@ export default function TeacherAssignmentsPage() {
                   </button>
                 </div>
                 {assignment.description && (
-                  <p className="text-gray-600 mb-4">{assignment.description}</p>
+                  <p className="text-gray-600 mb-3">{assignment.description}</p>
                 )}
-                <div className="space-y-2 mb-4">
-                  <div className="bg-indigo-50 rounded-lg p-3">
-                    <p className="text-sm text-gray-600 mb-1">Class</p>
-                    <p className="font-semibold text-indigo-600">{assignment.className}</p>
-                  </div>
-                  <div className="bg-gray-50 rounded-lg p-3">
-                    <p className="text-sm text-gray-600 mb-1">Quiz Type</p>
-                    <p className="font-semibold text-gray-900">
-                      {assignment.quizType ? assignment.quizType.replace('-', ' ').toUpperCase() : 'Custom Quiz'}
+
+                {/* Results Stats */}
+                <div className="grid grid-cols-3 gap-2 mb-4">
+                  <div className="bg-brand/10 rounded-lg p-2 text-center">
+                    <p className="text-lg font-bold text-brand">
+                      {assignment.stats.studentsCompleted}/{assignment.stats.totalStudents}
                     </p>
+                    <p className="text-xs text-brand">Completed</p>
+                  </div>
+                  <div className="bg-green-50 rounded-lg p-2 text-center">
+                    <p className="text-lg font-bold text-green-700">
+                      {assignment.stats.completionRate}%
+                    </p>
+                    <p className="text-xs text-green-600">Rate</p>
+                  </div>
+                  <div className="bg-brand/10 rounded-lg p-2 text-center">
+                    <p className="text-lg font-bold text-brand">
+                      {assignment.stats.averageScore !== null ? `${assignment.stats.averageScore}%` : '-'}
+                    </p>
+                    <p className="text-xs text-brand">Avg Score</p>
                   </div>
                 </div>
-                {assignment.dueDate && (
-                  <div className="text-sm text-gray-600">
-                    Due: {new Date(assignment.dueDate).toLocaleDateString()}
+
+                <div className="space-y-2 mb-4">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Class:</span>
+                    <span className="font-medium text-gray-900">{assignment.className}</span>
                   </div>
-                )}
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Quiz:</span>
+                    <span className="font-medium text-gray-900">
+                      {assignment.quizType ? assignment.quizType.replace('-', ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Custom Quiz'}
+                    </span>
+                  </div>
+                  {assignment.maxAttempts && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Attempts:</span>
+                      <span className="font-medium text-gray-900">
+                        {assignment.maxAttempts === 1 ? '1 only' : `Up to ${assignment.maxAttempts}`}
+                      </span>
+                    </div>
+                  )}
+                  {assignment.dueDate && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Due:</span>
+                      <span className="font-medium text-gray-900">
+                        {new Date(assignment.dueDate).toLocaleDateString()}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="pt-4 border-t border-gray-100">
+                  <Link
+                    href={`/teacher/assignments/${assignment.id}/results`}
+                    className="text-brand hover:text-brand-dark text-sm font-medium"
+                  >
+                    View Detailed Results &rarr;
+                  </Link>
+                </div>
               </div>
             ))}
           </div>
@@ -259,7 +313,7 @@ export default function TeacherAssignmentsPage() {
                   value={newAssignment.title}
                   onChange={(e) => setNewAssignment({ ...newAssignment, title: e.target.value })}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-gray-900"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-transparent text-gray-900"
                   placeholder="e.g., Week 3 Intervals Quiz"
                 />
               </div>
@@ -272,7 +326,7 @@ export default function TeacherAssignmentsPage() {
                   value={newAssignment.classId}
                   onChange={(e) => setNewAssignment({ ...newAssignment, classId: e.target.value })}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-gray-900"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-transparent text-gray-900"
                 >
                   <option value="">Select a class</option>
                   {classes.map((cls) => (
@@ -292,12 +346,15 @@ export default function TeacherAssignmentsPage() {
                   onChange={(e) => {
                     setNewAssignment({ ...newAssignment, quizType: e.target.value, quizId: '' });
                   }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-gray-900"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-transparent text-gray-900"
                 >
-                  <option value="">Built-in Quiz Types</option>
-                  <option value="interval-quiz">Interval Quiz</option>
-                  <option value="note-identification">Note Identification</option>
-                  <option value="mixed-quiz">Mixed Quiz</option>
+                  <option value="">Select a quiz type</option>
+                  <option value="intervals">Intervals</option>
+                  <option value="chords">Chords</option>
+                  <option value="scales">Scales</option>
+                  <option value="noteIdentification">Note Identification</option>
+                  <option value="ear-training">Ear Training</option>
+                  <option value="mixed">Mixed Quiz</option>
                 </select>
               </div>
 
@@ -312,7 +369,7 @@ export default function TeacherAssignmentsPage() {
                   onChange={(e) => {
                     setNewAssignment({ ...newAssignment, quizId: e.target.value, quizType: '' });
                   }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-gray-900"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-transparent text-gray-900"
                 >
                   <option value="">Select a custom quiz</option>
                   {quizzes.map((quiz) => (
@@ -331,7 +388,7 @@ export default function TeacherAssignmentsPage() {
                   value={newAssignment.description}
                   onChange={(e) => setNewAssignment({ ...newAssignment, description: e.target.value })}
                   rows={3}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-gray-900"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-transparent text-gray-900"
                   placeholder="Additional instructions for students"
                 />
               </div>
@@ -344,8 +401,32 @@ export default function TeacherAssignmentsPage() {
                   type="datetime-local"
                   value={newAssignment.dueDate}
                   onChange={(e) => setNewAssignment({ ...newAssignment, dueDate: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-gray-900"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-transparent text-gray-900"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Attempt Limit
+                </label>
+                <select
+                  value={newAssignment.maxAttempts}
+                  onChange={(e) => setNewAssignment({ ...newAssignment, maxAttempts: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-transparent text-gray-900"
+                >
+                  <option value="">Unlimited attempts</option>
+                  <option value="1">1 attempt only</option>
+                  <option value="2">2 attempts</option>
+                  <option value="3">3 attempts</option>
+                  <option value="5">5 attempts</option>
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  {newAssignment.maxAttempts === '1'
+                    ? 'Students can only take this quiz once'
+                    : newAssignment.maxAttempts
+                    ? `Students can take this quiz up to ${newAssignment.maxAttempts} times`
+                    : 'Students can retake this quiz as many times as they want'}
+                </p>
               </div>
 
               <div className="flex gap-3">
@@ -360,6 +441,7 @@ export default function TeacherAssignmentsPage() {
                       title: '',
                       description: '',
                       dueDate: '',
+                      maxAttempts: '',
                     });
                   }}
                   className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
@@ -368,7 +450,7 @@ export default function TeacherAssignmentsPage() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                  className="flex-1 px-4 py-2 bg-brand text-white rounded-lg hover:bg-brand-dark transition-colors"
                 >
                   Create Assignment
                 </button>
@@ -377,6 +459,25 @@ export default function TeacherAssignmentsPage() {
           </div>
         </div>
       )}
+
+      {/* Footer */}
+      <footer className="bg-gray-900 py-8 mt-auto">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Image
+                src="/images/quiznotes logo.jpg"
+                alt="QuizNotes Logo"
+                width={24}
+                height={24}
+                className="rounded"
+              />
+              <span className="text-sm font-semibold text-white">QuizNotes</span>
+            </div>
+            <p className="text-sm text-gray-500">&copy; {new Date().getFullYear()} QuizNotes. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

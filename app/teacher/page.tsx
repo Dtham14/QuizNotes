@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import TeacherNav from '@/components/TeacherNav';
 
 type Class = {
@@ -105,17 +106,17 @@ export default function TeacherPage() {
 
   if (loading || !currentUser) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <p className="text-gray-600">Loading...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
+    <div className="min-h-screen bg-white flex flex-col">
       <TeacherNav />
 
-      <main className="max-w-7xl mx-auto px-4 py-8">
+      <main className="max-w-7xl mx-auto px-4 py-8 flex-grow">
         <div className="flex justify-between items-center mb-6">
           <div>
             <h2 className="text-3xl font-bold text-gray-900 mb-2">My Classes</h2>
@@ -123,7 +124,7 @@ export default function TeacherPage() {
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors"
+            className="px-6 py-3 bg-brand text-white font-semibold rounded-lg hover:bg-brand-dark transition-colors"
           >
             Create Class
           </button>
@@ -134,7 +135,7 @@ export default function TeacherPage() {
             <p className="text-gray-500 mb-4">You haven't created any classes yet</p>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors"
+              className="px-6 py-3 bg-brand text-white font-semibold rounded-lg hover:bg-brand-dark transition-colors"
             >
               Create Your First Class
             </button>
@@ -159,16 +160,16 @@ export default function TeacherPage() {
                 {cls.description && (
                   <p className="text-gray-600 mb-4">{cls.description}</p>
                 )}
-                <div className="bg-indigo-50 rounded-lg p-3 mb-4">
+                <div className="bg-brand/10 rounded-lg p-3 mb-4">
                   <p className="text-sm text-gray-600 mb-1">Class Code</p>
-                  <p className="text-2xl font-bold text-indigo-600 font-mono">{cls.code}</p>
+                  <p className="text-2xl font-bold text-brand font-mono">{cls.code}</p>
                 </div>
                 <div className="flex items-center justify-between text-sm text-gray-600">
                   <span>{cls.studentCount} students</span>
                   <span>Created {new Date(cls.createdAt).toLocaleDateString()}</span>
                 </div>
                 <div className="mt-4 pt-4 border-t border-gray-100">
-                  <span className="text-indigo-600 text-sm font-medium">View student progress →</span>
+                  <span className="text-brand text-sm font-medium">View student progress →</span>
                 </div>
               </Link>
             ))}
@@ -191,7 +192,7 @@ export default function TeacherPage() {
                   value={newClassName}
                   onChange={(e) => setNewClassName(e.target.value)}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-gray-900"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-transparent text-gray-900"
                   placeholder="e.g., Music Theory 101"
                 />
               </div>
@@ -204,7 +205,7 @@ export default function TeacherPage() {
                   value={newClassDescription}
                   onChange={(e) => setNewClassDescription(e.target.value)}
                   rows={3}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-gray-900"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-transparent text-gray-900"
                   placeholder="Brief description of your class"
                 />
               </div>
@@ -222,7 +223,7 @@ export default function TeacherPage() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                  className="flex-1 px-4 py-2 bg-brand text-white rounded-lg hover:bg-brand-dark transition-colors"
                 >
                   Create Class
                 </button>
@@ -231,6 +232,25 @@ export default function TeacherPage() {
           </div>
         </div>
       )}
+
+      {/* Footer */}
+      <footer className="bg-gray-900 py-8 mt-auto">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Image
+                src="/images/quiznotes logo.jpg"
+                alt="QuizNotes Logo"
+                width={24}
+                height={24}
+                className="rounded"
+              />
+              <span className="text-sm font-semibold text-white">QuizNotes</span>
+            </div>
+            <p className="text-sm text-gray-500">&copy; {new Date().getFullYear()} QuizNotes. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

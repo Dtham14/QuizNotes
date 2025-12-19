@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import TeacherNav from '@/components/TeacherNav';
 
 type CustomQuiz = {
@@ -75,17 +76,17 @@ export default function TeacherQuizzesPage() {
 
   if (loading || !currentUser) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <p className="text-gray-600">Loading...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
+    <div className="min-h-screen bg-white flex flex-col">
       <TeacherNav />
 
-      <main className="max-w-7xl mx-auto px-4 py-8">
+      <main className="max-w-7xl mx-auto px-4 py-8 flex-grow">
         <div className="flex justify-between items-center mb-6">
           <div>
             <h2 className="text-3xl font-bold text-gray-900 mb-2">My Custom Quizzes</h2>
@@ -93,7 +94,7 @@ export default function TeacherQuizzesPage() {
           </div>
           <Link
             href="/teacher/quizzes/create"
-            className="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors"
+            className="px-6 py-3 bg-brand text-white font-semibold rounded-lg hover:bg-brand-dark transition-colors"
           >
             Create Quiz
           </Link>
@@ -104,7 +105,7 @@ export default function TeacherQuizzesPage() {
             <p className="text-gray-500 mb-4">You haven't created any custom quizzes yet</p>
             <Link
               href="/teacher/quizzes/create"
-              className="inline-block px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors"
+              className="inline-block px-6 py-3 bg-brand text-white font-semibold rounded-lg hover:bg-brand-dark transition-colors"
             >
               Create Your First Quiz
             </Link>
@@ -112,7 +113,11 @@ export default function TeacherQuizzesPage() {
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {quizzes.map((quiz) => {
-              const questionCount = JSON.parse(quiz.questions).length;
+              // Handle both string and object formats for questions
+              const questions = typeof quiz.questions === 'string'
+                ? JSON.parse(quiz.questions)
+                : quiz.questions;
+              const questionCount = Array.isArray(questions) ? questions.length : 0;
               return (
                 <div key={quiz.id} className="bg-white rounded-xl shadow-lg p-6">
                   <div className="flex justify-between items-start mb-4">
@@ -127,9 +132,9 @@ export default function TeacherQuizzesPage() {
                   {quiz.description && (
                     <p className="text-gray-600 mb-4">{quiz.description}</p>
                   )}
-                  <div className="bg-indigo-50 rounded-lg p-3 mb-4">
+                  <div className="bg-brand/10 rounded-lg p-3 mb-4">
                     <p className="text-sm text-gray-600 mb-1">Questions</p>
-                    <p className="text-2xl font-bold text-indigo-600">{questionCount}</p>
+                    <p className="text-2xl font-bold text-brand">{questionCount}</p>
                   </div>
                   <div className="text-sm text-gray-600">
                     Created {new Date(quiz.createdAt).toLocaleDateString()}
@@ -140,6 +145,25 @@ export default function TeacherQuizzesPage() {
           </div>
         )}
       </main>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 py-8 mt-auto">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Image
+                src="/images/quiznotes logo.jpg"
+                alt="QuizNotes Logo"
+                width={24}
+                height={24}
+                className="rounded"
+              />
+              <span className="text-sm font-semibold text-white">QuizNotes</span>
+            </div>
+            <p className="text-sm text-gray-500">&copy; {new Date().getFullYear()} QuizNotes. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

@@ -1,7 +1,17 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run db:push:*)",
+      "Bash(wc -l lib/**/*.ts app/**/*.ts*)",
+      "Bash(npm install:*)",
+      "Bash(dir \"C:\\\\Users\\\\danth\\\\OneDrive\\\\Documents\\\\music-theory-quiz-v2\\\\*.db\")",
+      "Bash(dir:*)",
+      "Bash(findstr:*)",
+      "Bash(node scripts/create-test-accounts.js:*)",
+      "Bash(node scripts/activate-test-teacher.js:*)",
+      "Bash(node scripts/check-test-teacher.js:*)"
     ]
   }
 }

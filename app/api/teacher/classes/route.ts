@@ -1,115 +1,195 @@
-import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { classes, classEnrollments, users } from '@/lib/db/schema';
-import { requireAuth } from '@/lib/auth';
-import { eq } from 'drizzle-orm';
-import { createId } from '@paralleldrive/cuid2';
+import { NextResponse } from 'next/server'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+import { getSession, hasActiveSubscription } from '@/lib/auth'
+
+// Service role client to bypass RLS policies
+function getSupabaseAdmin() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!url || !key) {
+    throw new Error('Missing Supabase environment variables')
+  }
+  return createSupabaseClient(url, key)
+}
+
+// Helper to generate class code
+function generateClassCode(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+  let result = ''
+  for (let i = 0; i < 6; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length))
+  }
+  return result
+}
 
 export async function GET() {
   try {
-    const user = await requireAuth();
+    const user = await getSession()
 
-    if (user.role !== 'teacher') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const teacherClasses = await db
-      .select()
-      .from(classes)
-      .where(eq(classes.teacherId, user.id));
+    if (user.role !== 'teacher' && user.role !== 'admin') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
 
-    // Get student count for each class
-    const classesWithCounts = await Promise.all(
-      teacherClasses.map(async (cls) => {
-        const enrollments = await db
-          .select()
-          .from(classEnrollments)
-          .where(eq(classEnrollments.classId, cls.id));
+    if (user.role === 'teacher' && !hasActiveSubscription(user)) {
+      return NextResponse.json({ error: 'Subscription required' }, { status: 402 })
+    }
 
-        return {
-          ...cls,
-          studentCount: enrollments.length,
-        };
-      })
-    );
+    const supabase = getSupabaseAdmin()
 
-    return NextResponse.json({ classes: classesWithCounts });
+    // Get classes with student count
+    const { data: classes, error } = await supabase
+      .from('classes')
+      .select(`
+        *,
+        class_enrollments(count)
+      `)
+      .eq('teacher_id', user.id)
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('Error fetching classes:', error)
+      return NextResponse.json({ error: 'Failed to fetch classes' }, { status: 500 })
+    }
+
+    // Transform data to include student count
+    const classesWithCounts = classes.map((cls) => ({
+      id: cls.id,
+      teacherId: cls.teacher_id,
+      name: cls.name,
+      description: cls.description,
+      code: cls.code,
+      createdAt: cls.created_at,
+      studentCount: cls.class_enrollments[0]?.count || 0,
+    }))
+
+    return NextResponse.json({ classes: classesWithCounts })
   } catch (error) {
+    console.error('Error:', error)
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to fetch classes' },
       { status: 500 }
-    );
+    )
   }
 }
 
 export async function POST(request: Request) {
   try {
-    const user = await requireAuth();
+    const user = await getSession()
 
-    if (user.role !== 'teacher') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { name, description } = await request.json();
+    if (user.role !== 'teacher' && user.role !== 'admin') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    if (user.role === 'teacher' && !hasActiveSubscription(user)) {
+      return NextResponse.json({ error: 'Subscription required' }, { status: 402 })
+    }
+
+    const { name, description } = await request.json()
 
     if (!name) {
-      return NextResponse.json({ error: 'Class name is required' }, { status: 400 });
+      return NextResponse.json({ error: 'Class name is required' }, { status: 400 })
     }
 
-    // Generate a unique 6-character code
-    const code = createId().slice(0, 6).toUpperCase();
+    const supabase = getSupabaseAdmin()
 
-    const [newClass] = await db
-      .insert(classes)
-      .values({
-        teacherId: user.id,
+    // Generate unique class code
+    const code = generateClassCode()
+
+    const { data: newClass, error } = await supabase
+      .from('classes')
+      .insert({
+        teacher_id: user.id,
         name,
         description: description || null,
         code,
       })
-      .returning();
+      .select()
+      .single()
 
-    return NextResponse.json({ class: newClass }, { status: 201 });
+    if (error) {
+      console.error('Error creating class:', error)
+      return NextResponse.json({ error: 'Failed to create class' }, { status: 500 })
+    }
+
+    return NextResponse.json({
+      class: {
+        id: newClass.id,
+        teacherId: newClass.teacher_id,
+        name: newClass.name,
+        description: newClass.description,
+        code: newClass.code,
+        createdAt: newClass.created_at,
+      }
+    }, { status: 201 })
   } catch (error) {
+    console.error('Error:', error)
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to create class' },
       { status: 500 }
-    );
+    )
   }
 }
 
 export async function DELETE(request: Request) {
   try {
-    const user = await requireAuth();
+    const user = await getSession()
 
-    if (user.role !== 'teacher') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { classId } = await request.json();
+    if (user.role !== 'teacher' && user.role !== 'admin') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    if (user.role === 'teacher' && !hasActiveSubscription(user)) {
+      return NextResponse.json({ error: 'Subscription required' }, { status: 402 })
+    }
+
+    const { classId } = await request.json()
 
     if (!classId) {
-      return NextResponse.json({ error: 'Class ID is required' }, { status: 400 });
+      return NextResponse.json({ error: 'Class ID is required' }, { status: 400 })
     }
+
+    const supabase = getSupabaseAdmin()
 
     // Verify the class belongs to the teacher
-    const [classToDelete] = await db
+    const { data: classToDelete } = await supabase
+      .from('classes')
       .select()
-      .from(classes)
-      .where(eq(classes.id, classId))
-      .limit(1);
+      .eq('id', classId)
+      .eq('teacher_id', user.id)
+      .single()
 
-    if (!classToDelete || classToDelete.teacherId !== user.id) {
-      return NextResponse.json({ error: 'Class not found' }, { status: 404 });
+    if (!classToDelete) {
+      return NextResponse.json({ error: 'Class not found' }, { status: 404 })
     }
 
-    await db.delete(classes).where(eq(classes.id, classId));
+    const { error } = await supabase
+      .from('classes')
+      .delete()
+      .eq('id', classId)
 
-    return NextResponse.json({ success: true });
+    if (error) {
+      console.error('Error deleting class:', error)
+      return NextResponse.json({ error: 'Failed to delete class' }, { status: 500 })
+    }
+
+    return NextResponse.json({ success: true })
   } catch (error) {
+    console.error('Error:', error)
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to delete class' },
       { status: 500 }
-    );
+    )
   }
 }

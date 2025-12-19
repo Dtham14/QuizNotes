@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 
 type QuizAttempt = {
   id: string;
@@ -38,6 +39,9 @@ type StudentAssignment = {
   description: string | null;
   dueDate: Date | null;
   createdAt: Date;
+  completed: boolean;
+  score: number | null;
+  totalQuestions: number | null;
 };
 
 export default function DashboardPage() {
@@ -118,6 +122,12 @@ export default function DashboardPage() {
           const classesData = await classesRes.json();
           setClasses(classesData.classes || []);
         }
+        // Refresh assignments (new class may have assignments)
+        const assignmentsRes = await fetch('/api/student/assignments');
+        if (assignmentsRes.ok) {
+          const assignmentsData = await assignmentsRes.json();
+          setStudentAssignments(assignmentsData.assignments || []);
+        }
       } else {
         const error = await res.json();
         alert(error.error || 'Failed to enroll in class');
@@ -130,7 +140,7 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-600">Loading...</p>
         </div>
@@ -162,19 +172,35 @@ export default function DashboardPage() {
   }, {} as Record<string, { count: number; totalScore: number; totalQuestions: number }>);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
-      <nav className="border-b bg-white/80 backdrop-blur-sm">
+    <div className="min-h-screen bg-white flex flex-col">
+      <nav className="border-b border-gray-200 bg-white sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
-            <Link href="/">
-              <h1 className="text-2xl font-bold text-indigo-600 cursor-pointer">QuizNotes</h1>
-            </Link>
-            <div className="flex items-center gap-4">
-              <span className="text-gray-700">Welcome, {user.name || user.email}</span>
+            <div className="flex items-center gap-8">
+              <Link href="/" className="flex items-center gap-3">
+                <Image
+                  src="/images/quiznotes logo.jpg"
+                  alt="QuizNotes Logo"
+                  width={36}
+                  height={36}
+                  className="rounded-lg"
+                />
+                <span className="text-xl font-bold text-gray-900">QuizNotes</span>
+              </Link>
+              <div className="hidden md:flex items-center gap-6">
+                <Link href="/quiz" className="text-gray-700 hover:text-gray-900 text-sm font-semibold">
+                  Quizzes
+                </Link>
+                <span className="text-gray-700 text-sm font-semibold">
+                  Welcome, {user.name || user.email}
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
               {user.role === 'admin' && (
                 <Link
                   href="/admin"
-                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-semibold"
+                  className="px-4 py-2 bg-brand text-white rounded-lg hover:bg-brand-dark transition-colors text-sm font-semibold"
                 >
                   Admin Panel
                 </Link>
@@ -182,14 +208,14 @@ export default function DashboardPage() {
               {user.role === 'teacher' && (
                 <Link
                   href="/teacher"
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-semibold"
+                  className="px-4 py-2 bg-brand text-white rounded-lg hover:bg-brand-dark transition-colors text-sm font-semibold"
                 >
                   Teacher Portal
                 </Link>
               )}
               <button
                 onClick={handleLogout}
-                className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                className="px-4 py-2 text-gray-700 hover:text-gray-900 text-sm font-semibold"
               >
                 Logout
               </button>
@@ -198,7 +224,7 @@ export default function DashboardPage() {
         </div>
       </nav>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex-grow">
         <div className="mb-8">
           <h2 className="text-3xl font-bold text-gray-900 mb-2">Your Dashboard</h2>
           <p className="text-gray-600">
@@ -217,7 +243,7 @@ export default function DashboardPage() {
             <div className="flex gap-4 justify-center">
               <Link
                 href="/admin"
-                className="px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors"
+                className="px-6 py-3 bg-brand text-white font-semibold rounded-lg hover:bg-brand-dark transition-colors"
               >
                 Go to Admin Panel
               </Link>
@@ -231,24 +257,24 @@ export default function DashboardPage() {
             <div className="grid md:grid-cols-3 gap-4">
               <Link
                 href="/teacher"
-                className="p-6 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors"
+                className="p-6 bg-brand/10 rounded-lg hover:bg-brand/20 transition-colors"
               >
-                <h4 className="font-bold text-indigo-900 mb-2">My Classes</h4>
-                <p className="text-sm text-indigo-700">Manage your classes and view enrolled students</p>
+                <h4 className="font-bold text-brand mb-2">My Classes</h4>
+                <p className="text-sm text-brand/80">Manage your classes and view enrolled students</p>
               </Link>
               <Link
                 href="/teacher/quizzes"
-                className="p-6 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors"
+                className="p-6 bg-brand/10 rounded-lg hover:bg-brand/20 transition-colors"
               >
-                <h4 className="font-bold text-indigo-900 mb-2">My Quizzes</h4>
-                <p className="text-sm text-indigo-700">Create and manage custom quizzes</p>
+                <h4 className="font-bold text-brand mb-2">My Quizzes</h4>
+                <p className="text-sm text-brand/80">Create and manage custom quizzes</p>
               </Link>
               <Link
                 href="/teacher/assignments"
-                className="p-6 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors"
+                className="p-6 bg-brand/10 rounded-lg hover:bg-brand/20 transition-colors"
               >
-                <h4 className="font-bold text-indigo-900 mb-2">Assignments</h4>
-                <p className="text-sm text-indigo-700">Assign quizzes to your classes</p>
+                <h4 className="font-bold text-brand mb-2">Assignments</h4>
+                <p className="text-sm text-brand/80">Assign quizzes to your classes</p>
               </Link>
             </div>
           </div>
@@ -261,7 +287,7 @@ export default function DashboardPage() {
                 <h3 className="text-xl font-bold text-gray-900">My Classes</h3>
                 <button
                   onClick={() => setShowEnrollModal(true)}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-semibold"
+                  className="px-4 py-2 bg-brand text-white rounded-lg hover:bg-brand-dark transition-colors text-sm font-semibold"
                 >
                   Join Class
                 </button>
@@ -272,7 +298,7 @@ export default function DashboardPage() {
                   <p className="text-gray-500 mb-4">You haven't joined any classes yet</p>
                   <button
                     onClick={() => setShowEnrollModal(true)}
-                    className="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors"
+                    className="px-6 py-3 bg-brand text-white font-semibold rounded-lg hover:bg-brand-dark transition-colors"
                   >
                     Join Your First Class
                   </button>
@@ -300,40 +326,64 @@ export default function DashboardPage() {
                 <div className="space-y-4">
                   {studentAssignments.map((assignment) => {
                     const isOverdue = assignment.dueDate && new Date(assignment.dueDate) < new Date();
+                    const percentage = assignment.score !== null && assignment.totalQuestions !== null
+                      ? Math.round((assignment.score / assignment.totalQuestions) * 100)
+                      : null;
                     return (
-                      <div key={assignment.id} className="bg-gray-50 rounded-lg p-4">
+                      <div key={assignment.id} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
                         <div className="flex justify-between items-start mb-2">
                           <div>
                             <h4 className="font-bold text-gray-900">{assignment.title}</h4>
                             <p className="text-sm text-gray-600">{assignment.className}</p>
                           </div>
-                          {assignment.dueDate && (
-                            <span
-                              className={`text-sm px-2 py-1 rounded ${
-                                isOverdue
-                                  ? 'bg-red-100 text-red-700'
-                                  : 'bg-blue-100 text-blue-700'
-                              }`}
-                            >
-                              {isOverdue ? 'Overdue' : `Due ${new Date(assignment.dueDate).toLocaleDateString()}`}
-                            </span>
-                          )}
+                          <div className="flex gap-2">
+                            {assignment.completed && (
+                              <span className="text-sm px-2 py-1 rounded bg-green-100 text-green-700">
+                                Completed
+                              </span>
+                            )}
+                            {!assignment.completed && assignment.dueDate && (
+                              <span
+                                className={`text-sm px-2 py-1 rounded ${
+                                  isOverdue
+                                    ? 'bg-red-100 text-red-700'
+                                    : 'bg-brand/20 text-brand'
+                                }`}
+                              >
+                                {isOverdue ? 'Overdue' : `Due ${new Date(assignment.dueDate).toLocaleDateString()}`}
+                              </span>
+                            )}
+                          </div>
                         </div>
                         {assignment.description && (
                           <p className="text-sm text-gray-600 mb-3">{assignment.description}</p>
                         )}
-                        <Link
-                          href={
-                            assignment.quizId
-                              ? `/quiz/${assignment.quizId}`
-                              : assignment.quizType
-                              ? `/quiz?type=${assignment.quizType}`
-                              : '/quiz'
-                          }
-                          className="inline-block px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-semibold"
-                        >
-                          Start Quiz
-                        </Link>
+                        {assignment.completed ? (
+                          <div className="flex items-center gap-3">
+                            <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                              percentage !== null && percentage >= 70
+                                ? 'bg-green-100 text-green-700'
+                                : percentage !== null && percentage >= 50
+                                ? 'bg-yellow-100 text-yellow-700'
+                                : 'bg-red-100 text-red-700'
+                            }`}>
+                              Score: {assignment.score}/{assignment.totalQuestions} ({percentage}%)
+                            </span>
+                          </div>
+                        ) : (
+                          <Link
+                            href={
+                              assignment.quizId
+                                ? `/quiz/${assignment.quizId}?assignmentId=${assignment.id}`
+                                : assignment.quizType
+                                ? `/quiz?type=${assignment.quizType}&assignmentId=${assignment.id}`
+                                : '/quiz'
+                            }
+                            className="inline-block px-4 py-2 bg-brand text-white rounded-lg hover:bg-brand-dark transition-colors text-sm font-semibold"
+                          >
+                            Start Quiz
+                          </Link>
+                        )}
                       </div>
                     );
                   })}
@@ -344,7 +394,7 @@ export default function DashboardPage() {
             <div className="grid md:grid-cols-3 gap-6 mb-8">
               <div className="bg-white p-6 rounded-xl shadow-lg">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
+                  <div className="w-12 h-12 bg-brand/20 rounded-lg flex items-center justify-center">
                     <span className="text-2xl">📊</span>
                   </div>
                   <div>
@@ -368,7 +418,7 @@ export default function DashboardPage() {
 
               <div className="bg-white p-6 rounded-xl shadow-lg">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <div className="w-12 h-12 bg-brand/20 rounded-lg flex items-center justify-center">
                     <span className="text-2xl">🔥</span>
                   </div>
                   <div>
@@ -395,7 +445,7 @@ export default function DashboardPage() {
                         </div>
                         <div className="w-full bg-gray-200 rounded-full h-2">
                           <div
-                            className="bg-indigo-600 h-2 rounded-full transition-all"
+                            className="bg-brand h-2 rounded-full transition-all"
                             style={{ width: `${percentage}%` }}
                           />
                         </div>
@@ -411,7 +461,7 @@ export default function DashboardPage() {
                 <h3 className="text-xl font-bold text-gray-900">Recent Quiz Attempts</h3>
                 <Link
                   href="/quiz"
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-semibold"
+                  className="px-4 py-2 bg-brand text-white rounded-lg hover:bg-brand-dark transition-colors text-sm font-semibold"
                 >
                   Take New Quiz
                 </Link>
@@ -422,7 +472,7 @@ export default function DashboardPage() {
                   <p className="text-gray-500 mb-4">You haven't taken any quizzes yet</p>
                   <Link
                     href="/quiz"
-                    className="inline-block px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors"
+                    className="inline-block px-6 py-3 bg-brand text-white font-semibold rounded-lg hover:bg-brand-dark transition-colors"
                   >
                     Start Your First Quiz
                   </Link>
@@ -496,7 +546,7 @@ export default function DashboardPage() {
                   value={classCode}
                   onChange={(e) => setClassCode(e.target.value)}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-gray-900 uppercase"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-transparent text-gray-900 uppercase"
                   placeholder="Enter 6-character code"
                   maxLength={6}
                 />
@@ -514,7 +564,7 @@ export default function DashboardPage() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                  className="flex-1 px-4 py-2 bg-brand text-white rounded-lg hover:bg-brand-dark transition-colors"
                 >
                   Join Class
                 </button>
@@ -523,6 +573,25 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+
+      {/* Footer */}
+      <footer className="bg-gray-900 py-8 mt-auto">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Image
+                src="/images/quiznotes logo.jpg"
+                alt="QuizNotes Logo"
+                width={24}
+                height={24}
+                className="rounded"
+              />
+              <span className="text-sm font-semibold text-white">QuizNotes</span>
+            </div>
+            <p className="text-sm text-gray-500">&copy; {new Date().getFullYear()} QuizNotes. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

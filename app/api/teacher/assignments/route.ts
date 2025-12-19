@@ -1,125 +1,255 @@
-import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { assignments, classes } from '@/lib/db/schema';
-import { requireAuth } from '@/lib/auth';
-import { eq, and } from 'drizzle-orm';
+import { NextResponse } from 'next/server'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+import { getSession, hasActiveSubscription } from '@/lib/auth'
+
+// Service role client to bypass RLS policies
+function getSupabaseAdmin() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!url || !key) {
+    throw new Error('Missing Supabase environment variables')
+  }
+  return createSupabaseClient(url, key)
+}
 
 export async function GET() {
   try {
-    const user = await requireAuth();
+    const user = await getSession()
 
-    if (user.role !== 'teacher') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get all assignments for this teacher's classes
-    const teacherAssignments = await db
-      .select({
-        id: assignments.id,
-        classId: assignments.classId,
-        className: classes.name,
-        quizId: assignments.quizId,
-        quizType: assignments.quizType,
-        title: assignments.title,
-        description: assignments.description,
-        dueDate: assignments.dueDate,
-        createdAt: assignments.createdAt,
-      })
-      .from(assignments)
-      .innerJoin(classes, eq(assignments.classId, classes.id))
-      .where(eq(assignments.teacherId, user.id));
+    if (user.role !== 'teacher' && user.role !== 'admin') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
 
-    return NextResponse.json({ assignments: teacherAssignments });
+    if (user.role === 'teacher' && !hasActiveSubscription(user)) {
+      return NextResponse.json({ error: 'Subscription required' }, { status: 402 })
+    }
+
+    const supabase = getSupabaseAdmin()
+
+    // Get all assignments for this teacher with class name
+    const { data: assignments, error } = await supabase
+      .from('assignments')
+      .select(`
+        *,
+        classes(name)
+      `)
+      .eq('teacher_id', user.id)
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('Error fetching assignments:', error)
+      return NextResponse.json({ error: 'Failed to fetch assignments' }, { status: 500 })
+    }
+
+    // Get stats for each assignment
+    const assignmentsWithStats = await Promise.all(
+      assignments.map(async (assignment) => {
+        // Get total students in the class
+        const { count: totalStudents } = await supabase
+          .from('class_enrollments')
+          .select('*', { count: 'exact', head: true })
+          .eq('class_id', assignment.class_id)
+
+        // Get quiz attempts for this assignment
+        const { data: attempts } = await supabase
+          .from('quiz_attempts')
+          .select('user_id, score, total_questions')
+          .eq('assignment_id', assignment.id)
+
+        // Calculate stats
+        const studentsCompleted = new Set(attempts?.map((a) => a.user_id) || []).size
+
+        // Get best score per student for average calculation
+        const bestScoresByStudent = new Map<string, number>()
+        attempts?.forEach((attempt) => {
+          const percentage = (attempt.score / attempt.total_questions) * 100
+          const current = bestScoresByStudent.get(attempt.user_id)
+          if (current === undefined || percentage > current) {
+            bestScoresByStudent.set(attempt.user_id, percentage)
+          }
+        })
+
+        const averageScore = bestScoresByStudent.size > 0
+          ? Math.round(
+              Array.from(bestScoresByStudent.values()).reduce((sum, score) => sum + score, 0) /
+                bestScoresByStudent.size
+            )
+          : null
+
+        // Handle classes as array or object
+        const classes = assignment.classes as { name: string }[] | { name: string } | null;
+        const className = Array.isArray(classes) ? classes[0]?.name : classes?.name;
+        return {
+          id: assignment.id,
+          classId: assignment.class_id,
+          className,
+          quizId: assignment.quiz_id,
+          quizType: assignment.quiz_type,
+          title: assignment.title,
+          description: assignment.description,
+          dueDate: assignment.due_date,
+          maxAttempts: assignment.max_attempts,
+          createdAt: assignment.created_at,
+          stats: {
+            totalStudents: totalStudents || 0,
+            studentsCompleted,
+            completionRate: totalStudents && totalStudents > 0
+              ? Math.round((studentsCompleted / totalStudents) * 100)
+              : 0,
+            averageScore,
+          },
+        }
+      })
+    )
+
+    return NextResponse.json({ assignments: assignmentsWithStats })
   } catch (error) {
+    console.error('Error:', error)
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to fetch assignments' },
       { status: 500 }
-    );
+    )
   }
 }
 
 export async function POST(request: Request) {
   try {
-    const user = await requireAuth();
+    const user = await getSession()
 
-    if (user.role !== 'teacher') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { classId, quizId, quizType, title, description, dueDate } = await request.json();
+    if (user.role !== 'teacher' && user.role !== 'admin') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    if (user.role === 'teacher' && !hasActiveSubscription(user)) {
+      return NextResponse.json({ error: 'Subscription required' }, { status: 402 })
+    }
+
+    const { classId, quizId, quizType, title, description, dueDate, maxAttempts } = await request.json()
 
     if (!classId || !title || (!quizId && !quizType)) {
       return NextResponse.json(
         { error: 'Class, title, and either quizId or quizType are required' },
         { status: 400 }
-      );
+      )
     }
+
+    const supabase = getSupabaseAdmin()
 
     // Verify the class belongs to this teacher
-    const [teacherClass] = await db
+    const { data: teacherClass } = await supabase
+      .from('classes')
       .select()
-      .from(classes)
-      .where(and(eq(classes.id, classId), eq(classes.teacherId, user.id)))
-      .limit(1);
+      .eq('id', classId)
+      .eq('teacher_id', user.id)
+      .single()
 
     if (!teacherClass) {
-      return NextResponse.json({ error: 'Class not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Class not found' }, { status: 404 })
     }
 
-    const [newAssignment] = await db
-      .insert(assignments)
-      .values({
-        classId,
-        teacherId: user.id,
-        quizId: quizId || null,
-        quizType: quizType || null,
+    const { data: newAssignment, error } = await supabase
+      .from('assignments')
+      .insert({
+        class_id: classId,
+        teacher_id: user.id,
+        quiz_id: quizId || null,
+        quiz_type: quizType || null,
         title,
         description: description || null,
-        dueDate: dueDate ? new Date(dueDate) : null,
+        due_date: dueDate || null,
+        max_attempts: maxAttempts ? parseInt(maxAttempts, 10) : null,
       })
-      .returning();
+      .select()
+      .single()
 
-    return NextResponse.json({ assignment: newAssignment }, { status: 201 });
+    if (error) {
+      console.error('Error creating assignment:', error)
+      return NextResponse.json({ error: 'Failed to create assignment' }, { status: 500 })
+    }
+
+    return NextResponse.json({
+      assignment: {
+        id: newAssignment.id,
+        classId: newAssignment.class_id,
+        teacherId: newAssignment.teacher_id,
+        quizId: newAssignment.quiz_id,
+        quizType: newAssignment.quiz_type,
+        title: newAssignment.title,
+        description: newAssignment.description,
+        dueDate: newAssignment.due_date,
+        maxAttempts: newAssignment.max_attempts,
+        createdAt: newAssignment.created_at,
+      }
+    }, { status: 201 })
   } catch (error) {
+    console.error('Error:', error)
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to create assignment' },
       { status: 500 }
-    );
+    )
   }
 }
 
 export async function DELETE(request: Request) {
   try {
-    const user = await requireAuth();
+    const user = await getSession()
 
-    if (user.role !== 'teacher') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { assignmentId } = await request.json();
+    if (user.role !== 'teacher' && user.role !== 'admin') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    if (user.role === 'teacher' && !hasActiveSubscription(user)) {
+      return NextResponse.json({ error: 'Subscription required' }, { status: 402 })
+    }
+
+    const { assignmentId } = await request.json()
 
     if (!assignmentId) {
-      return NextResponse.json({ error: 'Assignment ID is required' }, { status: 400 });
+      return NextResponse.json({ error: 'Assignment ID is required' }, { status: 400 })
     }
+
+    const supabase = getSupabaseAdmin()
 
     // Verify the assignment belongs to this teacher
-    const [assignment] = await db
+    const { data: assignment } = await supabase
+      .from('assignments')
       .select()
-      .from(assignments)
-      .where(and(eq(assignments.id, assignmentId), eq(assignments.teacherId, user.id)))
-      .limit(1);
+      .eq('id', assignmentId)
+      .eq('teacher_id', user.id)
+      .single()
 
     if (!assignment) {
-      return NextResponse.json({ error: 'Assignment not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Assignment not found' }, { status: 404 })
     }
 
-    await db.delete(assignments).where(eq(assignments.id, assignmentId));
+    const { error } = await supabase
+      .from('assignments')
+      .delete()
+      .eq('id', assignmentId)
 
-    return NextResponse.json({ success: true });
+    if (error) {
+      console.error('Error deleting assignment:', error)
+      return NextResponse.json({ error: 'Failed to delete assignment' }, { status: 500 })
+    }
+
+    return NextResponse.json({ success: true })
   } catch (error) {
+    console.error('Error:', error)
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to delete assignment' },
       { status: 500 }
-    );
+    )
   }
 }

@@ -1,33 +1,58 @@
-import { NextResponse } from 'next/server';
-import { requireAuth } from '@/lib/auth';
-import { db } from '@/lib/db';
-import { quizAttempts } from '@/lib/db/schema';
-import { eq, desc } from 'drizzle-orm';
+import { NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
+import { getSession } from '@/lib/auth'
+
+// Create admin client lazily to ensure env vars are available
+function getSupabaseAdmin() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  if (!url || !key) {
+    throw new Error('Missing Supabase environment variables')
+  }
+
+  return createClient(url, key)
+}
 
 export async function GET() {
   try {
-    const user = await requireAuth();
+    const user = await getSession()
 
-    const attempts = await db
-      .select()
-      .from(quizAttempts)
-      .where(eq(quizAttempts.userId, user.id))
-      .orderBy(desc(quizAttempts.createdAt));
-
-    return NextResponse.json({ attempts });
-  } catch (error) {
-    console.error('Fetch attempts error:', error);
-
-    if (error instanceof Error && error.message === 'Unauthorized') {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const supabaseAdmin = getSupabaseAdmin()
+
+    const { data: attempts, error } = await supabaseAdmin
+      .from('quiz_attempts')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('Error fetching attempts:', error)
+      return NextResponse.json({ error: 'Failed to fetch attempts' }, { status: 500 })
+    }
+
+    // Transform to camelCase
+    const transformedAttempts = attempts.map((a) => ({
+      id: a.id,
+      userId: a.user_id,
+      quizType: a.quiz_type,
+      score: a.score,
+      totalQuestions: a.total_questions,
+      answers: a.answers,
+      assignmentId: a.assignment_id,
+      createdAt: a.created_at,
+    }))
+
+    return NextResponse.json({ attempts: transformedAttempts })
+  } catch (error) {
+    console.error('Fetch attempts error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
-    );
+    )
   }
 }

@@ -1,9 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import MusicNotation, { Note } from '@/components/MusicNotation';
+import AudioPlayer from '@/components/AudioPlayer';
+import type { EarTrainingSubtype, EarTrainingAudioData } from '@/lib/types/earTraining';
 
 type Question = {
   question: string;
@@ -11,6 +14,10 @@ type Question = {
   correctAnswer: number;
   notes?: Note[];
   clef?: 'treble' | 'bass';
+  earTraining?: {
+    subtype: EarTrainingSubtype;
+    audioData: EarTrainingAudioData;
+  };
 };
 
 type CustomQuiz = {
@@ -20,10 +27,12 @@ type CustomQuiz = {
   questions: Question[];
 };
 
-export default function CustomQuizPage() {
+function CustomQuizContent() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const quizId = params.id as string;
+  const assignmentId = searchParams.get('assignmentId');
 
   const [quiz, setQuiz] = useState<CustomQuiz | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -119,7 +128,7 @@ export default function CustomQuizPage() {
     setShowResult(true);
 
     try {
-      await fetch('/api/quiz/submit', {
+      const response = await fetch('/api/quiz/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -128,8 +137,16 @@ export default function CustomQuizPage() {
           score: correctCount,
           totalQuestions: quiz!.questions.length,
           answers: finalAnswers,
+          assignmentId: assignmentId,
         }),
       });
+
+      if (!response.ok) {
+        const data = await response.json();
+        if (data.error === 'Attempt limit reached') {
+          alert(data.message);
+        }
+      }
     } catch (error) {
       console.error('Failed to submit quiz:', error);
     }
@@ -137,7 +154,7 @@ export default function CustomQuizPage() {
 
   if (loading || !user || !quiz) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-600">Loading quiz...</p>
         </div>
@@ -148,16 +165,23 @@ export default function CustomQuizPage() {
   if (showResult) {
     const percentage = Math.round((score / quiz.questions.length) * 100);
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
+      <div className="min-h-screen bg-white">
         <nav className="border-b bg-white/80 backdrop-blur-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between h-16 items-center">
-              <Link href="/">
-                <h1 className="text-2xl font-bold text-indigo-600 cursor-pointer">QuizNotes</h1>
+              <Link href="/" className="flex items-center gap-2">
+                <Image
+                  src="/images/quiznotes logo.jpg"
+                  alt="QuizNotes Logo"
+                  width={36}
+                  height={36}
+                  className="rounded-lg"
+                />
+                <h1 className="text-2xl font-bold text-brand cursor-pointer">QuizNotes</h1>
               </Link>
               <Link
                 href="/dashboard"
-                className="px-4 py-2 text-indigo-600 hover:text-indigo-700 transition-colors"
+                className="px-4 py-2 text-brand hover:text-brand-dark transition-colors"
               >
                 Dashboard
               </Link>
@@ -185,19 +209,19 @@ export default function CustomQuizPage() {
             <p className="text-gray-600 mb-8">{quiz.title}</p>
 
             <div className="grid grid-cols-3 gap-4 mb-8">
-              <div className="bg-indigo-50 rounded-xl p-4">
-                <p className="text-sm text-indigo-600 font-semibold mb-1">Score</p>
-                <p className="text-3xl font-bold text-indigo-900">
+              <div className="bg-brand/10 rounded-xl p-4">
+                <p className="text-sm text-brand font-semibold mb-1">Score</p>
+                <p className="text-3xl font-bold text-brand">
                   {score}/{quiz.questions.length}
                 </p>
               </div>
-              <div className="bg-purple-50 rounded-xl p-4">
-                <p className="text-sm text-purple-600 font-semibold mb-1">Percentage</p>
-                <p className="text-3xl font-bold text-purple-900">{percentage}%</p>
+              <div className="bg-brand/10 rounded-xl p-4">
+                <p className="text-sm text-brand font-semibold mb-1">Percentage</p>
+                <p className="text-3xl font-bold text-brand">{percentage}%</p>
               </div>
-              <div className="bg-pink-50 rounded-xl p-4">
-                <p className="text-sm text-pink-600 font-semibold mb-1">Grade</p>
-                <p className="text-3xl font-bold text-pink-900">
+              <div className="bg-brand/10 rounded-xl p-4">
+                <p className="text-sm text-brand font-semibold mb-1">Grade</p>
+                <p className="text-3xl font-bold text-brand">
                   {percentage >= 90 ? 'A' : percentage >= 80 ? 'B' : percentage >= 70 ? 'C' : percentage >= 60 ? 'D' : 'F'}
                 </p>
               </div>
@@ -206,7 +230,7 @@ export default function CustomQuizPage() {
             <div className="flex flex-col gap-3">
               <Link
                 href="/dashboard"
-                className="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors"
+                className="px-6 py-3 bg-brand text-white font-semibold rounded-lg hover:bg-brand-dark transition-colors"
               >
                 Back to Dashboard
               </Link>
@@ -236,7 +260,14 @@ export default function CustomQuizPage() {
                       </span>
                       <p className="font-semibold text-gray-900">{question.question}</p>
                     </div>
-                    {question.notes && (
+                    {question.earTraining ? (
+                      <div className="ml-9 mb-3">
+                        <AudioPlayer
+                          subtype={question.earTraining.subtype}
+                          audioData={question.earTraining.audioData}
+                        />
+                      </div>
+                    ) : question.notes ? (
                       <div className="ml-9 mb-3">
                         <MusicNotation
                           notes={question.notes}
@@ -245,7 +276,7 @@ export default function CustomQuizPage() {
                           height={120}
                         />
                       </div>
-                    )}
+                    ) : null}
                     <div className="ml-9 space-y-2">
                       {question.options.map((option, optionIndex) => {
                         const isUserAnswer = userAnswer === optionIndex;
@@ -286,16 +317,23 @@ export default function CustomQuizPage() {
   const progress = ((currentQuestionIndex + 1) / quiz.questions.length) * 100;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
+    <div className="min-h-screen bg-white">
       <nav className="border-b bg-white/80 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
-            <Link href="/">
-              <h1 className="text-2xl font-bold text-indigo-600 cursor-pointer">QuizNotes</h1>
+            <Link href="/" className="flex items-center gap-2">
+              <Image
+                src="/images/quiznotes logo.jpg"
+                alt="QuizNotes Logo"
+                width={36}
+                height={36}
+                className="rounded-lg"
+              />
+              <h1 className="text-2xl font-bold text-brand cursor-pointer">QuizNotes</h1>
             </Link>
             <Link
               href="/dashboard"
-              className="px-4 py-2 text-indigo-600 hover:text-indigo-700 transition-colors"
+              className="px-4 py-2 text-brand hover:text-brand-dark transition-colors"
             >
               Exit Quiz
             </Link>
@@ -314,7 +352,7 @@ export default function CustomQuizPage() {
           {quiz.description && <p className="text-gray-600 mb-4">{quiz.description}</p>}
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div
-              className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
+              className="bg-brand h-2 rounded-full transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -323,7 +361,14 @@ export default function CustomQuizPage() {
         <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
           <h3 className="text-xl font-semibold text-gray-900 mb-6">{currentQuestion.question}</h3>
 
-          {currentQuestion.notes && (
+          {currentQuestion.earTraining ? (
+            <div className="flex justify-center mb-6">
+              <AudioPlayer
+                subtype={currentQuestion.earTraining.subtype}
+                audioData={currentQuestion.earTraining.audioData}
+              />
+            </div>
+          ) : currentQuestion.notes ? (
             <div className="flex justify-center mb-6">
               <MusicNotation
                 notes={currentQuestion.notes}
@@ -332,7 +377,7 @@ export default function CustomQuizPage() {
                 height={130}
               />
             </div>
-          )}
+          ) : null}
 
           <div className="space-y-3">
             {currentQuestion.options.map((option, index) => (
@@ -341,8 +386,8 @@ export default function CustomQuizPage() {
                 onClick={() => handleAnswerSelect(index)}
                 className={`w-full p-4 text-left rounded-lg border-2 transition-all ${
                   selectedAnswer === index
-                    ? 'border-indigo-600 bg-indigo-50 text-indigo-900'
-                    : 'border-gray-200 bg-white text-gray-900 hover:border-indigo-300 hover:bg-indigo-25'
+                    ? 'border-brand bg-brand/10 text-brand'
+                    : 'border-gray-200 bg-white text-gray-900 hover:border-brand/50 hover:bg-brand/5'
                 }`}
               >
                 <span className="font-medium">{option}</span>
@@ -365,12 +410,24 @@ export default function CustomQuizPage() {
           </button>
           <button
             onClick={handleNext}
-            className="px-6 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-colors"
+            className="px-6 py-3 bg-brand text-white rounded-lg font-semibold hover:bg-brand-dark transition-colors"
           >
             {currentQuestionIndex === quiz.questions.length - 1 ? 'Submit Quiz' : 'Next Question'}
           </button>
         </div>
       </main>
     </div>
+  );
+}
+
+export default function CustomQuizPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <p className="text-gray-600">Loading quiz...</p>
+      </div>
+    }>
+      <CustomQuizContent />
+    </Suspense>
   );
 }

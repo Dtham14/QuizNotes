@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 
 export default function TeacherNav() {
@@ -26,16 +27,23 @@ export default function TeacherNav() {
   const linkClass = (path: string) =>
     `px-3 py-2 rounded-md text-sm font-medium transition-colors ${
       isActive(path)
-        ? 'bg-indigo-100 text-indigo-700'
-        : 'text-gray-600 hover:text-indigo-600 hover:bg-gray-50'
+        ? 'bg-brand/20 text-brand'
+        : 'text-gray-600 hover:text-brand hover:bg-gray-50'
     }`;
 
   return (
     <nav className="border-b bg-white/80 backdrop-blur-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
-          <Link href="/teacher">
-            <h1 className="text-2xl font-bold text-indigo-600 cursor-pointer">QuizNotes Teacher</h1>
+          <Link href="/teacher" className="flex items-center gap-2">
+            <Image
+              src="/images/quiznotes logo.jpg"
+              alt="QuizNotes Logo"
+              width={36}
+              height={36}
+              className="rounded-lg"
+            />
+            <h1 className="text-2xl font-bold text-brand cursor-pointer">QuizNotes Teacher</h1>
           </Link>
           <div className="flex items-center gap-1">
             <Link href="/teacher" className={linkClass('/teacher')}>
