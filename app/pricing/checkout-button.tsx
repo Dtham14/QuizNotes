@@ -3,8 +3,14 @@
 import { useState } from 'react'
 
 interface CheckoutButtonProps {
-  plan: 'monthly' | 'yearly'
+  plan: 'monthly' | 'yearly' | 'student_premium'
   variant: 'primary' | 'secondary'
+}
+
+const planLabels: Record<string, string> = {
+  monthly: 'Monthly',
+  yearly: 'Yearly',
+  student_premium: 'Premium',
 }
 
 export function CheckoutButton({ plan, variant }: CheckoutButtonProps) {
@@ -46,7 +52,7 @@ export function CheckoutButton({ plan, variant }: CheckoutButtonProps) {
       disabled={loading}
       className={`${baseClasses} ${variantClasses}`}
     >
-      {loading ? 'Processing...' : `Subscribe ${plan === 'monthly' ? 'Monthly' : 'Yearly'}`}
+      {loading ? 'Processing...' : `Subscribe ${planLabels[plan] || plan}`}
     </button>
   )
 }

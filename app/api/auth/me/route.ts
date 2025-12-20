@@ -35,6 +35,7 @@ export async function GET() {
         email: profile.email,
         name: profile.name,
         role: profile.role,
+        avatar: profile.avatar,
         subscriptionStatus: profile.subscription_status,
         subscriptionPlan: profile.subscription_plan,
         subscriptionExpiresAt: profile.subscription_expires_at,

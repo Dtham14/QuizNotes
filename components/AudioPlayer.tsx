@@ -30,7 +30,8 @@ export default function AudioPlayer({ subtype, audioData, onPlay }: AudioPlayerP
       await playEarTraining(subtype, audioData);
 
       // Wait for audio to finish before allowing replay
-      const duration = subtype === 'interval' ? 1500 : 1000;
+      // Longer durations for piano-like sustained sounds
+      const duration = subtype === 'interval' ? 3000 : 2500;
       setTimeout(() => {
         setIsPlaying(false);
         setHasPlayed(true);
@@ -44,7 +45,7 @@ export default function AudioPlayer({ subtype, audioData, onPlay }: AudioPlayerP
   }, [subtype, audioData, isPlaying, isInitializing, onPlay]);
 
   const getButtonText = () => {
-    if (isInitializing) return 'Initializing...';
+    if (isInitializing) return 'Loading piano...';
     if (isPlaying) return 'Playing...';
     if (hasPlayed) return 'Click to replay';
     return 'Click to play';

@@ -4,12 +4,14 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import AnonymousQuiz from './AnonymousQuiz';
+import ProfileDropdown from './ProfileDropdown';
 import { QuizType } from '@/lib/quizData';
 
 type User = {
   id: string;
   email: string;
   name?: string | null;
+  avatar?: string | null;
 };
 
 type LandingPageClientProps = {
@@ -50,18 +52,13 @@ export default function LandingPageClient({ user }: LandingPageClientProps) {
                   Quizzes
                 </button>
                 <Link href="/pricing" className="text-gray-700 hover:text-gray-900 text-sm font-semibold">
-                  Teacher Plans
+                  Pricing
                 </Link>
               </div>
             </div>
             <div className="flex items-center gap-3">
               {user ? (
-                <Link
-                  href="/dashboard"
-                  className="px-4 py-2 bg-brand text-white text-sm font-semibold rounded-lg hover:bg-brand-dark transition-colors"
-                >
-                  Dashboard
-                </Link>
+                <ProfileDropdown user={user} />
               ) : (
                 <>
                   <Link
@@ -88,10 +85,10 @@ export default function LandingPageClient({ user }: LandingPageClientProps) {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 tracking-tight">
-              The best way to learn music theory
+              Gamify your music theory learning
             </h1>
             <p className="text-lg sm:text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-              Interactive quizzes with real sheet music notation. Master intervals, chords, scales, and more.
+              Master music theory through interactive quizzes. Earn XP, unlock achievements, climb leaderboards, and track your progress with our variety of staff identification and ear training exercises.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3 justify-center mb-6">
@@ -118,100 +115,166 @@ export default function LandingPageClient({ user }: LandingPageClientProps) {
         </div>
       </section>
 
-      {/* Quiz Topics - Clean Cards */}
-      <section className="py-16 bg-white">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Quiz Selection - Matching Student Quiz Page Format */}
+      <section id="quizzes" className="py-16 bg-white">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">
-              Choose a topic to practice
+              Choose a Quiz Topic
             </h2>
             <p className="text-gray-600">
               Click any topic to start a free quiz instantly
             </p>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4 max-w-5xl mx-auto">
-            <button
-              onClick={() => openQuiz('intervals')}
-              className="group p-6 bg-white border-2 border-gray-200 rounded-xl hover:border-brand hover:shadow-md transition-all text-left flex flex-col"
-            >
-              <div className="w-12 h-12 bg-brand/20 rounded-lg flex items-center justify-center mb-4 group-hover:bg-brand transition-colors">
-                <svg className="w-6 h-6 text-brand group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-                </svg>
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-1">Intervals</h3>
-              <p className="text-sm text-gray-500 flex-grow">Identify distances between notes</p>
-            </button>
+          {/* Quick Start */}
+          <div className="mb-8">
+            <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Quick Start</h3>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* Mixed Staff Identification Quiz */}
+              <button
+                onClick={() => openQuiz('mixed')}
+                className="group p-6 bg-white border-2 border-gray-200 rounded-xl hover:border-brand hover:shadow-md transition-all text-left flex flex-col"
+              >
+                <div className="w-12 h-12 bg-brand/20 rounded-lg flex items-center justify-center mb-4 group-hover:bg-brand transition-colors">
+                  <span className="text-2xl">🎼</span>
+                </div>
+                <h3 className="font-semibold text-gray-900 mb-1">Mixed Staff Identification Quiz</h3>
+                <p className="text-sm text-gray-500 flex-grow">Random staff notation questions (10 questions)</p>
+              </button>
 
-            <button
-              onClick={() => openQuiz('chords')}
-              className="group p-6 bg-white border-2 border-gray-200 rounded-xl hover:border-brand hover:shadow-md transition-all text-left flex flex-col"
-            >
-              <div className="w-12 h-12 bg-brand/20 rounded-lg flex items-center justify-center mb-4 group-hover:bg-brand transition-colors">
-                <svg className="w-6 h-6 text-brand group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                </svg>
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-1">Chords</h3>
-              <p className="text-sm text-gray-500 flex-grow">Major, minor, and more</p>
-            </button>
+              {/* Mixed Ear Training Quiz */}
+              <button
+                onClick={() => openQuiz('ear-training')}
+                className="group p-6 bg-white border-2 border-gray-200 rounded-xl hover:border-brand hover:shadow-md transition-all text-left flex flex-col"
+              >
+                <div className="w-12 h-12 bg-brand/20 rounded-lg flex items-center justify-center mb-4 group-hover:bg-brand transition-colors">
+                  <span className="text-2xl">👂</span>
+                </div>
+                <h3 className="font-semibold text-gray-900 mb-1">Mixed Ear Training Quiz</h3>
+                <p className="text-sm text-gray-500 flex-grow">Random ear training questions (10 questions)</p>
+              </button>
 
-            <button
-              onClick={() => openQuiz('scales')}
-              className="group p-6 bg-white border-2 border-gray-200 rounded-xl hover:border-brand hover:shadow-md transition-all text-left flex flex-col"
-            >
-              <div className="w-12 h-12 bg-brand/20 rounded-lg flex items-center justify-center mb-4 group-hover:bg-brand transition-colors">
-                <svg className="w-6 h-6 text-brand group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                </svg>
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-1">Scales</h3>
-              <p className="text-sm text-gray-500 flex-grow">Learn scale degrees</p>
-            </button>
-
-            <button
-              onClick={() => openQuiz('noteIdentification')}
-              className="group p-6 bg-white border-2 border-gray-200 rounded-xl hover:border-brand hover:shadow-md transition-all text-left flex flex-col"
-            >
-              <div className="w-12 h-12 bg-brand/20 rounded-lg flex items-center justify-center mb-4 group-hover:bg-brand transition-colors">
-                <svg className="w-6 h-6 text-brand group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                </svg>
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-1">Note Reading</h3>
-              <p className="text-sm text-gray-500 flex-grow">Treble and bass clef</p>
-            </button>
-
-            <button
-              onClick={() => openQuiz('ear-training')}
-              className="group p-6 bg-white border-2 border-gray-200 rounded-xl hover:border-brand hover:shadow-md transition-all text-left flex flex-col"
-            >
-              <div className="w-12 h-12 bg-brand/20 rounded-lg flex items-center justify-center mb-4 group-hover:bg-brand transition-colors">
-                <svg className="w-6 h-6 text-brand group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15.536a5 5 0 001.414 1.414m2.828-9.9a9 9 0 012.828-2.828" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 12h.01" />
-                </svg>
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-1">Ear Training</h3>
-              <p className="text-sm text-gray-500 flex-grow">Identify sounds by ear</p>
-            </button>
+              {/* Mixed Quiz */}
+              <button
+                onClick={() => openQuiz('mixed')}
+                className="group p-6 bg-white border-2 border-gray-200 rounded-xl hover:border-brand hover:shadow-md transition-all text-left flex flex-col"
+              >
+                <div className="w-12 h-12 bg-brand/20 rounded-lg flex items-center justify-center mb-4 group-hover:bg-brand transition-colors">
+                  <svg className="w-6 h-6 text-brand group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                  </svg>
+                </div>
+                <h3 className="font-semibold text-gray-900 mb-1">Mixed Quiz</h3>
+                <p className="text-sm text-gray-500 flex-grow">Random questions from all topics (10 questions)</p>
+              </button>
+            </div>
           </div>
 
-          <div className="text-center mt-8">
-            <button
-              onClick={() => openQuiz('mixed')}
-              className="text-brand font-medium hover:text-brand-dark hover:underline"
-            >
-              Or try a mixed quiz with all topics →
-            </button>
+          {/* Staff Identification */}
+          <div className="mb-8">
+            <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Staff Identification</h3>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <button
+                onClick={() => openQuiz('noteIdentification')}
+                className="group p-6 bg-white border-2 border-gray-200 rounded-xl hover:border-brand hover:shadow-md transition-all text-left flex flex-col"
+              >
+                <div className="w-12 h-12 bg-brand/20 rounded-lg flex items-center justify-center mb-4 group-hover:bg-brand transition-colors">
+                  <span className="text-2xl">🎵</span>
+                </div>
+                <h3 className="font-semibold text-gray-900 mb-1">Note Identification</h3>
+                <p className="text-sm text-gray-500 flex-grow">Identify notes on the musical staff</p>
+              </button>
+
+              <button
+                onClick={() => openQuiz('scales')}
+                className="group p-6 bg-white border-2 border-gray-200 rounded-xl hover:border-brand hover:shadow-md transition-all text-left flex flex-col"
+              >
+                <div className="w-12 h-12 bg-brand/20 rounded-lg flex items-center justify-center mb-4 group-hover:bg-brand transition-colors">
+                  <span className="text-2xl">🎼</span>
+                </div>
+                <h3 className="font-semibold text-gray-900 mb-1">Key Signature</h3>
+                <p className="text-sm text-gray-500 flex-grow">Identify key signatures and their names</p>
+              </button>
+
+              <button
+                onClick={() => openQuiz('intervals')}
+                className="group p-6 bg-white border-2 border-gray-200 rounded-xl hover:border-brand hover:shadow-md transition-all text-left flex flex-col"
+              >
+                <div className="w-12 h-12 bg-brand/20 rounded-lg flex items-center justify-center mb-4 group-hover:bg-brand transition-colors">
+                  <span className="text-2xl">📏</span>
+                </div>
+                <h3 className="font-semibold text-gray-900 mb-1">Interval Identification</h3>
+                <p className="text-sm text-gray-500 flex-grow">Identify intervals between notes</p>
+              </button>
+
+              <button
+                onClick={() => openQuiz('chords')}
+                className="group p-6 bg-white border-2 border-gray-200 rounded-xl hover:border-brand hover:shadow-md transition-all text-left flex flex-col"
+              >
+                <div className="w-12 h-12 bg-brand/20 rounded-lg flex items-center justify-center mb-4 group-hover:bg-brand transition-colors">
+                  <span className="text-2xl">🎹</span>
+                </div>
+                <h3 className="font-semibold text-gray-900 mb-1">Chord Identification</h3>
+                <p className="text-sm text-gray-500 flex-grow">Identify chord types from notation</p>
+              </button>
+
+              <button
+                onClick={() => openQuiz('scales')}
+                className="group p-6 bg-white border-2 border-gray-200 rounded-xl hover:border-brand hover:shadow-md transition-all text-left flex flex-col"
+              >
+                <div className="w-12 h-12 bg-brand/20 rounded-lg flex items-center justify-center mb-4 group-hover:bg-brand transition-colors">
+                  <span className="text-2xl">🎚️</span>
+                </div>
+                <h3 className="font-semibold text-gray-900 mb-1">Scale Identification</h3>
+                <p className="text-sm text-gray-500 flex-grow">Identify scale types and modes</p>
+              </button>
+            </div>
+          </div>
+
+          {/* Ear Training */}
+          <div>
+            <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Ear Training</h3>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <button
+                onClick={() => openQuiz('ear-training')}
+                className="group p-6 bg-white border-2 border-gray-200 rounded-xl hover:border-brand hover:shadow-md transition-all text-left flex flex-col"
+              >
+                <div className="w-12 h-12 bg-brand/20 rounded-lg flex items-center justify-center mb-4 group-hover:bg-brand transition-colors">
+                  <span className="text-2xl">👂</span>
+                </div>
+                <h3 className="font-semibold text-gray-900 mb-1">Note Recognition</h3>
+                <p className="text-sm text-gray-500 flex-grow">Identify notes by ear</p>
+              </button>
+
+              <button
+                onClick={() => openQuiz('ear-training')}
+                className="group p-6 bg-white border-2 border-gray-200 rounded-xl hover:border-brand hover:shadow-md transition-all text-left flex flex-col"
+              >
+                <div className="w-12 h-12 bg-brand/20 rounded-lg flex items-center justify-center mb-4 group-hover:bg-brand transition-colors">
+                  <span className="text-2xl">🔊</span>
+                </div>
+                <h3 className="font-semibold text-gray-900 mb-1">Interval Recognition</h3>
+                <p className="text-sm text-gray-500 flex-grow">Identify intervals by ear</p>
+              </button>
+
+              <button
+                onClick={() => openQuiz('ear-training')}
+                className="group p-6 bg-white border-2 border-gray-200 rounded-xl hover:border-brand hover:shadow-md transition-all text-left flex flex-col"
+              >
+                <div className="w-12 h-12 bg-brand/20 rounded-lg flex items-center justify-center mb-4 group-hover:bg-brand transition-colors">
+                  <span className="text-2xl">🎧</span>
+                </div>
+                <h3 className="font-semibold text-gray-900 mb-1">Chord Recognition</h3>
+                <p className="text-sm text-gray-500 flex-grow">Identify chord types by ear</p>
+              </button>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Features - Clean Grid */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-16 bg-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">
@@ -219,40 +282,44 @@ export default function LandingPageClient({ user }: LandingPageClientProps) {
             </h2>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-4 gap-8 max-w-5xl mx-auto">
             <div className="text-center">
               <div className="w-14 h-14 bg-brand/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-7 h-7 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-                </svg>
+                <span className="text-2xl">⭐</span>
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">Real notation</h3>
+              <h3 className="font-semibold text-gray-900 mb-2">Earn XP & Level Up</h3>
               <p className="text-gray-600 text-sm">
-                Practice with professional sheet music, not simplified diagrams
+                Gain experience points with every quiz and watch your level grow
               </p>
             </div>
 
             <div className="text-center">
               <div className="w-14 h-14 bg-brand/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-7 h-7 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
+                <span className="text-2xl">🏆</span>
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">Instant feedback</h3>
+              <h3 className="font-semibold text-gray-900 mb-2">Unlock Achievements</h3>
               <p className="text-gray-600 text-sm">
-                Know immediately if you're right with helpful explanations
+                Complete challenges and collect achievements as you master skills
               </p>
             </div>
 
             <div className="text-center">
               <div className="w-14 h-14 bg-brand/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-7 h-7 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
+                <span className="text-2xl">🔥</span>
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">Track progress</h3>
+              <h3 className="font-semibold text-gray-900 mb-2">Build Streaks</h3>
               <p className="text-gray-600 text-sm">
-                Create a free account to save your scores and see improvement
+                Practice daily to build your streak and stay motivated
+              </p>
+            </div>
+
+            <div className="text-center">
+              <div className="w-14 h-14 bg-brand/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl">📊</span>
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">Climb Leaderboards</h3>
+              <p className="text-gray-600 text-sm">
+                Compete with others and see where you rank globally
               </p>
             </div>
           </div>
@@ -260,41 +327,97 @@ export default function LandingPageClient({ user }: LandingPageClientProps) {
       </section>
 
       {/* For Teachers */}
-      <section className="py-16 bg-white border-t border-gray-200">
+      <section className="py-20 bg-gradient-to-br from-gray-900 to-gray-800">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">
-              For music teachers
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 rounded-full text-white/80 text-sm font-medium mb-4">
+              <span>👩‍🏫</span>
+              For Educators
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+              Powerful tools for music teachers
             </h2>
-            <p className="text-gray-600 mb-6">
-              Create classes, assign quizzes, and track your students' progress.
-              Students always learn for free.
+            <p className="text-gray-300 text-lg max-w-2xl mx-auto">
+              Everything you need to create engaging music theory assignments and track your students' progress. Your students learn completely free.
             </p>
-            <Link
-              href="/pricing"
-              className="inline-block px-6 py-3 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 transition-colors"
-            >
-              Learn more about teacher tools
-            </Link>
           </div>
-        </div>
-      </section>
 
-      {/* Final CTA */}
-      <section className="py-20 bg-brand">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-            Start learning music theory today
-          </h2>
-          <p className="text-white/80 text-lg mb-8 max-w-xl mx-auto">
-            Join students who are mastering music theory with interactive quizzes
-          </p>
-          <button
-            onClick={() => openQuiz()}
-            className="px-8 py-4 bg-white text-brand text-lg font-semibold rounded-lg hover:bg-white/90 transition-colors"
-          >
-            Get started free
-          </button>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/10">
+              <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center mb-4">
+                <span className="text-2xl">🏫</span>
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-2">Class Management</h3>
+              <p className="text-gray-400 text-sm">
+                Create classes with unique join codes. Students enroll instantly and you see them in your roster.
+              </p>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/10">
+              <div className="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center mb-4">
+                <span className="text-2xl">📝</span>
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-2">Custom Quiz Builder</h3>
+              <p className="text-gray-400 text-sm">
+                Build quizzes with staff notation and ear training questions. Use our generators or create your own.
+              </p>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/10">
+              <div className="w-12 h-12 bg-amber-500/20 rounded-xl flex items-center justify-center mb-4">
+                <span className="text-2xl">📋</span>
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-2">Flexible Assignments</h3>
+              <p className="text-gray-400 text-sm">
+                Assign quizzes with due dates and attempt limits. Use custom quizzes or standard quiz types.
+              </p>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/10">
+              <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center mb-4">
+                <span className="text-2xl">📊</span>
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-2">Progress Tracking</h3>
+              <p className="text-gray-400 text-sm">
+                See completion rates, average scores, and individual student results at a glance.
+              </p>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/10">
+              <div className="w-12 h-12 bg-rose-500/20 rounded-xl flex items-center justify-center mb-4">
+                <span className="text-2xl">🎵</span>
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-2">VexFlow Notation</h3>
+              <p className="text-gray-400 text-sm">
+                Professional music notation rendering. Students see real sheet music, not simplified diagrams.
+              </p>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/10">
+              <div className="w-12 h-12 bg-cyan-500/20 rounded-xl flex items-center justify-center mb-4">
+                <span className="text-2xl">🎧</span>
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-2">Ear Training Audio</h3>
+              <p className="text-gray-400 text-sm">
+                Audio playback for ear training exercises. Test intervals, chords, and note recognition.
+              </p>
+            </div>
+          </div>
+
+          <div className="text-center">
+            <Link
+              href="/pricing?tab=teachers"
+              className="inline-flex items-center gap-2 px-8 py-4 bg-white text-gray-900 text-lg font-semibold rounded-xl hover:bg-gray-100 transition-colors"
+            >
+              View Teacher Plans
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </Link>
+            <p className="text-gray-400 text-sm mt-4">
+              Students always learn for free. No hidden costs.
+            </p>
+          </div>
         </div>
       </section>
 
@@ -314,19 +437,27 @@ export default function LandingPageClient({ user }: LandingPageClientProps) {
                 <span className="text-lg font-semibold text-white">QuizNotes</span>
               </div>
               <p className="text-gray-400 text-sm max-w-xs">
-                The free way to learn music theory with real sheet music notation.
+                The fun way to learn music theory through gamifying your journey.
               </p>
             </div>
 
             <div className="flex gap-12">
               <div>
-                <h4 className="text-white font-medium mb-3 text-sm">Learn</h4>
+                <h4 className="text-white font-medium mb-3 text-sm">Staff Identification</h4>
                 <ul className="space-y-2 text-sm">
+                  <li><button onClick={() => openQuiz('noteIdentification')} className="text-gray-400 hover:text-white">Note Identification</button></li>
+                  <li><button onClick={() => openQuiz('scales')} className="text-gray-400 hover:text-white">Key Signatures</button></li>
                   <li><button onClick={() => openQuiz('intervals')} className="text-gray-400 hover:text-white">Intervals</button></li>
                   <li><button onClick={() => openQuiz('chords')} className="text-gray-400 hover:text-white">Chords</button></li>
                   <li><button onClick={() => openQuiz('scales')} className="text-gray-400 hover:text-white">Scales</button></li>
-                  <li><button onClick={() => openQuiz('noteIdentification')} className="text-gray-400 hover:text-white">Note Reading</button></li>
-                  <li><button onClick={() => openQuiz('ear-training')} className="text-gray-400 hover:text-white">Ear Training</button></li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="text-white font-medium mb-3 text-sm">Ear Training</h4>
+                <ul className="space-y-2 text-sm">
+                  <li><button onClick={() => openQuiz('ear-training')} className="text-gray-400 hover:text-white">Note Recognition</button></li>
+                  <li><button onClick={() => openQuiz('ear-training')} className="text-gray-400 hover:text-white">Interval Recognition</button></li>
+                  <li><button onClick={() => openQuiz('ear-training')} className="text-gray-400 hover:text-white">Chord Recognition</button></li>
                 </ul>
               </div>
               <div>
@@ -334,7 +465,7 @@ export default function LandingPageClient({ user }: LandingPageClientProps) {
                 <ul className="space-y-2 text-sm">
                   <li><Link href="/login" className="text-gray-400 hover:text-white">Log in</Link></li>
                   <li><Link href="/login?tab=register" className="text-gray-400 hover:text-white">Sign up</Link></li>
-                  <li><Link href="/pricing" className="text-gray-400 hover:text-white">Teacher Plans</Link></li>
+                  <li><Link href="/pricing" className="text-gray-400 hover:text-white">Pricing</Link></li>
                 </ul>
               </div>
             </div>

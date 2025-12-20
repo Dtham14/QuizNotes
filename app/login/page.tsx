@@ -28,7 +28,7 @@ function LoginContent() {
     setLoading(true)
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
@@ -38,7 +38,8 @@ function LoginContent() {
         return
       }
 
-      router.push('/dashboard')
+      // Redirect to profile for all users
+      router.push('/profile')
       router.refresh()
     } catch (err) {
       setError('An error occurred. Please try again.')
@@ -73,9 +74,9 @@ function LoginContent() {
       // Check if email confirmation is required
       setSuccess('Account created successfully! Please check your email to confirm your account.')
 
-      // If no email confirmation required, redirect
+      // If no email confirmation required, redirect to profile
       setTimeout(() => {
-        router.push('/dashboard')
+        router.push('/profile')
         router.refresh()
       }, 2000)
     } catch (err) {

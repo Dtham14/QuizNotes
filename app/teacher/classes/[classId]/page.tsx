@@ -61,7 +61,7 @@ export default function ClassDetailPage({ params }: { params: Promise<{ classId:
 
       if (!res.ok) {
         if (res.status === 403) {
-          router.push('/dashboard');
+          router.push('/login');
           return;
         }
         setError(data.error || 'Failed to fetch class data');
@@ -93,8 +93,8 @@ export default function ClassDetailPage({ params }: { params: Promise<{ classId:
         <main className="max-w-7xl mx-auto px-4 py-8">
           <div className="bg-white rounded-xl shadow-lg p-8 text-center">
             <p className="text-red-600 mb-4">{error || 'Class not found'}</p>
-            <Link href="/teacher" className="text-brand hover:text-brand-dark">
-              Back to Classes
+            <Link href="/profile" className="text-brand hover:text-brand-dark">
+              Back to Dashboard
             </Link>
           </div>
         </main>
@@ -109,8 +109,8 @@ export default function ClassDetailPage({ params }: { params: Promise<{ classId:
       <main className="max-w-7xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-6">
-          <Link href="/teacher" className="text-brand hover:text-brand-dark text-sm mb-2 inline-block">
-            &larr; Back to Classes
+          <Link href="/profile" className="text-brand hover:text-brand-dark text-sm mb-2 inline-block">
+            &larr; Back to Dashboard
           </Link>
           <div className="flex justify-between items-start">
             <div>
@@ -267,7 +267,7 @@ export default function ClassDetailPage({ params }: { params: Promise<{ classId:
                 <div className="text-center py-8">
                   <p className="text-gray-500 mb-4">No assignments created yet</p>
                   <Link
-                    href="/teacher/assignments"
+                    href="/profile"
                     className="px-4 py-2 bg-brand text-white rounded-lg hover:bg-brand-dark transition-colors"
                   >
                     Create Assignment

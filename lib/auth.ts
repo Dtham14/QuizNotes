@@ -114,7 +114,7 @@ export async function requireTeacherSubscription(): Promise<UserWithProfile> {
 
   // Check role
   if (user.role !== 'teacher' && user.role !== 'admin') {
-    redirect('/dashboard')
+    redirect('/profile')
   }
 
   // Admins bypass subscription check
@@ -137,7 +137,7 @@ export async function requireAdmin(): Promise<UserWithProfile> {
   const user = await requireAuth()
 
   if (user.role !== 'admin') {
-    redirect('/dashboard')
+    redirect('/profile')
   }
 
   return user

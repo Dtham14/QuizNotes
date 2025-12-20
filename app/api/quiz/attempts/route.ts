@@ -44,6 +44,7 @@ export async function GET() {
       totalQuestions: a.total_questions,
       answers: a.answers,
       assignmentId: a.assignment_id,
+      pdfUrl: a.pdf_url,
       createdAt: a.created_at,
     }))
 

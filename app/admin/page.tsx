@@ -59,7 +59,7 @@ export default function AdminPage() {
         const userData = await userRes.json();
 
         if (!userData.user || userData.user.role !== 'admin') {
-          router.push('/dashboard');
+          router.push('/login');
           return;
         }
 
@@ -81,12 +81,12 @@ export default function AdminPage() {
           setAnalytics(analyticsData);
         } else if (analyticsRes.status === 401 || analyticsRes.status === 403) {
           // Session expired or user lost admin access - redirect silently
-          router.push('/dashboard');
+          router.push('/login');
           return;
         }
       } catch (error) {
         console.error('Failed to initialize admin page:', error);
-        router.push('/dashboard');
+        router.push('/login');
       } finally {
         setLoading(false);
       }
@@ -184,7 +184,7 @@ export default function AdminPage() {
               </div>
             </div>
             <Link
-              href="/dashboard"
+              href="/profile"
               className="px-4 py-2 text-gray-700 hover:text-gray-900 text-sm font-semibold"
             >
               Back to Dashboard

@@ -11,6 +11,14 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 const PRICE_IDS = {
   monthly: process.env.STRIPE_MONTHLY_PRICE_ID || 'price_monthly_placeholder',
   yearly: process.env.STRIPE_YEARLY_PRICE_ID || 'price_yearly_placeholder',
+  student_premium: process.env.STRIPE_STUDENT_PREMIUM_PRICE_ID || 'price_student_premium_placeholder',
+}
+
+// Success redirect URLs based on plan type
+const SUCCESS_URLS = {
+  monthly: '/teacher?success=true',
+  yearly: '/teacher?success=true',
+  student_premium: '/profile?success=true',
 }
 
 export async function POST(request: NextRequest) {
@@ -23,11 +31,12 @@ export async function POST(request: NextRequest) {
 
     const { plan } = await request.json()
 
-    if (!plan || !['monthly', 'yearly'].includes(plan)) {
+    if (!plan || !['monthly', 'yearly', 'student_premium'].includes(plan)) {
       return NextResponse.json({ error: 'Invalid plan' }, { status: 400 })
     }
 
     const priceId = PRICE_IDS[plan as keyof typeof PRICE_IDS]
+    const successPath = SUCCESS_URLS[plan as keyof typeof SUCCESS_URLS]
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
     // Create Stripe checkout session
@@ -40,7 +49,7 @@ export async function POST(request: NextRequest) {
           quantity: 1,
         },
       ],
-      success_url: `${appUrl}/teacher?success=true`,
+      success_url: `${appUrl}${successPath}`,
       cancel_url: `${appUrl}/pricing?canceled=true`,
       customer_email: user.email,
       metadata: {

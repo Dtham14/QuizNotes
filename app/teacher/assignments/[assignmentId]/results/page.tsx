@@ -61,7 +61,7 @@ export default function AssignmentResultsPage({
 
       if (!res.ok) {
         if (res.status === 403) {
-          router.push('/dashboard');
+          router.push('/login');
           return;
         }
         setError(data.error || 'Failed to fetch results');
@@ -118,8 +118,8 @@ export default function AssignmentResultsPage({
         <main className="max-w-7xl mx-auto px-4 py-8">
           <div className="bg-white rounded-xl shadow-lg p-8 text-center">
             <p className="text-red-600 mb-4">{error || 'Assignment not found'}</p>
-            <Link href="/teacher/assignments" className="text-brand hover:text-brand-dark">
-              Back to Assignments
+            <Link href="/profile" className="text-brand hover:text-brand-dark">
+              Back to Dashboard
             </Link>
           </div>
         </main>

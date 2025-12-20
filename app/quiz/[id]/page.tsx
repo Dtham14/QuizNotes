@@ -75,13 +75,13 @@ function CustomQuizContent() {
           setAnswers(new Array(parsedQuiz.questions.length).fill(null));
         } else {
           alert('Quiz not found');
-          router.push('/dashboard');
+          router.push('/login');
         }
       })
       .catch((error) => {
         console.error('Failed to load quiz:', error);
         alert('Failed to load quiz');
-        router.push('/dashboard');
+        router.push('/login');
       })
       .finally(() => {
         setLoading(false);
@@ -180,7 +180,7 @@ function CustomQuizContent() {
                 <h1 className="text-2xl font-bold text-brand cursor-pointer">QuizNotes</h1>
               </Link>
               <Link
-                href="/dashboard"
+                href="/profile"
                 className="px-4 py-2 text-brand hover:text-brand-dark transition-colors"
               >
                 Dashboard
@@ -229,7 +229,7 @@ function CustomQuizContent() {
 
             <div className="flex flex-col gap-3">
               <Link
-                href="/dashboard"
+                href="/profile"
                 className="px-6 py-3 bg-brand text-white font-semibold rounded-lg hover:bg-brand-dark transition-colors"
               >
                 Back to Dashboard
@@ -332,7 +332,7 @@ function CustomQuizContent() {
               <h1 className="text-2xl font-bold text-brand cursor-pointer">QuizNotes</h1>
             </Link>
             <Link
-              href="/dashboard"
+              href="/profile"
               className="px-4 py-2 text-brand hover:text-brand-dark transition-colors"
             >
               Exit Quiz

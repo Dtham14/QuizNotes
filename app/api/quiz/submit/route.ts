@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { getSession } from '@/lib/auth'
+import { processQuizCompletion } from '@/lib/gamification'
 
 // Create admin client lazily to ensure env vars are available
 function getSupabaseAdmin() {
@@ -79,6 +80,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to submit quiz', details: error.message }, { status: 500 })
     }
 
+    // Process gamification (XP, streaks, achievements)
+    let gamificationResult = null
+    try {
+      gamificationResult = await processQuizCompletion(
+        user.id,
+        score,
+        totalQuestions,
+        attempt.id
+      )
+    } catch (gamificationError) {
+      // Log but don't fail the request if gamification fails
+      console.error('Gamification processing error:', gamificationError)
+    }
+
     return NextResponse.json(
       {
         message: 'Quiz submitted successfully',
@@ -91,7 +106,26 @@ export async function POST(request: NextRequest) {
           answers: attempt.answers,
           assignmentId: attempt.assignment_id,
           createdAt: attempt.created_at,
-        }
+        },
+        gamification: gamificationResult ? {
+          xpAwarded: gamificationResult.xp.totalXpAwarded,
+          newTotalXp: gamificationResult.xp.newTotalXp,
+          leveledUp: gamificationResult.xp.leveledUp,
+          newLevel: gamificationResult.xp.newLevel,
+          xpBreakdown: gamificationResult.xp.breakdown,
+          streak: {
+            current: gamificationResult.streak.newStreak,
+            longest: gamificationResult.streak.longestStreak,
+            maintained: gamificationResult.streak.streakMaintained,
+          },
+          newAchievements: gamificationResult.achievements.map(a => ({
+            id: a.achievement.id,
+            name: a.achievement.name,
+            description: a.achievement.description,
+            icon: a.achievement.icon,
+            xpReward: a.xpAwarded,
+          })),
+        } : null,
       },
       { status: 201 }
     )

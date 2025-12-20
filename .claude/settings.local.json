@@ -11,7 +11,13 @@
       "Bash(findstr:*)",
       "Bash(node scripts/create-test-accounts.js:*)",
       "Bash(node scripts/activate-test-teacher.js:*)",
-      "Bash(node scripts/check-test-teacher.js:*)"
+      "Bash(node scripts/check-test-teacher.js:*)",
+      "Bash(curl:*)",
+      "Bash(node -e:*)",
+      "Bash(grep:*)",
+      "Bash(timeout /t 5)",
+      "Skill(frontend-design)",
+      "Bash(npm run build:check:*)"
     ]
   }
 }

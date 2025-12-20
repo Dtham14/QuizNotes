@@ -42,7 +42,7 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   // Protected routes that require authentication
-  const protectedPaths = ['/dashboard', '/quiz', '/teacher']
+  const protectedPaths = ['/profile', '/quiz', '/teacher', '/achievements', '/leaderboard']
   const isProtectedPath = protectedPaths.some((path) =>
     request.nextUrl.pathname.startsWith(path)
   )
@@ -68,7 +68,7 @@ export async function middleware(request: NextRequest) {
     // Check role
     if (profile?.role !== 'teacher' && profile?.role !== 'admin') {
       const url = request.nextUrl.clone()
-      url.pathname = '/dashboard'
+      url.pathname = '/profile'
       return NextResponse.redirect(url)
     }
 
@@ -122,8 +122,9 @@ export async function middleware(request: NextRequest) {
 
   // Redirect logged-in users away from login page
   if (request.nextUrl.pathname === '/login' && user) {
+    // Redirect logged-in users to profile
     const url = request.nextUrl.clone()
-    url.pathname = '/dashboard'
+    url.pathname = '/profile'
     return NextResponse.redirect(url)
   }
 
