@@ -35,6 +35,16 @@ type Stats = {
   averageScore: number | null;
 };
 
+type User = {
+  id: string;
+  email: string;
+  name?: string | null;
+  role: string;
+  avatar?: string | null;
+  avatarUrl?: string | null;
+  themeColor?: string | null;
+};
+
 export default function AssignmentResultsPage({
   params,
 }: {
@@ -42,6 +52,7 @@ export default function AssignmentResultsPage({
 }) {
   const { assignmentId } = use(params);
   const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
   const [assignment, setAssignment] = useState<Assignment | null>(null);
   const [results, setResults] = useState<StudentResult[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -51,8 +62,21 @@ export default function AssignmentResultsPage({
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   useEffect(() => {
+    fetchUser();
     fetchResults();
   }, [assignmentId]);
+
+  const fetchUser = async () => {
+    try {
+      const res = await fetch('/api/auth/me');
+      if (res.ok) {
+        const data = await res.json();
+        setUser(data.user);
+      }
+    } catch (err) {
+      console.error('Error fetching user:', err);
+    }
+  };
 
   const fetchResults = async () => {
     try {
@@ -114,7 +138,7 @@ export default function AssignmentResultsPage({
   if (error || !assignment) {
     return (
       <div className="min-h-screen bg-white">
-        <TeacherNav />
+        <TeacherNav user={user || undefined} />
         <main className="max-w-7xl mx-auto px-4 py-8">
           <div className="bg-white rounded-xl shadow-lg p-8 text-center">
             <p className="text-red-600 mb-4">{error || 'Assignment not found'}</p>
@@ -129,7 +153,7 @@ export default function AssignmentResultsPage({
 
   return (
     <div className="min-h-screen bg-white">
-      <TeacherNav />
+      <TeacherNav user={user || undefined} />
 
       <main className="max-w-7xl mx-auto px-4 py-8">
         {/* Header */}

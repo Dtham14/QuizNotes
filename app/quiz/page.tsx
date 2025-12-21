@@ -55,7 +55,7 @@ function QuizContent() {
   const [showResult, setShowResult] = useState(false);
   const [score, setScore] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [user, setUser] = useState<{ id: string; email: string; name?: string | null; avatar?: string | null } | null>(null);
+  const [user, setUser] = useState<{ id: string; email: string; name?: string | null; avatar?: string | null; avatarUrl?: string | null; themeColor?: string | null } | null>(null);
   const [gamificationStats, setGamificationStats] = useState<GamificationStats | null>(null);
   const [assignmentId, setAssignmentId] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);

@@ -1,7 +1,8 @@
-export type EarTrainingSubtype = 'note' | 'chord' | 'interval';
+export type EarTrainingSubtype = 'note' | 'chord' | 'interval' | 'sequence';
 
 export interface EarTrainingAudioData {
   notes: string[];  // Tone.js format: ['C4'], ['C4', 'E4', 'G4'], ['C4', 'E4']
+  noteGroups?: string[][]; // For sequence: each inner array is a group (note or chord)
   duration?: string; // e.g., '2n', '4n' - defaults to '2n'
 }
 

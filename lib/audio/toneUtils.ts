@@ -1,7 +1,17 @@
 import type { EarTrainingSubtype, EarTrainingAudioData } from '@/lib/types/earTraining';
 
+export type InstrumentType = 'piano' | 'violin' | 'flute';
+
+export const INSTRUMENTS: { id: InstrumentType; label: string }[] = [
+  { id: 'piano', label: 'Piano' },
+  { id: 'violin', label: 'Violin' },
+  { id: 'flute', label: 'Flute' },
+];
+
 let ToneModule: typeof import('tone') | null = null;
 let piano: import('tone').Sampler | null = null;
+let synths: Map<InstrumentType, import('tone').PolySynth> = new Map();
+let currentInstrument: InstrumentType = 'piano';
 let isInitialized = false;
 let isLoading = false;
 
@@ -77,6 +87,27 @@ export async function initializeAudio(): Promise<boolean> {
     // Wait for samples to load
     await Tone.loaded();
 
+    // Create synths for other instruments
+    // Violin - warm, string-like sound using FM synthesis
+    const violinSynth = new Tone.PolySynth(Tone.FMSynth, {
+      harmonicity: 3.01,
+      modulationIndex: 14,
+      oscillator: { type: 'triangle' },
+      envelope: { attack: 0.2, decay: 0.3, sustain: 0.8, release: 1.2 },
+      modulation: { type: 'square' },
+      modulationEnvelope: { attack: 0.5, decay: 0.1, sustain: 0.5, release: 0.5 }
+    }).toDestination();
+    violinSynth.volume.value = -14;
+    synths.set('violin', violinSynth);
+
+    // Flute - pure, airy tone with sine wave
+    const fluteSynth = new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: 'sine' },
+      envelope: { attack: 0.1, decay: 0.1, sustain: 0.9, release: 0.8 }
+    }).toDestination();
+    fluteSynth.volume.value = -12;
+    synths.set('flute', fluteSynth);
+
     isInitialized = true;
     isLoading = false;
     return true;
@@ -92,15 +123,34 @@ export function isAudioReady(): boolean {
   return isInitialized && piano !== null;
 }
 
+// Get current instrument
+export function getCurrentInstrument(): InstrumentType {
+  return currentInstrument;
+}
+
+// Set current instrument
+export function setCurrentInstrument(instrument: InstrumentType): void {
+  currentInstrument = instrument;
+}
+
+// Get the active instrument for playback
+function getActiveInstrument(): import('tone').Sampler | import('tone').PolySynth | null {
+  if (currentInstrument === 'piano') {
+    return piano;
+  }
+  return synths.get(currentInstrument) || null;
+}
+
 // Play a single note
 export async function playNote(note: string, duration: string = '2n'): Promise<void> {
   if (!isAudioReady()) {
     await initializeAudio();
   }
 
-  if (piano) {
+  const instrument = getActiveInstrument();
+  if (instrument) {
     const Tone = await loadTone();
-    piano.triggerAttackRelease(note, duration, Tone.now());
+    instrument.triggerAttackRelease(note, duration, Tone.now());
   }
 }
 
@@ -110,9 +160,10 @@ export async function playChord(notes: string[], duration: string = '2n'): Promi
     await initializeAudio();
   }
 
-  if (piano) {
+  const instrument = getActiveInstrument();
+  if (instrument) {
     const Tone = await loadTone();
-    piano.triggerAttackRelease(notes, duration, Tone.now());
+    instrument.triggerAttackRelease(notes, duration, Tone.now());
   }
 }
 
@@ -122,12 +173,35 @@ export async function playInterval(notes: string[], duration: string = '2n'): Pr
     await initializeAudio();
   }
 
-  if (piano) {
+  const instrument = getActiveInstrument();
+  if (instrument) {
     const Tone = await loadTone();
     const now = Tone.now();
 
     notes.forEach((note, index) => {
-      piano!.triggerAttackRelease(note, duration, now + index * 0.8);
+      instrument.triggerAttackRelease(note, duration, now + index * 0.8);
+    });
+  }
+}
+
+// Play a sequence of note groups (each group plays together, groups play in sequence)
+// noteGroups: array of arrays - each inner array is played as a chord, groups are sequential
+export async function playSequence(noteGroups: string[][], duration: string = '2n'): Promise<void> {
+  if (!isAudioReady()) {
+    await initializeAudio();
+  }
+
+  const instrument = getActiveInstrument();
+  if (instrument) {
+    const Tone = await loadTone();
+    const now = Tone.now();
+
+    noteGroups.forEach((group, index) => {
+      if (group.length === 1) {
+        instrument.triggerAttackRelease(group[0], duration, now + index * 0.8);
+      } else {
+        instrument.triggerAttackRelease(group, duration, now + index * 0.8);
+      }
     });
   }
 }
@@ -148,6 +222,15 @@ export async function playEarTraining(
       break;
     case 'interval':
       await playInterval(audioData.notes, duration);
+      break;
+    case 'sequence':
+      // For sequence, audioData.noteGroups should be an array of arrays
+      if (audioData.noteGroups) {
+        await playSequence(audioData.noteGroups, duration);
+      } else {
+        // Fallback: treat each note as individual
+        await playInterval(audioData.notes, duration);
+      }
       break;
   }
 }

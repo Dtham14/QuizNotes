@@ -57,7 +57,11 @@ export default function AnonymousQuiz({ onClose, initialType }: AnonymousQuizPro
       'chords': 'chordIdentification',
       'scales': 'scaleIdentification',
       'noteIdentification': 'noteIdentification',
+      'keySignature': 'keySignature',
       'ear-training': 'mixedEarTraining',
+      'earTrainingNote': 'earTrainingNote',
+      'earTrainingInterval': 'earTrainingInterval',
+      'earTrainingChord': 'earTrainingChord',
       'mixed': 'mixedAll',
     };
     return typeMap[type] || null;

@@ -18,6 +18,9 @@ export type UserWithProfile = {
   email: string
   name: string | null
   role: 'admin' | 'teacher' | 'student'
+  avatar: string | null
+  avatar_url: string | null
+  theme_color: string | null
   subscription_status: 'none' | 'active' | 'canceled' | 'expired'
   subscription_plan: 'monthly' | 'yearly' | null
   subscription_expires_at: string | null

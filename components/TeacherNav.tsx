@@ -21,12 +21,26 @@ const AVATAR_OPTIONS: Record<string, { icon: string; color: string }> = {
   'conductor': { icon: '🪄', color: 'from-purple-600 to-violet-700' },
 };
 
+// Default gradient color for custom avatars
+const DEFAULT_THEME_COLOR = '#8b5cf6'; // violet-500
+
+// Helper to darken a hex color
+function adjustColor(hex: string, amount: number): string {
+  const num = parseInt(hex.replace('#', ''), 16);
+  const r = Math.min(255, Math.max(0, (num >> 16) + amount));
+  const g = Math.min(255, Math.max(0, ((num >> 8) & 0x00FF) + amount));
+  const b = Math.min(255, Math.max(0, (num & 0x0000FF) + amount));
+  return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
+}
+
 interface TeacherNavProps {
   user?: {
     id: string;
     email: string;
     name?: string | null;
     avatar?: string | null;
+    avatarUrl?: string | null;
+    themeColor?: string | null;
   } | null;
   stats?: {
     classCount: number;
@@ -41,8 +55,17 @@ export default function TeacherNav({ user, stats }: TeacherNavProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // Check if user has a custom avatar image
+  const hasCustomAvatar = !!user?.avatarUrl;
   const avatarId = user?.avatar || 'conductor';
   const avatarData = AVATAR_OPTIONS[avatarId] || AVATAR_OPTIONS['conductor'];
+
+  // Use theme color for custom avatars, or predefined gradient for icon avatars
+  const themeColor = user?.themeColor || DEFAULT_THEME_COLOR;
+  const gradientStyle = hasCustomAvatar
+    ? { background: `linear-gradient(135deg, ${themeColor}, ${adjustColor(themeColor, -30)})` }
+    : undefined;
+  const gradientClass = hasCustomAvatar ? '' : `bg-gradient-to-br ${avatarData.color}`;
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -78,7 +101,7 @@ export default function TeacherNav({ user, stats }: TeacherNavProps) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
           <div className="flex items-center gap-8">
-            <Link href="/profile" className="flex items-center gap-3">
+            <Link href="/" className="flex items-center gap-3">
               <Image
                 src="/images/quiznotes logo.jpg"
                 alt="QuizNotes Logo"
@@ -88,26 +111,50 @@ export default function TeacherNav({ user, stats }: TeacherNavProps) {
               />
               <span className="text-xl font-bold text-gray-900">QuizNotes</span>
             </Link>
+            <Link href="/profile" className="text-gray-700 hover:text-gray-900 text-sm font-semibold">
+              Dashboard
+            </Link>
           </div>
 
           {/* Profile Dropdown */}
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className={`w-10 h-10 rounded-xl bg-gradient-to-br ${avatarData.color} flex items-center justify-center text-xl text-white shadow-md hover:shadow-lg transition-all hover:scale-105 focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2`}
+              className={`w-10 h-10 rounded-xl ${gradientClass} flex items-center justify-center text-xl text-white shadow-md hover:shadow-lg transition-all hover:scale-105 focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 overflow-hidden`}
+              style={gradientStyle}
               aria-label="Open profile menu"
               aria-expanded={isOpen}
             >
-              {avatarData.icon}
+              {hasCustomAvatar ? (
+                <Image
+                  src={user!.avatarUrl!}
+                  alt="Avatar"
+                  width={40}
+                  height={40}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                avatarData.icon
+              )}
             </button>
 
             {isOpen && (
               <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                 {/* User Header */}
-                <div className={`p-4 bg-gradient-to-r ${avatarData.color}`}>
+                <div className={`p-4 ${gradientClass}`} style={gradientStyle ? { background: `linear-gradient(to right, ${themeColor}, ${adjustColor(themeColor, -30)})` } : undefined}>
                   <div className="flex items-center gap-3">
-                    <div className="w-14 h-14 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-3xl text-white border-2 border-white/30">
-                      {avatarData.icon}
+                    <div className="w-14 h-14 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-3xl text-white border-2 border-white/30 overflow-hidden">
+                      {hasCustomAvatar ? (
+                        <Image
+                          src={user!.avatarUrl!}
+                          alt="Avatar"
+                          width={56}
+                          height={56}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        avatarData.icon
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-bold text-white truncate">

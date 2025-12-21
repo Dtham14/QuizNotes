@@ -1,8 +1,15 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import type { EarTrainingSubtype, EarTrainingAudioData } from '@/lib/types/earTraining';
-import { playEarTraining, initializeAudio } from '@/lib/audio/toneUtils';
+import {
+  playEarTraining,
+  initializeAudio,
+  INSTRUMENTS,
+  getCurrentInstrument,
+  setCurrentInstrument,
+  type InstrumentType
+} from '@/lib/audio/toneUtils';
 
 interface AudioPlayerProps {
   subtype: EarTrainingSubtype;
@@ -14,6 +21,22 @@ export default function AudioPlayer({ subtype, audioData, onPlay }: AudioPlayerP
   const [isPlaying, setIsPlaying] = useState(false);
   const [hasPlayed, setHasPlayed] = useState(false);
   const [isInitializing, setIsInitializing] = useState(false);
+  const [selectedInstrument, setSelectedInstrument] = useState<InstrumentType>('piano');
+
+  // Load saved instrument preference from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('earTrainingInstrument') as InstrumentType | null;
+    if (saved && INSTRUMENTS.some(i => i.id === saved)) {
+      setSelectedInstrument(saved);
+      setCurrentInstrument(saved);
+    }
+  }, []);
+
+  const handleInstrumentChange = (instrument: InstrumentType) => {
+    setSelectedInstrument(instrument);
+    setCurrentInstrument(instrument);
+    localStorage.setItem('earTrainingInstrument', instrument);
+  };
 
   const handlePlay = useCallback(async () => {
     if (isPlaying || isInitializing) return;
@@ -45,7 +68,8 @@ export default function AudioPlayer({ subtype, audioData, onPlay }: AudioPlayerP
   }, [subtype, audioData, isPlaying, isInitializing, onPlay]);
 
   const getButtonText = () => {
-    if (isInitializing) return 'Loading piano...';
+    const instrumentLabel = INSTRUMENTS.find(i => i.id === selectedInstrument)?.label || 'Piano';
+    if (isInitializing) return `Loading ${instrumentLabel.toLowerCase()}...`;
     if (isPlaying) return 'Playing...';
     if (hasPlayed) return 'Click to replay';
     return 'Click to play';
@@ -59,6 +83,8 @@ export default function AudioPlayer({ subtype, audioData, onPlay }: AudioPlayerP
         return 'Chord';
       case 'interval':
         return 'Interval';
+      case 'sequence':
+        return 'Sequence';
       default:
         return 'Sound';
     }
@@ -111,6 +137,27 @@ export default function AudioPlayer({ subtype, audioData, onPlay }: AudioPlayerP
       <p className="text-xs text-gray-400">
         Listen to the {getSubtypeLabel().toLowerCase()}
       </p>
+
+      {/* Instrument Selector */}
+      <div className="flex flex-wrap justify-center gap-2 mt-2">
+        {INSTRUMENTS.map((instrument) => (
+          <button
+            key={instrument.id}
+            onClick={() => handleInstrumentChange(instrument.id)}
+            disabled={isPlaying || isInitializing}
+            className={`
+              px-3 py-1.5 text-xs font-medium rounded-full transition-all
+              ${selectedInstrument === instrument.id
+                ? 'bg-brand text-white'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }
+              disabled:opacity-50 disabled:cursor-not-allowed
+            `}
+          >
+            {instrument.label}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

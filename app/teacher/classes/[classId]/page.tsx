@@ -40,9 +40,20 @@ type ClassData = {
   createdAt: Date | null;
 };
 
+type User = {
+  id: string;
+  email: string;
+  name?: string | null;
+  role: string;
+  avatar?: string | null;
+  avatarUrl?: string | null;
+  themeColor?: string | null;
+};
+
 export default function ClassDetailPage({ params }: { params: Promise<{ classId: string }> }) {
   const { classId } = use(params);
   const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
   const [classData, setClassData] = useState<ClassData | null>(null);
   const [students, setStudents] = useState<Student[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
@@ -51,8 +62,21 @@ export default function ClassDetailPage({ params }: { params: Promise<{ classId:
   const [activeTab, setActiveTab] = useState<'students' | 'assignments'>('students');
 
   useEffect(() => {
+    fetchUser();
     fetchClassData();
   }, [classId]);
+
+  const fetchUser = async () => {
+    try {
+      const res = await fetch('/api/auth/me');
+      if (res.ok) {
+        const data = await res.json();
+        setUser(data.user);
+      }
+    } catch (err) {
+      console.error('Error fetching user:', err);
+    }
+  };
 
   const fetchClassData = async () => {
     try {
@@ -89,7 +113,7 @@ export default function ClassDetailPage({ params }: { params: Promise<{ classId:
   if (error || !classData) {
     return (
       <div className="min-h-screen bg-white">
-        <TeacherNav />
+        <TeacherNav user={user || undefined} />
         <main className="max-w-7xl mx-auto px-4 py-8">
           <div className="bg-white rounded-xl shadow-lg p-8 text-center">
             <p className="text-red-600 mb-4">{error || 'Class not found'}</p>
@@ -104,7 +128,7 @@ export default function ClassDetailPage({ params }: { params: Promise<{ classId:
 
   return (
     <div className="min-h-screen bg-white">
-      <TeacherNav />
+      <TeacherNav user={user || undefined} />
 
       <main className="max-w-7xl mx-auto px-4 py-8">
         {/* Header */}

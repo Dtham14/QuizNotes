@@ -17,7 +17,9 @@
       "Bash(grep:*)",
       "Bash(timeout /t 5)",
       "Skill(frontend-design)",
-      "Bash(npm run build:check:*)"
+      "Bash(npm run build:check:*)",
+      "Bash(xargs ls:*)",
+      "Bash(node scripts/create-premium-student.js:*)"
     ]
   }
 }

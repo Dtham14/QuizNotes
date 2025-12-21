@@ -12,6 +12,8 @@ type User = {
   email: string;
   name?: string | null;
   avatar?: string | null;
+  avatar_url?: string | null;
+  theme_color?: string | null;
 };
 
 type LandingPageClientProps = {
@@ -52,13 +54,17 @@ export default function LandingPageClient({ user }: LandingPageClientProps) {
                   Quizzes
                 </button>
                 <Link href="/pricing" className="text-gray-700 hover:text-gray-900 text-sm font-semibold">
-                  Pricing
+                  Learning Plans
                 </Link>
               </div>
             </div>
             <div className="flex items-center gap-3">
               {user ? (
-                <ProfileDropdown user={user} />
+                <ProfileDropdown user={{
+                  ...user,
+                  avatarUrl: user.avatar_url,
+                  themeColor: user.theme_color,
+                }} />
               ) : (
                 <>
                   <Link
@@ -187,7 +193,7 @@ export default function LandingPageClient({ user }: LandingPageClientProps) {
               </button>
 
               <button
-                onClick={() => openQuiz('scales')}
+                onClick={() => openQuiz('keySignature')}
                 className="group p-6 bg-white border-2 border-gray-200 rounded-xl hover:border-brand hover:shadow-md transition-all text-left flex flex-col"
               >
                 <div className="w-12 h-12 bg-brand/20 rounded-lg flex items-center justify-center mb-4 group-hover:bg-brand transition-colors">
@@ -237,7 +243,7 @@ export default function LandingPageClient({ user }: LandingPageClientProps) {
             <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Ear Training</h3>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <button
-                onClick={() => openQuiz('ear-training')}
+                onClick={() => openQuiz('earTrainingNote')}
                 className="group p-6 bg-white border-2 border-gray-200 rounded-xl hover:border-brand hover:shadow-md transition-all text-left flex flex-col"
               >
                 <div className="w-12 h-12 bg-brand/20 rounded-lg flex items-center justify-center mb-4 group-hover:bg-brand transition-colors">
@@ -248,7 +254,7 @@ export default function LandingPageClient({ user }: LandingPageClientProps) {
               </button>
 
               <button
-                onClick={() => openQuiz('ear-training')}
+                onClick={() => openQuiz('earTrainingInterval')}
                 className="group p-6 bg-white border-2 border-gray-200 rounded-xl hover:border-brand hover:shadow-md transition-all text-left flex flex-col"
               >
                 <div className="w-12 h-12 bg-brand/20 rounded-lg flex items-center justify-center mb-4 group-hover:bg-brand transition-colors">
@@ -259,7 +265,7 @@ export default function LandingPageClient({ user }: LandingPageClientProps) {
               </button>
 
               <button
-                onClick={() => openQuiz('ear-training')}
+                onClick={() => openQuiz('earTrainingChord')}
                 className="group p-6 bg-white border-2 border-gray-200 rounded-xl hover:border-brand hover:shadow-md transition-all text-left flex flex-col"
               >
                 <div className="w-12 h-12 bg-brand/20 rounded-lg flex items-center justify-center mb-4 group-hover:bg-brand transition-colors">
@@ -446,7 +452,7 @@ export default function LandingPageClient({ user }: LandingPageClientProps) {
                 <h4 className="text-white font-medium mb-3 text-sm">Staff Identification</h4>
                 <ul className="space-y-2 text-sm">
                   <li><button onClick={() => openQuiz('noteIdentification')} className="text-gray-400 hover:text-white">Note Identification</button></li>
-                  <li><button onClick={() => openQuiz('scales')} className="text-gray-400 hover:text-white">Key Signatures</button></li>
+                  <li><button onClick={() => openQuiz('keySignature')} className="text-gray-400 hover:text-white">Key Signatures</button></li>
                   <li><button onClick={() => openQuiz('intervals')} className="text-gray-400 hover:text-white">Intervals</button></li>
                   <li><button onClick={() => openQuiz('chords')} className="text-gray-400 hover:text-white">Chords</button></li>
                   <li><button onClick={() => openQuiz('scales')} className="text-gray-400 hover:text-white">Scales</button></li>
@@ -455,9 +461,9 @@ export default function LandingPageClient({ user }: LandingPageClientProps) {
               <div>
                 <h4 className="text-white font-medium mb-3 text-sm">Ear Training</h4>
                 <ul className="space-y-2 text-sm">
-                  <li><button onClick={() => openQuiz('ear-training')} className="text-gray-400 hover:text-white">Note Recognition</button></li>
-                  <li><button onClick={() => openQuiz('ear-training')} className="text-gray-400 hover:text-white">Interval Recognition</button></li>
-                  <li><button onClick={() => openQuiz('ear-training')} className="text-gray-400 hover:text-white">Chord Recognition</button></li>
+                  <li><button onClick={() => openQuiz('earTrainingNote')} className="text-gray-400 hover:text-white">Note Recognition</button></li>
+                  <li><button onClick={() => openQuiz('earTrainingInterval')} className="text-gray-400 hover:text-white">Interval Recognition</button></li>
+                  <li><button onClick={() => openQuiz('earTrainingChord')} className="text-gray-400 hover:text-white">Chord Recognition</button></li>
                 </ul>
               </div>
               <div>
@@ -465,7 +471,7 @@ export default function LandingPageClient({ user }: LandingPageClientProps) {
                 <ul className="space-y-2 text-sm">
                   <li><Link href="/login" className="text-gray-400 hover:text-white">Log in</Link></li>
                   <li><Link href="/login?tab=register" className="text-gray-400 hover:text-white">Sign up</Link></li>
-                  <li><Link href="/pricing" className="text-gray-400 hover:text-white">Pricing</Link></li>
+                  <li><Link href="/pricing" className="text-gray-400 hover:text-white">Learning Plans</Link></li>
                 </ul>
               </div>
             </div>

@@ -41,8 +41,11 @@ interface User {
   name?: string | null
   role: string
   avatar?: string | null
+  avatarUrl?: string | null
+  themeColor?: string | null
   subscriptionStatus?: 'none' | 'active' | 'canceled' | 'expired' | null
 }
+
 
 interface QuizAttempt {
   id: string
@@ -130,6 +133,77 @@ interface TeacherStats {
 
 type TeacherTab = 'classes' | 'quizzes' | 'assignments'
 
+// Admin types
+type AdminTab = 'analytics' | 'users' | 'classes'
+
+interface AdminUser {
+  id: string
+  email: string
+  name: string | null
+  role: string
+  createdAt: string
+}
+
+interface AdminTeacher {
+  id: string
+  email: string
+  name: string | null
+  createdAt: string
+  classCount: number
+  totalStudents: number
+  classes: {
+    id: string
+    name: string
+    studentCount: number
+  }[]
+}
+
+interface AdminClass {
+  id: string
+  name: string
+  description: string | null
+  code: string
+  createdAt: string
+  teacher: {
+    id: string
+    email: string
+    name: string | null
+  } | null
+  studentCount: number
+  students: {
+    id: string
+    email: string
+    name: string | null
+  }[]
+}
+
+interface AdminAnalytics {
+  anonymous: {
+    totalAttempts: number
+    uniqueSessions: number
+    byQuizType: Record<string, { count: number; totalScore: number; totalQuestions: number }>
+    last24Hours: number
+    last7Days: number
+    last30Days: number
+  }
+  registered: {
+    totalAttempts: number
+    last24Hours: number
+    last7Days: number
+    last30Days: number
+  }
+  comparison: {
+    anonymousPercentage: number
+  }
+}
+
+interface AdminClassStats {
+  totalTeachers: number
+  totalClasses: number
+  totalEnrollments: number
+  totalUniqueStudents: number
+}
+
 // Icon map for achievements (same as AchievementCard)
 const achievementIconMap: Record<string, React.ReactNode> = {
   rocket: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />,
@@ -157,6 +231,11 @@ export default function ProfilePage() {
   const [showAvatarPicker, setShowAvatarPicker] = useState(false)
   const [selectedAvatar, setSelectedAvatar] = useState<string>('treble-clef')
   const [savingAvatar, setSavingAvatar] = useState(false)
+  const [selectedThemeColor, setSelectedThemeColor] = useState<string>('#8b5cf6')
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
+  const [avatarFile, setAvatarFile] = useState<File | null>(null)
+  const [avatarError, setAvatarError] = useState<string | null>(null)
   const [dailyQuote] = useState(() =>
     MOTIVATION_QUOTES[Math.floor(Math.random() * MOTIVATION_QUOTES.length)]
   )
@@ -203,6 +282,14 @@ export default function ProfilePage() {
     maxAttempts: '',
   })
 
+  // Admin state
+  const [adminTab, setAdminTab] = useState<AdminTab>('analytics')
+  const [adminUsers, setAdminUsers] = useState<AdminUser[]>([])
+  const [adminTeachers, setAdminTeachers] = useState<AdminTeacher[]>([])
+  const [adminClasses, setAdminClasses] = useState<AdminClass[]>([])
+  const [adminAnalytics, setAdminAnalytics] = useState<AdminAnalytics | null>(null)
+  const [adminClassStats, setAdminClassStats] = useState<AdminClassStats | null>(null)
+
   useEffect(() => {
     async function loadData() {
       try {
@@ -214,6 +301,10 @@ export default function ProfilePage() {
         const userData = await userRes.json()
         setUser(userData.user)
         setSelectedAvatar(userData.user.avatar || 'treble-clef')
+        setSelectedThemeColor(userData.user.themeColor || '#8b5cf6')
+        if (userData.user.avatarUrl) {
+          setAvatarPreview(userData.user.avatarUrl)
+        }
 
         const [statsRes, attemptsRes, achievementsRes, pdfStatsRes] = await Promise.all([
           fetch('/api/gamification/stats'),
@@ -288,6 +379,32 @@ export default function ProfilePage() {
             assignmentCount: assignmentList.length,
           })
         }
+
+        // Load admin data
+        if (userData.user.role === 'admin') {
+          const [usersRes, analyticsRes, classesRes] = await Promise.all([
+            fetch('/api/admin/users'),
+            fetch('/api/admin/analytics'),
+            fetch('/api/admin/classes'),
+          ])
+
+          if (usersRes.ok) {
+            const data = await usersRes.json()
+            setAdminUsers(data.users || [])
+          }
+
+          if (analyticsRes.ok) {
+            const data = await analyticsRes.json()
+            setAdminAnalytics(data)
+          }
+
+          if (classesRes.ok) {
+            const data = await classesRes.json()
+            setAdminClasses(data.classes || [])
+            setAdminTeachers(data.teachers || [])
+            setAdminClassStats(data.stats || null)
+          }
+        }
       } catch (error) {
         console.error('Error loading data:', error)
       } finally {
@@ -306,20 +423,117 @@ export default function ProfilePage() {
 
   const handleAvatarSave = async () => {
     setSavingAvatar(true)
+    setAvatarError(null)
     try {
-      const res = await fetch('/api/profile/avatar', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ avatar: selectedAvatar }),
-      })
-      if (res.ok) {
-        setUser(prev => prev ? { ...prev, avatar: selectedAvatar } : null)
+      // If there's a custom avatar file to upload
+      if (avatarFile) {
+        setUploadingAvatar(true)
+        const formData = new FormData()
+        formData.append('avatar', avatarFile)
+
+        const uploadRes = await fetch('/api/profile/avatar-upload', {
+          method: 'POST',
+          body: formData,
+        })
+
+        if (!uploadRes.ok) {
+          const data = await uploadRes.json()
+          setAvatarError(data.error || 'Failed to upload avatar')
+          setUploadingAvatar(false)
+          setSavingAvatar(false)
+          return
+        }
+
+        const uploadData = await uploadRes.json()
+        setUploadingAvatar(false)
+
+        // Save theme color
+        await fetch('/api/profile/theme', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ themeColor: selectedThemeColor }),
+        })
+
+        setUser(prev => prev ? {
+          ...prev,
+          avatar: null,
+          avatarUrl: uploadData.avatarUrl,
+          themeColor: selectedThemeColor
+        } : null)
+        setAvatarFile(null)
         setShowAvatarPicker(false)
+      } else if (user?.avatarUrl && !selectedAvatar) {
+        // User has existing custom avatar, just update theme color
+        await fetch('/api/profile/theme', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ themeColor: selectedThemeColor }),
+        })
+
+        setUser(prev => prev ? {
+          ...prev,
+          themeColor: selectedThemeColor
+        } : null)
+        setShowAvatarPicker(false)
+      } else {
+        // Save predefined avatar
+        const res = await fetch('/api/profile/avatar', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ avatar: selectedAvatar }),
+        })
+        if (res.ok) {
+          // Clear custom avatar if using predefined
+          if (user?.avatarUrl) {
+            await fetch('/api/profile/avatar-upload', { method: 'DELETE' })
+          }
+          setUser(prev => prev ? { ...prev, avatar: selectedAvatar, avatarUrl: null } : null)
+          setAvatarPreview(null)
+          setShowAvatarPicker(false)
+        }
       }
     } catch (error) {
       console.error('Failed to save avatar:', error)
+      setAvatarError('Failed to save avatar. Please try again.')
     } finally {
       setSavingAvatar(false)
+      setUploadingAvatar(false)
+    }
+  }
+
+  const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    if (!['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(file.type)) {
+      setAvatarError('Invalid file type. Please use JPEG, PNG, GIF, or WebP.')
+      return
+    }
+
+    // Validate file size (2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      setAvatarError('File too large. Maximum size is 2MB.')
+      return
+    }
+
+    setAvatarError(null)
+    setAvatarFile(file)
+    setSelectedAvatar('') // Clear predefined selection when custom is chosen
+
+    // Create preview
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setAvatarPreview(reader.result as string)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleClearCustomAvatar = () => {
+    setAvatarFile(null)
+    setAvatarPreview(user?.avatarUrl || null)
+    if (!user?.avatarUrl) {
+      setSelectedAvatar('treble-clef')
     }
   }
 
@@ -569,6 +783,24 @@ export default function ProfilePage() {
   // Get current avatar data
   const currentAvatar = AVATAR_OPTIONS.find(a => a.id === (user?.avatar || selectedAvatar)) || AVATAR_OPTIONS[0]
 
+  // Check if user has custom avatar
+  const hasCustomAvatar = !!user?.avatarUrl
+  const themeColor = user?.themeColor || '#8b5cf6'
+
+  // Helper to darken a hex color
+  const adjustColor = (hex: string, amount: number): string => {
+    const num = parseInt(hex.replace('#', ''), 16)
+    const r = Math.min(255, Math.max(0, (num >> 16) + amount))
+    const g = Math.min(255, Math.max(0, ((num >> 8) & 0x00FF) + amount))
+    const b = Math.min(255, Math.max(0, (num & 0x0000FF) + amount))
+    return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`
+  }
+
+  // Gradient style for custom avatar
+  const customGradientStyle = hasCustomAvatar
+    ? { background: `linear-gradient(to right, ${themeColor}, ${adjustColor(themeColor, -40)})` }
+    : undefined
+
   // Calculate practice streak status
   const getPracticeStatus = () => {
     if (!stats) return { message: 'Complete your first quiz!', urgency: 'neutral' }
@@ -638,9 +870,25 @@ export default function ProfilePage() {
               </Link>
               <div className="hidden md:flex items-center gap-6">
                 <span className="text-brand font-semibold text-sm">Dashboard</span>
-                <Link href="/quiz" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors">
-                  Quizzes
-                </Link>
+                {user.role === 'admin' ? (
+                  <Link href="/admin" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors">
+                    Admin Panel
+                  </Link>
+                ) : (
+                  <>
+                    <Link href="/quiz" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors">
+                      Quizzes
+                    </Link>
+                    {user.role === 'student' && (
+                      <Link href="/student-premium" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors flex items-center gap-1">
+                        Student Premium
+                        {user.subscriptionStatus !== 'active' && (
+                          <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full">New</span>
+                        )}
+                      </Link>
+                    )}
+                  </>
+                )}
               </div>
             </div>
             {/* Profile Dropdown - Right Corner */}
@@ -658,7 +906,10 @@ export default function ProfilePage() {
 
           <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
             {/* Gradient header strip */}
-            <div className={`h-52 bg-gradient-to-r ${currentAvatar.color} relative overflow-hidden`}>
+            <div
+              className={`h-52 ${hasCustomAvatar ? '' : `bg-gradient-to-r ${currentAvatar.color}`} relative overflow-hidden`}
+              style={customGradientStyle}
+            >
               <div className="absolute inset-0 opacity-20">
                 <div className="absolute top-2 left-10 text-6xl text-white/30">♩</div>
                 <div className="absolute bottom-2 right-20 text-5xl text-white/20">♪</div>
@@ -673,8 +924,21 @@ export default function ProfilePage() {
                   onClick={() => setShowAvatarPicker(true)}
                   className="group relative"
                 >
-                  <div className={`w-32 h-32 rounded-2xl bg-gradient-to-br ${currentAvatar.color} flex items-center justify-center text-6xl text-white shadow-2xl border-4 border-white transition-transform group-hover:scale-105`}>
-                    {currentAvatar.icon}
+                  <div
+                    className={`w-32 h-32 rounded-2xl ${hasCustomAvatar ? '' : `bg-gradient-to-br ${currentAvatar.color}`} flex items-center justify-center text-6xl text-white shadow-2xl border-4 border-white transition-transform group-hover:scale-105 overflow-hidden`}
+                    style={hasCustomAvatar ? { background: `linear-gradient(135deg, ${themeColor}, ${adjustColor(themeColor, -40)})` } : undefined}
+                  >
+                    {hasCustomAvatar ? (
+                      <Image
+                        src={user.avatarUrl!}
+                        alt="Profile"
+                        width={128}
+                        height={128}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      currentAvatar.icon
+                    )}
                   </div>
                   <div className="absolute inset-0 rounded-2xl bg-black/0 group-hover:bg-black/20 flex items-center justify-center transition-all">
                     <span className="text-white opacity-0 group-hover:opacity-100 text-sm font-medium">Change</span>
@@ -736,36 +1000,47 @@ export default function ProfilePage() {
                   <p className="text-white font-semibold mb-3 drop-shadow-sm">{user.email}</p>
 
                   <div className="flex flex-wrap gap-3">
-                    {/* Subscription Status */}
-                    {user.subscriptionStatus === 'active' ? (
-                      <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-400/30 to-yellow-400/30 backdrop-blur-sm rounded-full border border-amber-300/50">
-                        <span className="text-lg">👑</span>
-                        <span className="text-white font-bold">Premium</span>
+                    {user.role === 'admin' ? (
+                      <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500/30 to-violet-500/30 backdrop-blur-sm rounded-full border border-purple-300/50">
+                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                        <span className="text-white font-bold">Admin</span>
                       </div>
                     ) : (
-                      <Link
-                        href="/pricing"
-                        className="flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full border border-white/30 hover:bg-white/30 transition-colors"
-                      >
-                        <span className="text-white font-medium">Free Plan</span>
-                        <span className="text-xs bg-white/30 px-2 py-0.5 rounded-full text-white">Upgrade</span>
-                      </Link>
-                    )}
-                    {stats && (
                       <>
-                        <div className="flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full border border-white/30">
-                          <span className="text-white font-bold">Level {stats.current_level}</span>
-                          <span className="text-white/60">•</span>
-                          <span className="text-white/90">{stats.level_info?.name || 'Beginner'}</span>
-                        </div>
-                        <div className="flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full border border-white/30">
-                          <span className="text-white font-bold">{stats.total_xp.toLocaleString()} XP</span>
-                        </div>
-                        {stats.current_streak > 0 && (
-                          <div className="flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full border border-white/30">
-                            <span className="text-lg">🔥</span>
-                            <span className="text-white font-bold">{stats.current_streak} day streak</span>
+                        {/* Subscription Status */}
+                        {user.subscriptionStatus === 'active' ? (
+                          <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-400/30 to-yellow-400/30 backdrop-blur-sm rounded-full border border-amber-300/50">
+                            <span className="text-lg">👑</span>
+                            <span className="text-white font-bold">Premium</span>
                           </div>
+                        ) : (
+                          <Link
+                            href="/pricing"
+                            className="flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full border border-white/30 hover:bg-white/30 transition-colors"
+                          >
+                            <span className="text-white font-medium">Free Plan</span>
+                            <span className="text-xs bg-white/30 px-2 py-0.5 rounded-full text-white">Upgrade</span>
+                          </Link>
+                        )}
+                        {stats && (
+                          <>
+                            <div className="flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full border border-white/30">
+                              <span className="text-white font-bold">Level {stats.current_level}</span>
+                              <span className="text-white/60">•</span>
+                              <span className="text-white/90">{stats.level_info?.name || 'Beginner'}</span>
+                            </div>
+                            <div className="flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full border border-white/30">
+                              <span className="text-white font-bold">{stats.total_xp.toLocaleString()} XP</span>
+                            </div>
+                            {stats.current_streak > 0 && (
+                              <div className="flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full border border-white/30">
+                                <span className="text-lg">🔥</span>
+                                <span className="text-white font-bold">{stats.current_streak} day streak</span>
+                              </div>
+                            )}
+                          </>
                         )}
                       </>
                     )}
@@ -786,6 +1061,309 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
+
+        {/* Admin Dashboard */}
+        {user.role === 'admin' && (
+          <>
+            {/* Admin Stats Overview */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+              <div className="bg-white rounded-xl shadow-md p-5 border border-gray-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-brand/20 flex items-center justify-center">
+                    <span className="text-2xl">👥</span>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900">{adminUsers.length}</p>
+                    <p className="text-sm text-gray-500">Total Users</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white rounded-xl shadow-md p-5 border border-gray-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center">
+                    <span className="text-2xl">🎓</span>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900">{adminClassStats?.totalTeachers || 0}</p>
+                    <p className="text-sm text-gray-500">Teachers</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white rounded-xl shadow-md p-5 border border-gray-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
+                    <span className="text-2xl">🏫</span>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900">{adminClassStats?.totalClasses || 0}</p>
+                    <p className="text-sm text-gray-500">Classes</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white rounded-xl shadow-md p-5 border border-gray-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center">
+                    <span className="text-2xl">📊</span>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900">{(adminAnalytics?.anonymous.totalAttempts || 0) + (adminAnalytics?.registered.totalAttempts || 0)}</p>
+                    <p className="text-sm text-gray-500">Total Quizzes</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Admin Tabs */}
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden mb-8">
+              <div className="border-b border-gray-200">
+                <div className="flex">
+                  <button
+                    onClick={() => setAdminTab('analytics')}
+                    className={`flex-1 py-4 px-6 text-sm font-semibold transition-colors ${
+                      adminTab === 'analytics'
+                        ? 'text-brand border-b-2 border-brand bg-brand/5'
+                        : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    📊 Quiz Analytics
+                  </button>
+                  <button
+                    onClick={() => setAdminTab('users')}
+                    className={`flex-1 py-4 px-6 text-sm font-semibold transition-colors ${
+                      adminTab === 'users'
+                        ? 'text-brand border-b-2 border-brand bg-brand/5'
+                        : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    👥 Users
+                  </button>
+                  <button
+                    onClick={() => setAdminTab('classes')}
+                    className={`flex-1 py-4 px-6 text-sm font-semibold transition-colors ${
+                      adminTab === 'classes'
+                        ? 'text-brand border-b-2 border-brand bg-brand/5'
+                        : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    🏫 Classes & Teachers
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-6">
+                {/* Analytics Tab */}
+                {adminTab === 'analytics' && (
+                  <div className="space-y-6">
+                    <div className="grid md:grid-cols-2 gap-6">
+                      {/* Anonymous vs Registered */}
+                      <div className="bg-gray-50 rounded-xl p-5">
+                        <h4 className="font-semibold text-gray-900 mb-4">Quiz Attempts Breakdown</h4>
+                        <div className="space-y-4">
+                          <div className="flex justify-between items-center">
+                            <span className="text-gray-600">Anonymous</span>
+                            <span className="font-bold text-brand">{adminAnalytics?.anonymous.totalAttempts || 0}</span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-3">
+                            <div
+                              className="bg-brand h-3 rounded-full transition-all"
+                              style={{ width: `${adminAnalytics?.comparison.anonymousPercentage || 0}%` }}
+                            />
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-gray-600">Registered</span>
+                            <span className="font-bold text-green-600">{adminAnalytics?.registered.totalAttempts || 0}</span>
+                          </div>
+                          <p className="text-sm text-gray-500">
+                            {adminAnalytics?.anonymous.uniqueSessions || 0} unique anonymous sessions
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Time-based Stats */}
+                      <div className="bg-gray-50 rounded-xl p-5">
+                        <h4 className="font-semibold text-gray-900 mb-4">Recent Activity</h4>
+                        <div className="space-y-3">
+                          <div className="flex justify-between items-center p-3 bg-white rounded-lg">
+                            <span className="text-gray-700">Last 24 Hours</span>
+                            <span className="font-bold text-brand">
+                              {(adminAnalytics?.anonymous.last24Hours || 0) + (adminAnalytics?.registered.last24Hours || 0)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center p-3 bg-white rounded-lg">
+                            <span className="text-gray-700">Last 7 Days</span>
+                            <span className="font-bold text-brand">
+                              {(adminAnalytics?.anonymous.last7Days || 0) + (adminAnalytics?.registered.last7Days || 0)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center p-3 bg-white rounded-lg">
+                            <span className="text-gray-700">Last 30 Days</span>
+                            <span className="font-bold text-brand">
+                              {(adminAnalytics?.anonymous.last30Days || 0) + (adminAnalytics?.registered.last30Days || 0)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Quiz Type Breakdown */}
+                    <div className="bg-gray-50 rounded-xl p-5">
+                      <h4 className="font-semibold text-gray-900 mb-4">Anonymous Quizzes by Type</h4>
+                      {adminAnalytics?.anonymous.byQuizType && Object.keys(adminAnalytics.anonymous.byQuizType).length > 0 ? (
+                        <div className="grid md:grid-cols-3 gap-4">
+                          {Object.entries(adminAnalytics.anonymous.byQuizType).map(([type, stats]) => {
+                            const avgScore = stats.totalQuestions > 0
+                              ? Math.round((stats.totalScore / stats.totalQuestions) * 100)
+                              : 0
+                            return (
+                              <div key={type} className="bg-white rounded-lg p-4">
+                                <p className="font-medium text-gray-900 capitalize mb-2">{type.replace(/([A-Z])/g, ' $1').trim()}</p>
+                                <p className="text-2xl font-bold text-brand">{stats.count}</p>
+                                <p className="text-sm text-gray-500">Avg: {avgScore}%</p>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      ) : (
+                        <p className="text-gray-500 text-center py-4">No anonymous quiz attempts yet</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Users Tab */}
+                {adminTab === 'users' && (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-3 gap-4 mb-6">
+                      <div className="bg-gray-50 rounded-lg p-4 text-center">
+                        <p className="text-2xl font-bold text-brand">{adminUsers.length}</p>
+                        <p className="text-sm text-gray-500">Total</p>
+                      </div>
+                      <div className="bg-gray-50 rounded-lg p-4 text-center">
+                        <p className="text-2xl font-bold text-green-600">{adminUsers.filter(u => u.role === 'teacher').length}</p>
+                        <p className="text-sm text-gray-500">Teachers</p>
+                      </div>
+                      <div className="bg-gray-50 rounded-lg p-4 text-center">
+                        <p className="text-2xl font-bold text-blue-600">{adminUsers.filter(u => u.role === 'student').length}</p>
+                        <p className="text-sm text-gray-500">Students</p>
+                      </div>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="text-left py-3 px-4 font-semibold text-gray-700 text-sm">Email</th>
+                            <th className="text-left py-3 px-4 font-semibold text-gray-700 text-sm">Name</th>
+                            <th className="text-left py-3 px-4 font-semibold text-gray-700 text-sm">Role</th>
+                            <th className="text-left py-3 px-4 font-semibold text-gray-700 text-sm">Joined</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {adminUsers.slice(0, 10).map((u) => (
+                            <tr key={u.id} className="border-t hover:bg-gray-50">
+                              <td className="py-3 px-4 text-gray-900 text-sm">{u.email}</td>
+                              <td className="py-3 px-4 text-gray-900 text-sm">{u.name || '-'}</td>
+                              <td className="py-3 px-4">
+                                <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                                  u.role === 'admin' ? 'bg-purple-100 text-purple-700' :
+                                  u.role === 'teacher' ? 'bg-green-100 text-green-700' :
+                                  'bg-blue-100 text-blue-700'
+                                }`}>
+                                  {u.role}
+                                </span>
+                              </td>
+                              <td className="py-3 px-4 text-gray-500 text-sm">
+                                {new Date(u.createdAt).toLocaleDateString()}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    {adminUsers.length > 10 && (
+                      <p className="text-sm text-gray-500 text-center">
+                        Showing 10 of {adminUsers.length} users. <Link href="/admin" className="text-brand hover:underline">View all in Admin Panel</Link>
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Classes & Teachers Tab */}
+                {adminTab === 'classes' && (
+                  <div className="space-y-6">
+                    {/* Teachers Section */}
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-4">Teachers ({adminTeachers.length})</h4>
+                      {adminTeachers.length > 0 ? (
+                        <div className="space-y-3">
+                          {adminTeachers.map((teacher) => (
+                            <div key={teacher.id} className="bg-gray-50 rounded-xl p-4">
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <p className="font-medium text-gray-900">{teacher.name || teacher.email}</p>
+                                  <p className="text-sm text-gray-500">{teacher.email}</p>
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-sm font-medium text-gray-900">{teacher.classCount} classes</p>
+                                  <p className="text-sm text-gray-500">{teacher.totalStudents} students</p>
+                                </div>
+                              </div>
+                              {teacher.classes.length > 0 && (
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                  {teacher.classes.map((c) => (
+                                    <span key={c.id} className="px-2 py-1 bg-white rounded-lg text-xs text-gray-600">
+                                      {c.name} ({c.studentCount})
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-gray-500 text-center py-4">No teachers registered yet</p>
+                      )}
+                    </div>
+
+                    {/* Classes Section */}
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-4">All Classes ({adminClasses.length})</h4>
+                      {adminClasses.length > 0 ? (
+                        <div className="overflow-x-auto">
+                          <table className="w-full">
+                            <thead className="bg-gray-50">
+                              <tr>
+                                <th className="text-left py-3 px-4 font-semibold text-gray-700 text-sm">Class Name</th>
+                                <th className="text-left py-3 px-4 font-semibold text-gray-700 text-sm">Teacher</th>
+                                <th className="text-left py-3 px-4 font-semibold text-gray-700 text-sm">Students</th>
+                                <th className="text-left py-3 px-4 font-semibold text-gray-700 text-sm">Code</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {adminClasses.slice(0, 10).map((c) => (
+                                <tr key={c.id} className="border-t hover:bg-gray-50">
+                                  <td className="py-3 px-4 text-gray-900 text-sm font-medium">{c.name}</td>
+                                  <td className="py-3 px-4 text-gray-600 text-sm">{c.teacher?.name || c.teacher?.email || '-'}</td>
+                                  <td className="py-3 px-4 text-gray-600 text-sm">{c.studentCount}</td>
+                                  <td className="py-3 px-4">
+                                    <code className="px-2 py-1 bg-gray-100 rounded text-xs">{c.code}</code>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      ) : (
+                        <p className="text-gray-500 text-center py-4">No classes created yet</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+          </>
+        )}
 
         {/* Teacher Dashboard */}
         {user.role === 'teacher' && (
@@ -1058,7 +1636,7 @@ export default function ProfilePage() {
         )}
 
         {/* Student Dashboard */}
-        {user.role !== 'teacher' && (
+        {user.role === 'student' && (
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Left Column - Stats & Progress */}
           <div className="lg:col-span-2 space-y-8">
@@ -1689,9 +2267,14 @@ export default function ProfilePage() {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-lg w-full max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-2xl font-bold text-gray-900">Choose Your Avatar</h3>
+              <h3 className="text-2xl font-bold text-gray-900">Customize Your Profile</h3>
               <button
-                onClick={() => setShowAvatarPicker(false)}
+                onClick={() => {
+                  setShowAvatarPicker(false)
+                  setAvatarError(null)
+                  setAvatarFile(null)
+                  setAvatarPreview(user?.avatarUrl || null)
+                }}
                 className="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1700,13 +2283,181 @@ export default function ProfilePage() {
               </button>
             </div>
 
+            {/* Custom Avatar Upload Section */}
+            <div className="mb-6">
+              <h4 className="text-sm font-semibold text-gray-700 mb-3">Upload Your Photo</h4>
+              <div className="flex items-center gap-4">
+                <div
+                  className="w-20 h-20 rounded-xl flex items-center justify-center overflow-hidden border-2 border-dashed border-gray-300"
+                  style={avatarPreview ? { background: `linear-gradient(135deg, ${selectedThemeColor}, ${selectedThemeColor}dd)` } : undefined}
+                >
+                  {avatarPreview ? (
+                    <Image
+                      src={avatarPreview}
+                      alt="Avatar preview"
+                      width={80}
+                      height={80}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <label className="block">
+                    <span className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg cursor-pointer hover:bg-gray-200 transition-colors">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      Choose Photo
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/gif,image/webp"
+                      onChange={handleAvatarFileChange}
+                      className="hidden"
+                    />
+                  </label>
+                  <p className="text-xs text-gray-500 mt-1">JPEG, PNG, GIF, WebP. Max 2MB.</p>
+                  {avatarFile && (
+                    <button
+                      onClick={handleClearCustomAvatar}
+                      className="text-xs text-red-600 hover:text-red-700 mt-1"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              </div>
+              {avatarError && (
+                <p className="text-sm text-red-600 mt-2">{avatarError}</p>
+              )}
+            </div>
+
+            {/* Theme Color Picker (only shown when custom avatar is selected) */}
+            {(avatarPreview || avatarFile || user?.avatarUrl) && (
+              <div className="mb-6">
+                <h4 className="text-sm font-semibold text-gray-700 mb-3">Card Theme Color</h4>
+                <div className="space-y-3">
+                  {/* Gradient Color Bar */}
+                  <div className="relative">
+                    <input
+                      type="range"
+                      min="0"
+                      max="360"
+                      value={(() => {
+                        // Convert hex to hue
+                        const hex = selectedThemeColor.replace('#', '')
+                        const r = parseInt(hex.substring(0, 2), 16) / 255
+                        const g = parseInt(hex.substring(2, 4), 16) / 255
+                        const b = parseInt(hex.substring(4, 6), 16) / 255
+                        const max = Math.max(r, g, b)
+                        const min = Math.min(r, g, b)
+                        let h = 0
+                        if (max !== min) {
+                          const d = max - min
+                          if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) * 60
+                          else if (max === g) h = ((b - r) / d + 2) * 60
+                          else h = ((r - g) / d + 4) * 60
+                        }
+                        return Math.round(h)
+                      })()}
+                      onChange={(e) => {
+                        // Convert hue to hex (using full saturation and 50% lightness)
+                        const h = parseInt(e.target.value)
+                        const s = 0.7
+                        const l = 0.55
+                        const c = (1 - Math.abs(2 * l - 1)) * s
+                        const x = c * (1 - Math.abs((h / 60) % 2 - 1))
+                        const m = l - c / 2
+                        let r = 0, g = 0, b = 0
+                        if (h < 60) { r = c; g = x; b = 0 }
+                        else if (h < 120) { r = x; g = c; b = 0 }
+                        else if (h < 180) { r = 0; g = c; b = x }
+                        else if (h < 240) { r = 0; g = x; b = c }
+                        else if (h < 300) { r = x; g = 0; b = c }
+                        else { r = c; g = 0; b = x }
+                        const toHex = (n: number) => Math.round((n + m) * 255).toString(16).padStart(2, '0')
+                        setSelectedThemeColor(`#${toHex(r)}${toHex(g)}${toHex(b)}`)
+                      }}
+                      className="w-full h-8 rounded-lg cursor-pointer appearance-none"
+                      style={{
+                        background: 'linear-gradient(to right, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000)',
+                      }}
+                    />
+                    <style jsx>{`
+                      input[type="range"]::-webkit-slider-thumb {
+                        -webkit-appearance: none;
+                        width: 24px;
+                        height: 32px;
+                        background: white;
+                        border: 3px solid ${selectedThemeColor};
+                        border-radius: 6px;
+                        cursor: pointer;
+                        box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+                      }
+                      input[type="range"]::-moz-range-thumb {
+                        width: 24px;
+                        height: 32px;
+                        background: white;
+                        border: 3px solid ${selectedThemeColor};
+                        border-radius: 6px;
+                        cursor: pointer;
+                        box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+                      }
+                    `}</style>
+                  </div>
+                  {/* Color preview and hex input */}
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="w-12 h-12 rounded-lg shadow-inner border border-gray-200"
+                      style={{ backgroundColor: selectedThemeColor }}
+                    />
+                    <input
+                      type="color"
+                      value={selectedThemeColor}
+                      onChange={(e) => setSelectedThemeColor(e.target.value)}
+                      className="w-12 h-12 rounded-lg cursor-pointer border-0 p-0"
+                      title="Pick a custom color"
+                    />
+                    <input
+                      type="text"
+                      value={selectedThemeColor}
+                      onChange={(e) => {
+                        const val = e.target.value
+                        if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+                          setSelectedThemeColor(val)
+                        }
+                      }}
+                      className="flex-1 px-3 py-2 border border-gray-200 rounded-lg font-mono text-sm uppercase"
+                      placeholder="#8b5cf6"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Divider */}
+            <div className="flex items-center gap-3 mb-6">
+              <div className="flex-1 h-px bg-gray-200"></div>
+              <span className="text-sm text-gray-500">or choose an icon</span>
+              <div className="flex-1 h-px bg-gray-200"></div>
+            </div>
+
+            {/* Predefined Avatars */}
             <div className="grid grid-cols-4 gap-3 mb-6">
               {AVATAR_OPTIONS.map((avatar) => (
                 <button
                   key={avatar.id}
-                  onClick={() => setSelectedAvatar(avatar.id)}
+                  onClick={() => {
+                    setSelectedAvatar(avatar.id)
+                    setAvatarFile(null)
+                    setAvatarPreview(null)
+                  }}
                   className={`aspect-square rounded-xl bg-gradient-to-br ${avatar.color} flex items-center justify-center text-3xl text-white transition-all hover:scale-105 ${
-                    selectedAvatar === avatar.id ? 'ring-4 ring-brand ring-offset-2' : ''
+                    selectedAvatar === avatar.id && !avatarFile && !avatarPreview ? 'ring-4 ring-brand ring-offset-2' : ''
                   }`}
                   title={avatar.label}
                 >
@@ -1717,17 +2468,22 @@ export default function ProfilePage() {
 
             <div className="flex gap-3">
               <button
-                onClick={() => setShowAvatarPicker(false)}
+                onClick={() => {
+                  setShowAvatarPicker(false)
+                  setAvatarError(null)
+                  setAvatarFile(null)
+                  setAvatarPreview(user?.avatarUrl || null)
+                }}
                 className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleAvatarSave}
-                disabled={savingAvatar}
+                disabled={savingAvatar || uploadingAvatar}
                 className="flex-1 px-4 py-3 bg-brand text-white font-semibold rounded-xl hover:bg-brand-dark transition-colors disabled:opacity-50"
               >
-                {savingAvatar ? 'Saving...' : 'Save Avatar'}
+                {uploadingAvatar ? 'Uploading...' : savingAvatar ? 'Saving...' : 'Save'}
               </button>
             </div>
           </div>

@@ -16,6 +16,8 @@ interface User {
   name?: string | null
   role: string
   avatar?: string | null
+  avatarUrl?: string | null
+  themeColor?: string | null
 }
 
 type AchievementCategory = 'all' | 'quiz' | 'streak' | 'score' | 'milestone' | 'special'

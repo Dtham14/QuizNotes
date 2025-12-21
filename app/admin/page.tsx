@@ -1,16 +1,36 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import ProfileDropdown from '@/components/ProfileDropdown';
 
 type User = {
   id: string;
   email: string;
   name: string | null;
   role: string;
+  subscriptionStatus: string | null;
   createdAt: Date;
+};
+
+// Helper to get effective role for dropdown (combines role + subscription status)
+function getEffectiveRole(user: User): string {
+  if (user.role === 'student' && user.subscriptionStatus === 'active') {
+    return 'student-premium';
+  }
+  return user.role;
+}
+
+type CurrentUser = {
+  id: string;
+  email: string;
+  name?: string | null;
+  role: string;
+  avatar?: string | null;
+  avatarUrl?: string | null;
+  themeColor?: string | null;
 };
 
 type AnonymousAttempt = {
@@ -43,13 +63,26 @@ type Analytics = {
   };
 };
 
-export default function AdminPage() {
+function AdminPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState<{ role: string } | null>(null);
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
+
+  // Get initial tab from URL params
+  const tabParam = searchParams.get('tab');
   const [activeTab, setActiveTab] = useState<'users' | 'analytics'>('analytics');
+
+  // Sync tab with URL params
+  useEffect(() => {
+    if (tabParam === 'users') {
+      setActiveTab('users');
+    } else {
+      setActiveTab('analytics');
+    }
+  }, [tabParam]);
 
   useEffect(() => {
     async function initializePage() {
@@ -127,11 +160,17 @@ export default function AdminPage() {
         body: JSON.stringify({ userId, role: newRole }),
       });
 
+      const data = await res.json();
+
       if (res.ok) {
         fetchUsers();
+      } else {
+        console.error('Failed to update role:', data.error);
+        alert(`Failed to update role: ${data.error}`);
       }
     } catch (error) {
       console.error('Failed to update role:', error);
+      alert('Failed to update role. Please try again.');
     }
   };
 
@@ -165,7 +204,7 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      <nav className="border-b border-gray-200 bg-white sticky top-0 z-50">
+      <nav className="border-b border-gray-200/80 bg-white/80 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
             <div className="flex items-center gap-8">
@@ -180,15 +219,13 @@ export default function AdminPage() {
                 <span className="text-xl font-bold text-gray-900">QuizNotes</span>
               </Link>
               <div className="hidden md:flex items-center gap-6">
-                <span className="text-gray-700 text-sm font-semibold">Admin Panel</span>
+                <Link href="/profile" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors">
+                  Dashboard
+                </Link>
+                <span className="text-brand font-semibold text-sm">Admin Panel</span>
               </div>
             </div>
-            <Link
-              href="/profile"
-              className="px-4 py-2 text-gray-700 hover:text-gray-900 text-sm font-semibold"
-            >
-              Back to Dashboard
-            </Link>
+            {currentUser && <ProfileDropdown user={currentUser} />}
           </div>
         </div>
       </nav>
@@ -432,11 +469,12 @@ export default function AdminPage() {
                         <td className="py-4 px-6 text-gray-900">{user.name || '-'}</td>
                         <td className="py-4 px-6">
                           <select
-                            value={user.role}
+                            value={getEffectiveRole(user)}
                             onChange={(e) => handleRoleChange(user.id, e.target.value)}
                             className="px-3 py-1 border border-gray-300 rounded-lg text-gray-900 text-sm"
                           >
                             <option value="student">Student</option>
+                            <option value="student-premium">Student Premium</option>
                             <option value="teacher">Teacher</option>
                             <option value="admin">Admin</option>
                           </select>
@@ -500,5 +538,17 @@ export default function AdminPage() {
         </div>
       </footer>
     </div>
+  );
+}
+
+export default function AdminPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <p className="text-gray-600">Loading...</p>
+      </div>
+    }>
+      <AdminPageContent />
+    </Suspense>
   );
 }

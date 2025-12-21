@@ -15,6 +15,8 @@ interface User {
   name?: string | null
   role: string
   avatar?: string | null
+  avatarUrl?: string | null
+  themeColor?: string | null
 }
 
 interface LeaderboardStats {

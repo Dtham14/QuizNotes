@@ -150,7 +150,7 @@ export default function MusicNotation({
             // Add per-key accidentals if specified (for chords)
             if (note.accidentals && note.accidentals.length > 0) {
               note.accidentals.forEach((acc, index) => {
-                if (acc) {
+                if (acc && acc !== 'n') {
                   vfNote.addModifier(new VF.Accidental(acc), index);
                 }
               });
@@ -165,38 +165,29 @@ export default function MusicNotation({
             return vfNote;
           });
 
-          // Create a TickContext and add all notes to it
-          const tickContext = new VF.TickContext();
-          vfNotes.forEach((note) => {
-            tickContext.addTickable(note);
-          });
-
-          // Preformat to calculate metrics
-          tickContext.preFormat();
-
-          // Set X positions and draw notes
-          const startX = stave.getNoteStartX();
-          const spacing = (width - startX - 60) / validNotes.length;
-
+          // Set stave and stem direction for each note
           vfNotes.forEach((note, index) => {
             note.setStave(stave);
-            note.setContext(context);
 
-            // Set the x position for this note
-            const xPos = startX + (index * spacing) + 20;
-            tickContext.setX(xPos);
-
-            // Set stem direction AFTER setStave to override VexFlow's auto-calculation
-            // Only for notes with stems (not whole notes)
+            // Set stem direction for notes with stems (not whole notes)
             const originalNote = validNotes[index];
             if (originalNote.duration !== 'w') {
               const stemDirection = getChordStemDirection(originalNote.keys, clef);
               note.setStemDirection(stemDirection);
             }
-
-            // Draw the note
-            note.draw();
           });
+
+          // Create a voice and add notes
+          const voice = new VF.Voice({ numBeats: validNotes.length, beatValue: 1 }).setStrict(false);
+          voice.addTickables(vfNotes);
+
+          // Use Formatter to handle accidental positioning automatically
+          const formatter = new VF.Formatter();
+          formatter.joinVoices([voice]);
+          formatter.format([voice], width - stave.getNoteStartX() - 40);
+
+          // Draw the voice
+          voice.draw(context, stave);
         }
 
       } catch (err) {

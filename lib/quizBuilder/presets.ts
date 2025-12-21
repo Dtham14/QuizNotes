@@ -166,7 +166,7 @@ export const DIFFICULTY_PRESETS: Record<QuizType, Record<Difficulty, Partial<Qui
   earTrainingInterval: {
     beginner: {
       quizType: 'earTrainingInterval',
-      intervals: ['M2', 'm3', 'M3', 'P5', 'P8'],
+      intervals: ['M2', 'm3', 'M3', 'P4', 'P5', 'P8'],
       direction: 'ascending',
     } as Partial<IntervalSettings>,
     intermediate: {
@@ -185,7 +185,7 @@ export const DIFFICULTY_PRESETS: Record<QuizType, Record<Difficulty, Partial<Qui
   earTrainingChord: {
     beginner: {
       quizType: 'earTrainingChord',
-      chordTypes: ['major', 'minor'],
+      chordTypes: ['major', 'minor', 'diminished', 'augmented'],
       inversions: 'root',
     } as Partial<ChordSettings>,
     intermediate: {

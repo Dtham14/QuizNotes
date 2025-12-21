@@ -19,6 +19,8 @@ export type Database = {
           name: string | null
           role: 'admin' | 'teacher' | 'student'
           avatar: string | null
+          avatar_url: string | null
+          theme_color: string | null
           subscription_status: 'none' | 'active' | 'canceled' | 'expired' | 'past_due' | 'inactive'
           subscription_plan: 'monthly' | 'yearly' | 'student_premium' | null
           subscription_expires_at: string | null
@@ -33,6 +35,8 @@ export type Database = {
           name?: string | null
           role?: 'admin' | 'teacher' | 'student'
           avatar?: string | null
+          avatar_url?: string | null
+          theme_color?: string | null
           subscription_status?: 'none' | 'active' | 'canceled' | 'expired' | 'past_due' | 'inactive'
           subscription_plan?: 'monthly' | 'yearly' | 'student_premium' | null
           subscription_expires_at?: string | null
@@ -47,6 +51,8 @@ export type Database = {
           name?: string | null
           role?: 'admin' | 'teacher' | 'student'
           avatar?: string | null
+          avatar_url?: string | null
+          theme_color?: string | null
           subscription_status?: 'none' | 'active' | 'canceled' | 'expired' | 'past_due' | 'inactive'
           subscription_plan?: 'monthly' | 'yearly' | 'student_premium' | null
           subscription_expires_at?: string | null

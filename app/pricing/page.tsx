@@ -33,13 +33,17 @@ export default async function PricingPage() {
                   Quizzes
                 </Link>
                 <span className="text-brand text-sm font-semibold">
-                  Pricing
+                  Learning Plans
                 </span>
               </div>
             </div>
             <div className="flex items-center gap-3">
               {user ? (
-                <ProfileDropdown user={user} />
+                <ProfileDropdown user={{
+                  ...user,
+                  avatarUrl: user.avatar_url,
+                  themeColor: user.theme_color,
+                }} />
               ) : (
                 <>
                   <Link

@@ -10,7 +10,7 @@ export type QuizQuestion = {
   clef?: 'treble' | 'bass';
 };
 
-export type QuizType = 'intervals' | 'chords' | 'scales' | 'noteIdentification' | 'ear-training' | 'mixed';
+export type QuizType = 'intervals' | 'chords' | 'scales' | 'noteIdentification' | 'keySignature' | 'ear-training' | 'earTrainingNote' | 'earTrainingInterval' | 'earTrainingChord' | 'mixed';
 
 export const quizzes: Record<QuizType, QuizQuestion[]> = {
   intervals: [
@@ -1144,7 +1144,11 @@ export const quizzes: Record<QuizType, QuizQuestion[]> = {
       clef: 'bass',
     },
   ],
+  'keySignature': [],
   'ear-training': [], // Ear training uses separate data from earTrainingQuizData.ts
+  'earTrainingNote': [],
+  'earTrainingInterval': [],
+  'earTrainingChord': [],
   mixed: [],
 };
 
