@@ -82,9 +82,13 @@ interface StudentAssignment {
   title: string
   description: string | null
   dueDate: Date | null
+  maxAttempts: number
+  attemptsUsed: number
+  attemptsRemaining: number
   createdAt: Date
   completed: boolean
-  score: number | null
+  bestScore: number | null
+  lastScore: number | null
   totalQuestions: number | null
 }
 
@@ -2053,8 +2057,9 @@ export default function ProfilePage() {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {assignments.filter(a => !a.completed).slice(0, 3).map((assignment) => (
-                      <div key={assignment.id} className="bg-amber-50 rounded-lg p-3 border border-amber-200">
+                    {/* Assignments that can still be attempted (not started or has attempts remaining) */}
+                    {assignments.filter(a => a.attemptsRemaining > 0).slice(0, 3).map((assignment) => (
+                      <div key={assignment.id} className={`rounded-lg p-3 border ${assignment.attemptsUsed > 0 ? 'bg-blue-50 border-blue-200' : 'bg-amber-50 border-amber-200'}`}>
                         <div className="flex justify-between items-start gap-2">
                           <div className="min-w-0">
                             <h3 className="font-semibold text-gray-900 text-sm truncate">{assignment.title}</h3>
@@ -2064,17 +2069,24 @@ export default function ProfilePage() {
                                 Due: {new Date(assignment.dueDate).toLocaleDateString()}
                               </p>
                             )}
+                            {assignment.maxAttempts > 1 && (
+                              <p className="text-xs text-gray-500 mt-1">
+                                Attempts: {assignment.attemptsUsed}/{assignment.maxAttempts}
+                                {assignment.bestScore !== null && ` • Best: ${assignment.bestScore}/${assignment.totalQuestions}`}
+                              </p>
+                            )}
                           </div>
                           <Link
                             href={assignment.quizId ? `/quiz/${assignment.quizId}?assignmentId=${assignment.id}` : '/quiz'}
                             className="px-3 py-1.5 bg-brand text-white font-semibold rounded-lg hover:bg-brand-dark transition-colors text-xs flex-shrink-0"
                           >
-                            Start
+                            {assignment.attemptsUsed > 0 ? 'Retry' : 'Start'}
                           </Link>
                         </div>
                       </div>
                     ))}
 
+                    {/* Fully completed assignments (no attempts remaining) */}
                     {assignments.filter(a => a.completed).length > 0 && (
                       <div className="pt-3 border-t border-gray-200">
                         <p className="text-xs font-semibold text-gray-500 mb-2">Completed</p>
@@ -2083,9 +2095,14 @@ export default function ProfilePage() {
                             <div className="flex justify-between items-center">
                               <div className="min-w-0">
                                 <h3 className="font-semibold text-gray-900 text-sm truncate">{assignment.title}</h3>
+                                {assignment.maxAttempts > 1 && (
+                                  <p className="text-xs text-gray-500">
+                                    Best: {assignment.bestScore}/{assignment.totalQuestions} ({assignment.attemptsUsed} attempts)
+                                  </p>
+                                )}
                               </div>
                               <p className="font-bold text-green-600 text-sm">
-                                {assignment.score}/{assignment.totalQuestions}
+                                {assignment.bestScore}/{assignment.totalQuestions}
                               </p>
                             </div>
                           </div>

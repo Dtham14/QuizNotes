@@ -58,6 +58,7 @@ function QuizContent() {
   const [user, setUser] = useState<{ id: string; email: string; name?: string | null; avatar?: string | null; avatarUrl?: string | null; themeColor?: string | null } | null>(null);
   const [gamificationStats, setGamificationStats] = useState<GamificationStats | null>(null);
   const [assignmentId, setAssignmentId] = useState<string | null>(null);
+  const [assignmentInfo, setAssignmentInfo] = useState<{ maxAttempts: number; attemptsUsed: number; attemptsRemaining: number } | null>(null);
   const [initialized, setInitialized] = useState(false);
   const [gamificationResult, setGamificationResult] = useState<GamificationResult | null>(null);
   const [showXPAnimation, setShowXPAnimation] = useState(false);
@@ -107,6 +108,20 @@ function QuizContent() {
 
     if (assignmentIdParam) {
       setAssignmentId(assignmentIdParam);
+      // Fetch assignment info to get attempt counts
+      fetch('/api/student/assignments')
+        .then(res => res.json())
+        .then(data => {
+          const assignment = data.assignments?.find((a: { id: string }) => a.id === assignmentIdParam);
+          if (assignment) {
+            setAssignmentInfo({
+              maxAttempts: assignment.maxAttempts,
+              attemptsUsed: assignment.attemptsUsed,
+              attemptsRemaining: assignment.attemptsRemaining,
+            });
+          }
+        })
+        .catch(err => console.error('Failed to fetch assignment info:', err));
     }
 
     if (typeParam) {
@@ -790,7 +805,10 @@ function QuizContent() {
           )}
 
           <div className="space-y-4 mb-8 max-h-[600px] overflow-y-auto pr-2">
-            {questions.map((question, index) => {
+            {/* Hide correct answers in results if assignment has attempts remaining (note: attemptsRemaining was before this attempt) */}
+            {(() => {
+              const hideAnswersInResults = assignmentInfo && assignmentInfo.maxAttempts > 1 && assignmentInfo.attemptsRemaining > 0;
+              return questions.map((question, index) => {
               const userAnswer = answers[index];
               const correctIdx = getCorrectAnswerIndex(question);
               const isCorrect = userAnswer === correctIdx;
@@ -854,20 +872,26 @@ function QuizContent() {
                             Your answer: {question.options[userAnswer ?? -1] || 'No answer'}
                           </span>
                         </p>
-                        {!isCorrect && (
+                        {!isCorrect && !hideAnswersInResults && (
                           <p className="text-green-700 font-medium">
                             Correct answer: {question.options[correctIdx]}
                           </p>
                         )}
+                        {!isCorrect && hideAnswersInResults && (
+                          <p className="text-gray-500 text-sm italic">
+                            You have attempts remaining - correct answer hidden
+                          </p>
+                        )}
                       </div>
-                      {'explanation' in question && question.explanation && (
+                      {'explanation' in question && question.explanation && !hideAnswersInResults && (
                         <p className="text-sm text-gray-500 mt-2 italic bg-gray-50 p-2 rounded">{question.explanation}</p>
                       )}
                     </div>
                   </div>
                 </div>
               );
-            })}
+            });
+            })()}
           </div>
 
           <div className="flex flex-wrap gap-3 justify-center">
@@ -1033,65 +1057,91 @@ function QuizContent() {
           </div>
 
           <div className="space-y-3 mb-8">
-            {currentQuestion.options.map((option, index) => {
-              const isSelected = selectedAnswer === index;
-              const isCorrectOption = index === correctAnswerIndex;
+            {(() => {
+              // Hide correct answers if this is an assignment with multiple attempts remaining
+              const hideCorrectAnswer = assignmentInfo && assignmentInfo.maxAttempts > 1 && assignmentInfo.attemptsRemaining > 1;
 
-              let buttonClass = 'bg-white border-gray-200 hover:border-brand/50 text-gray-700';
+              return currentQuestion.options.map((option, index) => {
+                const isSelected = selectedAnswer === index;
+                const isCorrectOption = index === correctAnswerIndex;
 
-              if (showFeedback) {
-                if (isCorrectOption) {
-                  buttonClass = 'bg-green-50 border-green-500 text-green-700';
-                } else if (isSelected && !isCorrectOption) {
-                  buttonClass = 'bg-red-50 border-red-500 text-red-700';
-                } else {
-                  buttonClass = 'bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed';
+                let buttonClass = 'bg-white border-gray-200 hover:border-brand/50 text-gray-700';
+
+                if (showFeedback) {
+                  if (hideCorrectAnswer) {
+                    // When hiding answers, only show if the selected answer was correct/incorrect
+                    if (isSelected) {
+                      buttonClass = isCorrectOption
+                        ? 'bg-green-50 border-green-500 text-green-700'
+                        : 'bg-red-50 border-red-500 text-red-700';
+                    } else {
+                      buttonClass = 'bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed';
+                    }
+                  } else {
+                    // Normal behavior: show which answer was correct
+                    if (isCorrectOption) {
+                      buttonClass = 'bg-green-50 border-green-500 text-green-700';
+                    } else if (isSelected && !isCorrectOption) {
+                      buttonClass = 'bg-red-50 border-red-500 text-red-700';
+                    } else {
+                      buttonClass = 'bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed';
+                    }
+                  }
+                } else if (isSelected) {
+                  buttonClass = 'bg-brand/10 border-brand text-brand';
                 }
-              } else if (isSelected) {
-                buttonClass = 'bg-brand/10 border-brand text-brand';
-              }
 
-              return (
-                <button
-                  key={index}
-                  onClick={() => handleAnswer(index)}
-                  disabled={showFeedback}
-                  className={`w-full p-4 text-left rounded-lg border-2 transition-all ${buttonClass}`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span>
-                      <span className="font-semibold">{String.fromCharCode(65 + index)}.</span> {option}
-                    </span>
-                    {showFeedback && isCorrectOption && (
-                      <span className="text-green-600 text-xl">✓</span>
-                    )}
-                    {showFeedback && isSelected && !isCorrectOption && (
-                      <span className="text-red-600 text-xl">✗</span>
-                    )}
-                  </div>
-                </button>
-              );
-            })}
+                return (
+                  <button
+                    key={index}
+                    onClick={() => handleAnswer(index)}
+                    disabled={showFeedback}
+                    className={`w-full p-4 text-left rounded-lg border-2 transition-all ${buttonClass}`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span>
+                        <span className="font-semibold">{String.fromCharCode(65 + index)}.</span> {option}
+                      </span>
+                      {showFeedback && !hideCorrectAnswer && isCorrectOption && (
+                        <span className="text-green-600 text-xl">✓</span>
+                      )}
+                      {showFeedback && isSelected && !isCorrectOption && (
+                        <span className="text-red-600 text-xl">✗</span>
+                      )}
+                    </div>
+                  </button>
+                );
+              });
+            })()}
           </div>
 
           {/* Feedback message */}
-          {showFeedback && (
-            <div className={`mb-6 p-4 rounded-xl ${isCorrect ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">{isCorrect ? '🎉' : '💡'}</span>
-                <div>
-                  <p className={`font-semibold ${isCorrect ? 'text-green-700' : 'text-red-700'}`}>
-                    {isCorrect ? 'Correct!' : 'Not quite right'}
-                  </p>
-                  {!isCorrect && (
-                    <p className="text-sm text-gray-600">
-                      The correct answer is: <span className="font-semibold">{currentQuestion.options[correctAnswerIndex]}</span>
+          {showFeedback && (() => {
+            // Hide correct answers if this is an assignment with multiple attempts remaining
+            const hideCorrectAnswer = assignmentInfo && assignmentInfo.maxAttempts > 1 && assignmentInfo.attemptsRemaining > 1;
+            return (
+              <div className={`mb-6 p-4 rounded-xl ${isCorrect ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">{isCorrect ? '🎉' : (hideCorrectAnswer ? '🤔' : '💡')}</span>
+                  <div>
+                    <p className={`font-semibold ${isCorrect ? 'text-green-700' : 'text-red-700'}`}>
+                      {isCorrect ? 'Correct!' : 'Not quite right'}
                     </p>
-                  )}
+                    {!isCorrect && !hideCorrectAnswer && (
+                      <p className="text-sm text-gray-600">
+                        The correct answer is: <span className="font-semibold">{currentQuestion.options[correctAnswerIndex]}</span>
+                      </p>
+                    )}
+                    {!isCorrect && hideCorrectAnswer && (
+                      <p className="text-sm text-gray-600">
+                        You have more attempts remaining. Keep trying!
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           <div className="flex justify-between items-center">
             <p className="text-sm text-gray-500">

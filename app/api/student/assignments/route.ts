@@ -57,23 +57,36 @@ export async function GET() {
       return NextResponse.json({ error: 'Failed to fetch assignments' }, { status: 500 })
     }
 
-    // Get quiz attempts for this student to check completion status
+    // Get quiz attempts for this student to check completion status and attempt counts
     const assignmentIds = (assignments || []).map((a) => a.id)
     const { data: attempts } = await supabase
       .from('quiz_attempts')
-      .select('assignment_id, score, total_questions')
+      .select('assignment_id, score, total_questions, created_at')
       .eq('user_id', user.id)
       .in('assignment_id', assignmentIds)
+      .order('created_at', { ascending: false })
 
-    // Create a map of assignment completions
-    const completionMap = new Map<string, { completed: boolean; score: number; totalQuestions: number }>()
+    // Create a map of assignment attempts with count and best score
+    const attemptMap = new Map<string, {
+      attemptsUsed: number
+      bestScore: number
+      lastScore: number
+      totalQuestions: number
+    }>()
     ;(attempts || []).forEach((attempt) => {
       if (attempt.assignment_id) {
-        completionMap.set(attempt.assignment_id, {
-          completed: true,
-          score: attempt.score,
-          totalQuestions: attempt.total_questions,
-        })
+        const existing = attemptMap.get(attempt.assignment_id)
+        if (existing) {
+          existing.attemptsUsed += 1
+          existing.bestScore = Math.max(existing.bestScore, attempt.score)
+        } else {
+          attemptMap.set(attempt.assignment_id, {
+            attemptsUsed: 1,
+            bestScore: attempt.score,
+            lastScore: attempt.score,
+            totalQuestions: attempt.total_questions,
+          })
+        }
       }
     })
 
@@ -94,7 +107,12 @@ export async function GET() {
       const className = Array.isArray(assignment.classes)
         ? assignment.classes[0]?.name
         : assignment.classes?.name;
-      const completion = completionMap.get(assignment.id)
+      const attemptData = attemptMap.get(assignment.id)
+      const maxAttempts = assignment.max_attempts || 1
+      const attemptsUsed = attemptData?.attemptsUsed || 0
+      const attemptsRemaining = Math.max(0, maxAttempts - attemptsUsed)
+      // Only mark as fully completed when all attempts are exhausted
+      const completed = attemptsUsed > 0 && attemptsRemaining === 0
       return {
         id: assignment.id,
         classId: assignment.class_id,
@@ -104,11 +122,14 @@ export async function GET() {
         title: assignment.title,
         description: assignment.description,
         dueDate: assignment.due_date,
-        maxAttempts: assignment.max_attempts,
+        maxAttempts,
+        attemptsUsed,
+        attemptsRemaining,
         createdAt: assignment.created_at,
-        completed: completion?.completed || false,
-        score: completion?.score || null,
-        totalQuestions: completion?.totalQuestions || null,
+        completed,
+        bestScore: attemptData?.bestScore || null,
+        lastScore: attemptData?.lastScore || null,
+        totalQuestions: attemptData?.totalQuestions || null,
       };
     })
 
