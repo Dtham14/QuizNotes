@@ -6,6 +6,8 @@ import { CheckoutButton } from './checkout-button'
 import { PricingTabs } from './pricing-tabs'
 import ProfileDropdown from '@/components/ProfileDropdown'
 
+export const dynamic = 'force-dynamic';
+
 export default async function PricingPage() {
   const user = await getSession()
   const isTeacher = user?.role === 'teacher'
