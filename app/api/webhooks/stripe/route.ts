@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session
         const userId = session.metadata?.user_id
-        const plan = session.metadata?.plan as 'monthly' | 'yearly'
+        const plan = session.metadata?.plan as 'monthly' | 'yearly' | 'student_premium'
 
         if (!userId) {
           console.error('No user_id in session metadata')

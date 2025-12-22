@@ -177,9 +177,15 @@ export default function StudentPremiumPage() {
                 <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
                   Your Premium Benefits
                 </h1>
-                <p className="text-xl text-white/90 max-w-2xl mx-auto">
+                <p className="text-xl text-white/90 max-w-2xl mx-auto mb-6">
                   Thank you for being a premium member! Here&apos;s what&apos;s coming to make your learning experience even better.
                 </p>
+                <div className="inline-flex items-center gap-3 px-6 py-3 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20">
+                  <div className="text-left">
+                    <p className="text-white/70 text-sm">Your Plan</p>
+                    <p className="text-white font-bold text-lg">Student Premium - $5/month</p>
+                  </div>
+                </div>
               </>
             ) : (
               <>
