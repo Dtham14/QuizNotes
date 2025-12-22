@@ -462,9 +462,11 @@ export default function ProfilePage() {
           themeColor: selectedThemeColor
         } : null)
         setAvatarFile(null)
+        setAvatarPreview(uploadData.avatarUrl) // Update preview to match new URL
         setShowAvatarPicker(false)
-      } else if (user?.avatarUrl && !selectedAvatar) {
-        // User has existing custom avatar, just update theme color
+      } else if (avatarPreview && user?.avatarUrl) {
+        // User has existing custom avatar displayed (avatarPreview shows it), just update theme color
+        // This means user didn't select a predefined avatar (which would clear avatarPreview)
         await fetch('/api/profile/theme', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -528,6 +530,9 @@ export default function ProfilePage() {
       setAvatarPreview(reader.result as string)
     }
     reader.readAsDataURL(file)
+
+    // Reset input value to allow selecting the same file again
+    e.target.value = ''
   }
 
   const handleClearCustomAvatar = () => {
@@ -931,11 +936,13 @@ export default function ProfilePage() {
                   >
                     {hasCustomAvatar ? (
                       <Image
+                        key={user.avatarUrl}
                         src={user.avatarUrl!}
                         alt="Profile"
                         width={128}
                         height={128}
                         className="w-full h-full object-cover"
+                        unoptimized
                       />
                     ) : (
                       currentAvatar.icon
@@ -2303,11 +2310,13 @@ export default function ProfilePage() {
                 >
                   {avatarPreview ? (
                     <Image
+                      key={avatarPreview}
                       src={avatarPreview}
                       alt="Avatar preview"
                       width={80}
                       height={80}
                       className="w-full h-full object-cover"
+                      unoptimized
                     />
                   ) : (
                     <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

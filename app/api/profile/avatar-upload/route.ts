@@ -64,12 +64,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Failed to upload avatar' }, { status: 500 })
     }
 
-    // Get public URL
+    // Get public URL with cache-busting timestamp
     const { data: urlData } = supabase.storage
       .from('avatars')
       .getPublicUrl(fileName)
 
-    const avatarUrl = urlData.publicUrl
+    // Add timestamp to bust browser cache when avatar is updated
+    const avatarUrl = `${urlData.publicUrl}?t=${Date.now()}`
 
     // Update profile with new avatar URL
     const { error: updateError } = await supabase
