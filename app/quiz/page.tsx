@@ -98,7 +98,7 @@ function QuizContent() {
     loadUserData();
   }, [router]);
 
-  // Handle URL parameters for assignment-based quizzes
+  // Handle URL parameters for assignment-based quizzes and quiz type selection
   useEffect(() => {
     if (initialized || !user) return;
 
@@ -110,29 +110,44 @@ function QuizContent() {
     }
 
     if (typeParam) {
-      const validTypes: QuizType[] = ['intervals', 'chords', 'scales', 'noteIdentification', 'ear-training', 'mixed'];
-      // Map URL params to quiz types
-      const typeMap: Record<string, QuizType> = {
-        'intervals': 'intervals',
-        'interval-quiz': 'intervals',
-        'chords': 'chords',
-        'scales': 'scales',
+      // Map URL params to Quiz Builder types for consistent experience
+      const builderTypeMap: Record<string, BuilderQuizType> = {
         'noteIdentification': 'noteIdentification',
         'note-identification': 'noteIdentification',
-        'ear-training': 'ear-training',
-        'mixed': 'mixed',
-        'mixed-quiz': 'mixed',
+        'keySignature': 'keySignature',
+        'key-signature': 'keySignature',
+        'intervals': 'intervalIdentification',
+        'intervalIdentification': 'intervalIdentification',
+        'interval-identification': 'intervalIdentification',
+        'chords': 'chordIdentification',
+        'chordIdentification': 'chordIdentification',
+        'chord-identification': 'chordIdentification',
+        'scales': 'scaleIdentification',
+        'scaleIdentification': 'scaleIdentification',
+        'scale-identification': 'scaleIdentification',
+        'earTrainingNote': 'earTrainingNote',
+        'ear-training-note': 'earTrainingNote',
+        'earTrainingInterval': 'earTrainingInterval',
+        'ear-training-interval': 'earTrainingInterval',
+        'earTrainingChord': 'earTrainingChord',
+        'ear-training-chord': 'earTrainingChord',
       };
 
-      const mappedType = typeMap[typeParam];
-      if (mappedType && validTypes.includes(mappedType)) {
-        let quizQuestions: CombinedQuestion[];
-        if (mappedType === 'ear-training') {
-          quizQuestions = getEarTrainingQuestions(10);
-        } else {
-          quizQuestions = getQuizQuestions(mappedType, 10);
-        }
-        setQuizType(mappedType);
+      const mappedBuilderType = builderTypeMap[typeParam];
+      if (mappedBuilderType) {
+        // Open Quiz Builder modal for the selected type
+        setSelectedBuilderType(mappedBuilderType);
+        setIsModalOpen(true);
+      } else if (typeParam === 'mixed' || typeParam === 'mixed-quiz') {
+        // For mixed quizzes, use legacy questions
+        const quizQuestions = getQuizQuestions('mixed', 10);
+        setQuizType('mixed');
+        setQuestions(quizQuestions);
+        setAnswers(new Array(quizQuestions.length).fill(null));
+      } else if (typeParam === 'ear-training') {
+        // For generic ear training, use legacy questions
+        const quizQuestions = getEarTrainingQuestions(10);
+        setQuizType('ear-training');
         setQuestions(quizQuestions);
         setAnswers(new Array(quizQuestions.length).fill(null));
       }

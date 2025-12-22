@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import AnonymousQuiz from './AnonymousQuiz';
@@ -21,10 +22,18 @@ type LandingPageClientProps = {
 };
 
 export default function LandingPageClient({ user }: LandingPageClientProps) {
+  const router = useRouter();
   const [showQuiz, setShowQuiz] = useState(false);
   const [selectedQuizType, setSelectedQuizType] = useState<QuizType | undefined>(undefined);
 
   const openQuiz = (type?: QuizType) => {
+    // Logged-in users go to the quiz page with full features
+    if (user) {
+      const url = type ? `/quiz?type=${type}` : '/quiz';
+      router.push(url);
+      return;
+    }
+    // Anonymous users see the anonymous quiz modal
     setSelectedQuizType(type);
     setShowQuiz(true);
   };
