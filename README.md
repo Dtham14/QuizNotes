@@ -1,161 +1,157 @@
 # QuizNotes
 
-A professional music theory quiz web application built with Next.js, featuring real music notation rendered with VexFlow and user authentication with quiz tracking.
+A professional music theory learning platform featuring interactive quizzes, ear training exercises, real music notation, and gamification. Built for students, teachers, and musicians of all levels.
 
 ## Features
 
-- **User Authentication**: Secure login and registration system with session management
-- **Real Music Notation**: VexFlow integration for displaying professional sheet music
-- **Multiple Quiz Topics**:
-  - Intervals
-  - Chords
-  - Scales
-- **Progress Tracking**: Dashboard to view quiz history and performance statistics
-- **Responsive Design**: Professional UI with Tailwind CSS
-- **Database**: SQLite with Drizzle ORM for easy setup and scalability
+### Core Learning
+- **Music Notation Rendering** - Professional sheet music display with VexFlow 5
+- **Ear Training** - Audio-based exercises with Tone.js synthesis
+- **Multiple Quiz Types** - Notes, intervals, chords, scales, key signatures
+- **Instant Feedback** - Real-time scoring with detailed explanations
+
+### Gamification
+- **XP & Leveling** - Earn experience points and level up
+- **Daily Streaks** - Maintain practice streaks with customizable goals
+- **Achievements** - Unlock 15+ badges for milestones
+- **Leaderboards** - Compete globally or within classes
+
+### Teacher Tools (Premium)
+- **Class Management** - Create classes with unique join codes
+- **Custom Quizzes** - Build assignments with specific topics and difficulty
+- **Student Progress** - Track performance and completion rates
+- **Assignment System** - Set quizzes with attempt limits
+
+### Additional Features
+- **PDF Export** - Download quiz results with notation
+- **Profile Customization** - Avatars, display names, theme colors
+- **Multiple Instruments** - Piano, guitar, violin, trumpet, and more
+- **Responsive Design** - Works on desktop and mobile
 
 ## Tech Stack
 
-- **Framework**: Next.js 16 (App Router)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS 4
-- **Database**: SQLite with Drizzle ORM
-- **Music Notation**: VexFlow 5
-- **Authentication**: Custom auth with bcrypt and sessions
+| Category | Technology |
+|----------|------------|
+| Framework | Next.js 16 (App Router) |
+| Language | TypeScript |
+| Styling | Tailwind CSS 4 |
+| Database | Supabase (PostgreSQL) |
+| Auth | Supabase Auth |
+| Payments | Stripe |
+| Notation | VexFlow 5 |
+| Audio | Tone.js |
+| PDF | jsPDF + svg2pdf.js |
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js 18+ installed
-- npm or yarn package manager
+- Node.js 18+
+- npm or yarn
+- Supabase account
+- Stripe account (for payments)
 
 ### Installation
 
-1. Navigate to the project directory:
 ```bash
-cd music-theory-quiz
-```
+# Clone the repository
+git clone <repository-url>
+cd music-theory-quiz-v2
 
-2. Install dependencies (already done):
-```bash
+# Install dependencies
 npm install
-```
 
-3. Push the database schema (already done):
-```bash
-npm run db:push
-```
+# Set up environment variables
+cp .env.example .env.local
+# Edit .env.local with your Supabase and Stripe credentials
 
-4. Start the development server:
-```bash
+# Start development server
 npm run dev
 ```
 
-5. Open your browser and navigate to [http://localhost:3000](http://localhost:3000)
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### Environment Variables
+
+Create a `.env.local` file with:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+
+STRIPE_SECRET_KEY=your_stripe_secret
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable
+STRIPE_WEBHOOK_SECRET=your_webhook_secret
+STRIPE_STUDENT_PRICE_ID=price_xxx
+STRIPE_MONTHLY_PRICE_ID=price_xxx
+STRIPE_YEARLY_PRICE_ID=price_xxx
+
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
 
 ## Project Structure
 
 ```
-music-theory-quiz/
-├── app/
-│   ├── api/
-│   │   ├── auth/          # Authentication endpoints
-│   │   └── quiz/          # Quiz submission and retrieval
-│   ├── dashboard/         # User dashboard page
-│   ├── login/             # Login/Register page
-│   ├── quiz/              # Quiz taking page
-│   └── page.tsx           # Home landing page
-├── components/
-│   └── MusicNotation.tsx  # VexFlow music notation component
-├── lib/
-│   ├── db/
-│   │   ├── schema.ts      # Database schema
-│   │   └── index.ts       # Database client
-│   ├── auth.ts            # Authentication utilities
-│   └── quizData.ts        # Quiz questions and data
-├── drizzle.config.ts      # Drizzle ORM configuration
-└── sqlite.db              # SQLite database file
+app/
+├── api/
+│   ├── auth/           # Authentication endpoints
+│   ├── quiz/           # Quiz operations & PDF generation
+│   ├── gamification/   # XP, achievements, leaderboards
+│   ├── teacher/        # Class & assignment management
+│   ├── student/        # Enrollment & progress
+│   ├── admin/          # Platform analytics
+│   └── stripe/         # Payment processing
+├── quiz/               # Quiz interface
+├── profile/            # User dashboard
+├── teacher/            # Teacher portal
+├── admin/              # Admin dashboard
+├── leaderboard/        # Rankings
+└── achievements/       # Badge display
+
+components/
+├── MusicNotation.tsx   # VexFlow renderer
+├── AudioPlayer.tsx     # Tone.js playback
+├── gamification/       # XP bars, streaks, badges
+└── quiz-builder/       # Quiz customization
+
+lib/
+├── supabase/           # Database clients
+├── quizBuilder/        # Dynamic question generation
+├── gamification/       # XP, streaks, achievements
+├── audio/              # Tone.js utilities
+└── pdf/                # PDF generation
 ```
 
-## Usage
+## Scripts
 
-### Creating an Account
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start development server |
+| `npm run build` | Build for production |
+| `npm run start` | Run production server |
+| `npm run lint` | Run ESLint |
 
-1. Click "Get Started" or "Register" on the home page
-2. Enter your email, password, and optional name
-3. You'll be automatically logged in and redirected to the dashboard
+## Quiz Topics
 
-### Taking a Quiz
+| Topic | Description |
+|-------|-------------|
+| Note Identification | Identify notes on treble and bass clef |
+| Key Signatures | Recognize major and minor key signatures |
+| Intervals | Identify intervals between notes |
+| Chords | Recognize chord types and inversions |
+| Scales | Identify scale types |
+| Ear Training | Audio-based note, interval, and chord recognition |
+| Mixed | Random questions from all topics |
 
-1. From the dashboard or home page, click "Start a Quiz"
-2. Choose a topic (Intervals, Chords, or Scales)
-3. Answer questions by selecting the correct option
-4. View your results and explanations at the end
-5. Your quiz attempt is automatically saved
+## User Roles
 
-### Viewing Progress
-
-1. Navigate to your Dashboard
-2. View statistics including:
-   - Total quizzes taken
-   - Average score
-   - Performance by topic
-   - Complete quiz history with dates and scores
-
-## Database Management
-
-View and edit your database using Drizzle Studio:
-```bash
-npm run db:studio
-```
-
-This will open a web interface to browse and manage your database.
-
-## Development Scripts
-
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run start` - Start production server
-- `npm run lint` - Run ESLint
-- `npm run db:push` - Push database schema changes
-- `npm run db:studio` - Open Drizzle Studio
-
-## Features Breakdown
-
-### Authentication System
-- Secure password hashing with bcrypt
-- Session-based authentication
-- Protected routes and API endpoints
-- Automatic session expiration (7 days)
-
-### Quiz System
-- 15 questions across 3 topics
-- Real-time scoring
-- Answer tracking and review
-- Detailed explanations for each question
-
-### Music Notation
-- VexFlow-powered notation rendering
-- Support for multiple clefs (treble, bass)
-- Accidentals and complex note patterns
-- Responsive canvas sizing
-
-## Future Enhancements
-
-Potential features to add:
-- More quiz topics (key signatures, rhythm, harmony)
-- Difficulty levels
-- Timed quizzes
-- Leaderboards
-- Study mode with hints
-- Custom quiz creation
-- Export quiz results as PDF
+| Role | Access |
+|------|--------|
+| Student | Quizzes, progress tracking, leaderboards |
+| Teacher | + Class management, custom quizzes, analytics |
+| Admin | + Platform administration, user management |
 
 ## License
 
 This project is open source and available for educational purposes.
-
-## Support
-
-For issues or questions, please check the code comments or reach out to the development team.
