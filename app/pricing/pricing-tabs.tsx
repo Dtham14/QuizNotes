@@ -144,7 +144,7 @@ export function PricingTabs({ user, hasActiveSubscription, isTeacher }: PricingT
             <div className="text-center mb-8">
               <h3 className="text-lg font-semibold text-brand mb-2">Premium</h3>
               <div className="flex items-baseline justify-center gap-1">
-                <span className="text-5xl font-bold text-gray-900">$4</span>
+                <span className="text-5xl font-bold text-gray-900">$5</span>
                 <span className="text-gray-600">/month</span>
               </div>
               <p className="text-sm text-gray-500 mt-2">Billed monthly</p>
@@ -197,7 +197,7 @@ export function PricingTabs({ user, hasActiveSubscription, isTeacher }: PricingT
               <CheckoutButton plan="student_premium" variant="primary" />
             ) : (
               <Link
-                href="/login?tab=register"
+                href="/login?tab=register&plan=student_premium"
                 className="block w-full py-4 bg-brand text-white font-semibold rounded-xl hover:bg-brand-dark transition-colors text-center"
               >
                 Get Started
@@ -215,7 +215,7 @@ export function PricingTabs({ user, hasActiveSubscription, isTeacher }: PricingT
             <div className="text-center mb-8">
               <h3 className="text-lg font-semibold text-gray-600 mb-2">Monthly</h3>
               <div className="flex items-baseline justify-center gap-1">
-                <span className="text-5xl font-bold text-gray-900">$9</span>
+                <span className="text-5xl font-bold text-gray-900">$12</span>
                 <span className="text-gray-600">/month</span>
               </div>
               <p className="text-sm text-gray-500 mt-2">Billed monthly</p>
@@ -268,7 +268,7 @@ export function PricingTabs({ user, hasActiveSubscription, isTeacher }: PricingT
               <CheckoutButton plan="monthly" variant="secondary" />
             ) : (
               <Link
-                href="/login?tab=register"
+                href="/login?tab=register&plan=monthly"
                 className="block w-full py-4 bg-gray-900 text-white font-semibold rounded-xl hover:bg-gray-800 transition-colors text-center"
               >
                 Get Started
@@ -280,17 +280,17 @@ export function PricingTabs({ user, hasActiveSubscription, isTeacher }: PricingT
           <div className="bg-white rounded-2xl shadow-xl p-8 border-2 border-brand relative">
             <div className="absolute -top-4 left-1/2 -translate-x-1/2">
               <span className="px-4 py-1 bg-brand text-white text-sm font-semibold rounded-full">
-                Save 33%
+                Save 44%
               </span>
             </div>
 
             <div className="text-center mb-8">
               <h3 className="text-lg font-semibold text-brand mb-2">Yearly</h3>
               <div className="flex items-baseline justify-center gap-1">
-                <span className="text-5xl font-bold text-gray-900">$72</span>
+                <span className="text-5xl font-bold text-gray-900">$80</span>
                 <span className="text-gray-600">/year</span>
               </div>
-              <p className="text-sm text-gray-500 mt-2">$6/month, billed annually</p>
+              <p className="text-sm text-gray-500 mt-2">$6.67/month, billed annually</p>
             </div>
 
             <ul className="space-y-4 mb-8">
@@ -346,7 +346,7 @@ export function PricingTabs({ user, hasActiveSubscription, isTeacher }: PricingT
               <CheckoutButton plan="yearly" variant="primary" />
             ) : (
               <Link
-                href="/login?tab=register"
+                href="/login?tab=register&plan=yearly"
                 className="block w-full py-4 bg-brand text-white font-semibold rounded-xl hover:bg-brand-dark transition-colors text-center"
               >
                 Get Started

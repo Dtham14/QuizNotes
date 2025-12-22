@@ -19,7 +19,11 @@
       "Skill(frontend-design)",
       "Bash(npm run build:check:*)",
       "Bash(xargs ls:*)",
-      "Bash(node scripts/create-premium-student.js:*)"
+      "Bash(node scripts/create-premium-student.js:*)",
+      "Bash(where stripe)",
+      "Bash(where scoop:*)",
+      "Bash(where:*)",
+      "Bash(winget install:*)"
     ]
   }
 }

@@ -1,7 +1,7 @@
 // Quiz Builder Utility Functions
 
-import { PITCH_RANGES, ALL_INTERVALS, ALL_CHORD_TYPES, ALL_SCALE_TYPES } from './types';
-import type { AccidentalType, Clef } from './types';
+import { PITCH_RANGES, ALL_INTERVALS, ALL_CHORD_TYPES, ALL_SCALE_TYPES, QUIZ_TYPE_INFO } from './types';
+import type { AccidentalType, Clef, QuizType } from './types';
 
 // Note definitions with all accidentals
 const NOTE_NAMES = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
@@ -486,4 +486,31 @@ export function getVexFlowKeySignature(key: string): string {
   // VexFlow uses format like 'C', 'G', 'F', 'Bb', 'Am', 'Em', etc.
   // For flats, use lowercase b
   return key.replace('♭', 'b');
+}
+
+// Format quiz type for display
+export function formatQuizType(type: string): string {
+  // Check if it's a known QuizType in QUIZ_TYPE_INFO
+  if (type in QUIZ_TYPE_INFO) {
+    return QUIZ_TYPE_INFO[type as QuizType].name;
+  }
+
+  // Fallback mappings for legacy/alternate quiz type names
+  const fallbackMap: Record<string, string> = {
+    'ear-training': 'Ear Training',
+    'intervals': 'Intervals',
+    'chords': 'Chords',
+    'scales': 'Scales',
+    'mixed': 'Mixed Quiz',
+  };
+
+  if (type in fallbackMap) {
+    return fallbackMap[type];
+  }
+
+  // Convert camelCase or kebab-case to Title Case
+  return type
+    .replace(/([a-z])([A-Z])/g, '$1 $2')  // camelCase to spaces
+    .replace(/-/g, ' ')                    // kebab-case to spaces
+    .replace(/\b\w/g, c => c.toUpperCase()); // capitalize each word
 }

@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import ProfileDropdown from '@/components/ProfileDropdown'
 import type { GamificationStats, AchievementDefinition, UserAchievementWithDetails } from '@/lib/types/database'
+import { formatQuizType } from '@/lib/quizBuilder/utils'
 
 // Avatar options with musical themes
 const AVATAR_OPTIONS = [
@@ -570,7 +571,7 @@ export default function ProfilePage() {
       const res = await fetch('/api/student/enroll', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ classCode: classCode.trim().toUpperCase() }),
+        body: JSON.stringify({ code: classCode.trim().toUpperCase() }),
       })
       const data = await res.json()
       if (!res.ok) {
@@ -1790,40 +1791,49 @@ export default function ProfilePage() {
                       </Link>
                     </div>
                   ) : (
-                    attempts.slice(0, 5).map((attempt) => {
-                      const percentage = Math.round((attempt.score / attempt.totalQuestions) * 100)
-                      const quizName = attempt.quizType.charAt(0).toUpperCase() + attempt.quizType.slice(1).replace(/-/g, ' ')
-                      return (
-                        <div key={attempt.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
-                          <div className="flex items-center gap-3">
-                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold text-white ${
-                              percentage >= 80 ? 'bg-green-500' : percentage >= 60 ? 'bg-amber-500' : 'bg-red-500'
-                            }`}>
-                              {percentage}%
+                    (() => {
+                      // Deduplicate: show only the most recent attempt per quiz type
+                      const seenTypes = new Set<string>()
+                      const uniqueAttempts = attempts.filter((attempt) => {
+                        if (seenTypes.has(attempt.quizType)) return false
+                        seenTypes.add(attempt.quizType)
+                        return true
+                      })
+                      return uniqueAttempts.slice(0, 5).map((attempt) => {
+                        const percentage = Math.round((attempt.score / attempt.totalQuestions) * 100)
+                        const quizName = formatQuizType(attempt.quizType)
+                        return (
+                          <div key={attempt.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                            <div className="flex items-center gap-3">
+                              <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold text-white ${
+                                percentage >= 80 ? 'bg-green-500' : percentage >= 60 ? 'bg-amber-500' : 'bg-red-500'
+                              }`}>
+                                {percentage}%
+                              </div>
+                              <div>
+                                <p className="font-semibold text-gray-900">{quizName}</p>
+                                <p className="text-xs text-gray-500">
+                                  {attempt.score}/{attempt.totalQuestions} correct • {new Date(attempt.createdAt).toLocaleDateString()}
+                                </p>
+                              </div>
                             </div>
-                            <div>
-                              <p className="font-semibold text-gray-900">{quizName}</p>
-                              <p className="text-xs text-gray-500">
-                                {attempt.score}/{attempt.totalQuestions} correct • {new Date(attempt.createdAt).toLocaleDateString()}
-                              </p>
-                            </div>
+                            {attempt.pdfUrl && (
+                              <a
+                                href={attempt.pdfUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-2 text-brand hover:bg-brand/10 rounded-lg transition-colors"
+                                title="Download PDF"
+                              >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                              </a>
+                            )}
                           </div>
-                          {attempt.pdfUrl && (
-                            <a
-                              href={attempt.pdfUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="p-2 text-brand hover:bg-brand/10 rounded-lg transition-colors"
-                              title="Download PDF"
-                            >
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                              </svg>
-                            </a>
-                          )}
-                        </div>
-                      )
-                    })
+                        )
+                      })
+                    })()
                   )}
                 </div>
               )}
@@ -1890,7 +1900,7 @@ export default function ProfilePage() {
                   ) : (
                     attempts.filter(a => a.pdfUrl).slice(0, 10).map((attempt) => {
                       const percentage = Math.round((attempt.score / attempt.totalQuestions) * 100)
-                      const quizName = attempt.quizType.charAt(0).toUpperCase() + attempt.quizType.slice(1).replace(/-/g, ' ')
+                      const quizName = formatQuizType(attempt.quizType)
                       const isDownloading = downloadingPdf === attempt.id
                       const isDisabled = isDownloading || (pdfStats?.downloadsRemaining === 0)
                       return (

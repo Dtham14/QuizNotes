@@ -9,6 +9,7 @@ function LoginContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const defaultTab = searchParams.get('tab') === 'register' ? 'register' : 'login'
+  const planParam = searchParams.get('plan')
 
   const [activeTab, setActiveTab] = useState(defaultTab)
   const [email, setEmail] = useState('')
@@ -20,6 +21,25 @@ function LoginContent() {
   const [loading, setLoading] = useState(false)
 
   const supabase = createClient()
+
+  const initiateCheckout = async (plan: string) => {
+    try {
+      const response = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan }),
+      })
+      const data = await response.json()
+      if (data.url) {
+        window.location.href = data.url
+      } else {
+        // If checkout fails, redirect to pricing
+        router.push('/pricing')
+      }
+    } catch {
+      router.push('/pricing')
+    }
+  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -38,9 +58,14 @@ function LoginContent() {
         return
       }
 
-      // Redirect to profile for all users
-      router.push('/profile')
-      router.refresh()
+      // If plan parameter exists, redirect to Stripe checkout
+      if (planParam && ['monthly', 'yearly', 'student_premium'].includes(planParam)) {
+        await initiateCheckout(planParam)
+      } else {
+        // Redirect to profile for all users
+        router.push('/profile')
+        router.refresh()
+      }
     } catch (err) {
       setError('An error occurred. Please try again.')
     } finally {
@@ -74,10 +99,14 @@ function LoginContent() {
       // Check if email confirmation is required
       setSuccess('Account created successfully! Please check your email to confirm your account.')
 
-      // If no email confirmation required, redirect to profile
-      setTimeout(() => {
-        router.push('/profile')
-        router.refresh()
+      // If no email confirmation required, redirect to checkout or profile
+      setTimeout(async () => {
+        if (planParam && ['monthly', 'yearly', 'student_premium'].includes(planParam)) {
+          await initiateCheckout(planParam)
+        } else {
+          router.push('/profile')
+          router.refresh()
+        }
       }, 2000)
     } catch (err) {
       setError('An error occurred. Please try again.')
@@ -91,6 +120,11 @@ function LoginContent() {
     setLoading(true)
 
     try {
+      // Store plan in localStorage for OAuth callback
+      if (planParam && ['monthly', 'yearly', 'student_premium'].includes(planParam)) {
+        localStorage.setItem('checkout_plan', planParam)
+      }
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {

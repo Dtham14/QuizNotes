@@ -11,6 +11,6 @@ export async function GET(request: Request) {
     await supabase.auth.exchangeCodeForSession(code)
   }
 
-  // Redirect all users to profile
-  return NextResponse.redirect(`${origin}/profile`)
+  // Redirect to auth complete page which handles checkout redirect client-side
+  return NextResponse.redirect(`${origin}/auth/complete`)
 }

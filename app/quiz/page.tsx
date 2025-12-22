@@ -248,13 +248,13 @@ function QuizContent() {
       // Map builder quiz type to legacy quiz type for display
       const typeMap: Record<BuilderQuizType, QuizType> = {
         'noteIdentification': 'noteIdentification',
-        'keySignature': 'scales',
-        'intervalIdentification': 'intervals',
-        'chordIdentification': 'chords',
-        'scaleIdentification': 'scales',
-        'earTrainingNote': 'ear-training',
-        'earTrainingInterval': 'ear-training',
-        'earTrainingChord': 'ear-training',
+        'keySignature': 'keySignature',
+        'intervalIdentification': 'intervalIdentification',
+        'chordIdentification': 'chordIdentification',
+        'scaleIdentification': 'scaleIdentification',
+        'earTrainingNote': 'earTrainingNote',
+        'earTrainingInterval': 'earTrainingInterval',
+        'earTrainingChord': 'earTrainingChord',
       };
 
       setQuizType(typeMap[settings.quizType] || 'mixed');
