@@ -2077,7 +2077,9 @@ export default function ProfilePage() {
                             )}
                           </div>
                           <Link
-                            href={assignment.quizId ? `/quiz/${assignment.quizId}?assignmentId=${assignment.id}` : '/quiz'}
+                            href={assignment.quizId
+                              ? `/quiz/${assignment.quizId}?assignmentId=${assignment.id}`
+                              : `/quiz?type=${assignment.quizType}&assignmentId=${assignment.id}`}
                             className="px-3 py-1.5 bg-brand text-white font-semibold rounded-lg hover:bg-brand-dark transition-colors text-xs flex-shrink-0"
                           >
                             {assignment.attemptsUsed > 0 ? 'Retry' : 'Start'}

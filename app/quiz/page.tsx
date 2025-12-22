@@ -16,6 +16,7 @@ import type { GamificationStats } from '@/lib/types/database';
 import QuizBuilderModal from '@/components/quiz-builder/QuizBuilderModal';
 import type { QuizType as BuilderQuizType, QuizSettings, GeneratedQuestion } from '@/lib/quizBuilder/types';
 import { generateQuestions, QUIZ_TYPE_INFO, generateMixedQuiz, type MixedQuizCategory } from '@/lib/quizBuilder';
+import { getDefaultSettings } from '@/lib/quizBuilder/presets';
 import { generateQuizResultsPdf, uploadQuizPdf, type QuizPdfData } from '@/lib/pdf';
 
 interface GamificationResult {
@@ -150,9 +151,38 @@ function QuizContent() {
 
       const mappedBuilderType = builderTypeMap[typeParam];
       if (mappedBuilderType) {
-        // Open Quiz Builder modal for the selected type
-        setSelectedBuilderType(mappedBuilderType);
-        setIsModalOpen(true);
+        // For assignment-based quizzes, auto-start with default (intermediate) settings
+        if (assignmentIdParam) {
+          try {
+            const defaultSettings = getDefaultSettings(mappedBuilderType, 'intermediate');
+            const generatedQuestions = generateQuestions(defaultSettings);
+
+            // Map builder quiz type to legacy quiz type for display
+            const typeMap: Record<BuilderQuizType, QuizType> = {
+              'noteIdentification': 'noteIdentification',
+              'keySignature': 'keySignature',
+              'intervalIdentification': 'intervalIdentification',
+              'chordIdentification': 'chordIdentification',
+              'scaleIdentification': 'scaleIdentification',
+              'earTrainingNote': 'earTrainingNote',
+              'earTrainingInterval': 'earTrainingInterval',
+              'earTrainingChord': 'earTrainingChord',
+            };
+
+            setQuizType(typeMap[mappedBuilderType] || 'mixed');
+            setQuestions(generatedQuestions);
+            setAnswers(new Array(generatedQuestions.length).fill(null));
+          } catch (error) {
+            console.error('Failed to generate assignment quiz:', error);
+            // Fallback to modal if generation fails
+            setSelectedBuilderType(mappedBuilderType);
+            setIsModalOpen(true);
+          }
+        } else {
+          // For non-assignment quizzes, open Quiz Builder modal for the selected type
+          setSelectedBuilderType(mappedBuilderType);
+          setIsModalOpen(true);
+        }
       } else if (typeParam === 'mixed' || typeParam === 'mixed-quiz') {
         // For mixed quizzes, use legacy questions
         const quizQuestions = getQuizQuestions('mixed', 10);
@@ -805,9 +835,10 @@ function QuizContent() {
           )}
 
           <div className="space-y-4 mb-8 max-h-[600px] overflow-y-auto pr-2">
-            {/* Hide correct answers in results if assignment has attempts remaining (note: attemptsRemaining was before this attempt) */}
+            {/* Hide correct answers in results if assignment has more than 1 attempt remaining (show answers on last attempt or perfect score) */}
             {(() => {
-              const hideAnswersInResults = assignmentInfo && assignmentInfo.maxAttempts > 1 && assignmentInfo.attemptsRemaining > 0;
+              const isPerfectScore = score === questions.length;
+              const hideAnswersInResults = assignmentInfo && assignmentInfo.maxAttempts > 1 && assignmentInfo.attemptsRemaining > 1 && !isPerfectScore;
               return questions.map((question, index) => {
               const userAnswer = answers[index];
               const correctIdx = getCorrectAnswerIndex(question);
@@ -895,33 +926,104 @@ function QuizContent() {
           </div>
 
           <div className="flex flex-wrap gap-3 justify-center">
-            <button
-              onClick={() => {
-                setQuizType(null);
-                setQuestions([]);
-                setCurrentQuestionIndex(0);
-                setSelectedAnswer(null);
-                setAnswers([]);
-                setShowResult(false);
-                setScore(0);
-                setGamificationResult(null);
-                setShowXPAnimation(false);
-                setShowLevelUp(false);
-                setShowAchievements(false);
-                // Reset PDF state
-                setQuizAttemptId(null);
-                setPdfUrl(null);
-                setPdfGenerating(false);
-              }}
-              className="px-6 py-3 bg-brand text-white font-semibold rounded-lg hover:bg-brand-dark transition-colors"
-            >
-              Take Another Quiz
-            </button>
+            {/* Show Retry button for assignments with attempts remaining */}
+            {assignmentInfo && assignmentInfo.attemptsRemaining > 1 && (
+              <button
+                onClick={() => {
+                  // Reset quiz state but keep assignment context
+                  setQuestions([]);
+                  setCurrentQuestionIndex(0);
+                  setSelectedAnswer(null);
+                  setAnswers([]);
+                  setShowResult(false);
+                  setShowFeedback(false);
+                  setScore(0);
+                  setGamificationResult(null);
+                  setShowXPAnimation(false);
+                  setShowLevelUp(false);
+                  setShowAchievements(false);
+                  setQuizAttemptId(null);
+                  setPdfUrl(null);
+                  setPdfGenerating(false);
+                  // Re-trigger quiz generation by resetting quizType and re-initializing
+                  setQuizType(null);
+                  setInitialized(false);
+                  // Update attempts info
+                  setAssignmentInfo({
+                    ...assignmentInfo,
+                    attemptsUsed: assignmentInfo.attemptsUsed + 1,
+                    attemptsRemaining: assignmentInfo.attemptsRemaining - 1,
+                  });
+                }}
+                className="px-6 py-3 bg-amber-500 text-white font-semibold rounded-lg hover:bg-amber-600 transition-colors"
+              >
+                Retry Quiz ({assignmentInfo.attemptsRemaining - 1} left)
+              </button>
+            )}
+            {/* Show Submit button for assignments (to finalize score) */}
+            {assignmentInfo && assignmentInfo.attemptsRemaining > 1 && (
+              <button
+                onClick={async () => {
+                  try {
+                    const res = await fetch('/api/student/assignments/submit', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ assignmentId }),
+                    });
+                    if (res.ok) {
+                      // Navigate to profile after successful submission
+                      window.location.href = '/profile';
+                    } else {
+                      const data = await res.json();
+                      alert(data.error || 'Failed to submit assignment');
+                    }
+                  } catch (error) {
+                    console.error('Failed to submit:', error);
+                    alert('Failed to submit assignment');
+                  }
+                }}
+                className="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors"
+              >
+                Submit & Finish
+              </button>
+            )}
+            {/* Show Take Another Quiz for non-assignments or when no retries left */}
+            {(!assignmentInfo || assignmentInfo.attemptsRemaining <= 1) && (
+              <button
+                onClick={() => {
+                  setQuizType(null);
+                  setQuestions([]);
+                  setCurrentQuestionIndex(0);
+                  setSelectedAnswer(null);
+                  setAnswers([]);
+                  setShowResult(false);
+                  setScore(0);
+                  setGamificationResult(null);
+                  setShowXPAnimation(false);
+                  setShowLevelUp(false);
+                  setShowAchievements(false);
+                  // Reset PDF state
+                  setQuizAttemptId(null);
+                  setPdfUrl(null);
+                  setPdfGenerating(false);
+                  // Reset assignment context
+                  setAssignmentId(null);
+                  setAssignmentInfo(null);
+                }}
+                className="px-6 py-3 bg-brand text-white font-semibold rounded-lg hover:bg-brand-dark transition-colors"
+              >
+                Take Another Quiz
+              </button>
+            )}
             <Link
               href="/profile"
-              className="px-6 py-3 bg-white text-brand font-semibold rounded-lg hover:bg-gray-50 transition-colors border-2 border-brand"
+              className={`px-6 py-3 font-semibold rounded-lg transition-colors ${
+                assignmentInfo && assignmentInfo.attemptsRemaining > 1
+                  ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  : 'bg-white text-brand hover:bg-gray-50 border-2 border-brand'
+              }`}
             >
-              View Dashboard
+              {assignmentInfo && assignmentInfo.attemptsRemaining > 1 ? 'Back to Dashboard' : 'View Dashboard'}
             </Link>
           </div>
         </div>

@@ -66,6 +66,16 @@ export async function GET() {
       .in('assignment_id', assignmentIds)
       .order('created_at', { ascending: false })
 
+    // Get early submissions for this student
+    const { data: submissions } = await supabase
+      .from('assignment_submissions')
+      .select('assignment_id')
+      .eq('student_id', user.id)
+      .in('assignment_id', assignmentIds)
+
+    // Create a set of submitted assignment IDs
+    const submittedAssignments = new Set((submissions || []).map((s) => s.assignment_id))
+
     // Create a map of assignment attempts with count and best score
     const attemptMap = new Map<string, {
       attemptsUsed: number
@@ -110,9 +120,11 @@ export async function GET() {
       const attemptData = attemptMap.get(assignment.id)
       const maxAttempts = assignment.max_attempts || 1
       const attemptsUsed = attemptData?.attemptsUsed || 0
-      const attemptsRemaining = Math.max(0, maxAttempts - attemptsUsed)
-      // Only mark as fully completed when all attempts are exhausted
-      const completed = attemptsUsed > 0 && attemptsRemaining === 0
+      const isSubmitted = submittedAssignments.has(assignment.id)
+      // If submitted early, no attempts remaining; otherwise calculate normally
+      const attemptsRemaining = isSubmitted ? 0 : Math.max(0, maxAttempts - attemptsUsed)
+      // Mark as completed when all attempts are exhausted OR student submitted early
+      const completed = (attemptsUsed > 0 && attemptsRemaining === 0) || isSubmitted
       return {
         id: assignment.id,
         classId: assignment.class_id,
