@@ -161,31 +161,31 @@ export function PricingTabs({ user, hasActiveSubscription, isTeacher }: PricingT
                 <svg className="w-5 h-5 text-brand flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
+                <span className="text-gray-700 font-medium">🎹 Interactive Piano (2 octaves, recording)</span>
+              </li>
+              <li className="flex items-center gap-3">
+                <svg className="w-5 h-5 text-brand flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span className="text-gray-700 font-medium">🎮 Rhythm Game (timing training)</span>
+              </li>
+              <li className="flex items-center gap-3">
+                <svg className="w-5 h-5 text-brand flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span className="text-gray-700 font-medium">🎼 Sandbox Composition (notation editor)</span>
+              </li>
+              <li className="flex items-center gap-3">
+                <svg className="w-5 h-5 text-brand flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
                 <span className="text-gray-700 font-medium">20 PDF downloads/day</span>
               </li>
               <li className="flex items-center gap-3">
                 <svg className="w-5 h-5 text-brand flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
-                <span className="text-gray-700 font-medium">Premium badge</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <svg className="w-5 h-5 text-brand flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span className="text-gray-700 font-medium">Priority leaderboard</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <svg className="w-5 h-5 text-brand flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span className="text-gray-700 font-medium">Early access to new features</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <svg className="w-5 h-5 text-brand flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span className="text-gray-700 font-medium">Support the developers</span>
+                <span className="text-gray-700 font-medium">Premium badge & priority leaderboard</span>
               </li>
             </ul>
 

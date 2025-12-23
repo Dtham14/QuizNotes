@@ -6,6 +6,13 @@ import Link from 'next/link'
 import Image from 'next/image'
 import ProfileDropdown from '@/components/ProfileDropdown'
 
+// Premium tools with paths
+const PREMIUM_TOOLS = [
+  { id: 'piano', icon: '🎹', title: 'Interactive Piano', description: 'Play, practice, and record melodies with a virtual 2-octave keyboard', path: '/tools/piano' },
+  { id: 'rhythm', icon: '🎮', title: 'Rhythm Game', description: 'Test your timing skills with falling notes and build combos', path: '/tools/rhythm' },
+  { id: 'composition', icon: '🎼', title: 'Sandbox Composition', description: 'Create your own music with a full notation editor', path: '/tools/composition' },
+]
+
 interface User {
   id: string
   email: string
@@ -146,6 +153,9 @@ export default function StudentPremiumPage() {
                 <Link href="/quiz" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors">
                   Quizzes
                 </Link>
+                <Link href="/learning" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors">
+                  Learning
+                </Link>
                 <span className="text-sm font-semibold" style={{ color: PREMIUM_BLUE }}>Student Premium</span>
               </div>
             </div>
@@ -247,6 +257,52 @@ export default function StudentPremiumPage() {
                 <h3 className="text-lg font-bold text-gray-900 mb-2">Priority Support</h3>
                 <p className="text-gray-600">Get faster responses when you need help with your learning.</p>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Interactive Premium Features */}
+        {isPremium && (
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-50 to-sky-50 rounded-full border border-blue-100 mb-4">
+                <span>👑</span>
+                <span className="text-sm font-semibold" style={{ color: PREMIUM_BLUE }}>Premium Exclusive</span>
+              </div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">Interactive Tools</h2>
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                Practice and explore music theory with these exclusive interactive features.
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+              {PREMIUM_TOOLS.map(tool => (
+                <Link
+                  key={tool.id}
+                  href={tool.path}
+                  className="group bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all hover:scale-[1.02] hover:border-blue-200"
+                >
+                  <div
+                    className="w-16 h-16 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"
+                    style={{ background: `linear-gradient(135deg, ${PREMIUM_BLUE_LIGHT} 0%, #d0e8f7 100%)` }}
+                  >
+                    <span className="text-4xl">{tool.icon}</span>
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
+                    {tool.title}
+                  </h3>
+                  <p className="text-gray-600 text-sm mb-4">{tool.description}</p>
+                  <div
+                    className="inline-flex items-center gap-2 text-sm font-semibold transition-colors"
+                    style={{ color: PREMIUM_BLUE }}
+                  >
+                    Open Tool
+                    <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                </Link>
+              ))}
             </div>
           </div>
         )}

@@ -25,6 +25,7 @@ export default function LandingPageClient({ user }: LandingPageClientProps) {
   const router = useRouter();
   const [showQuiz, setShowQuiz] = useState(false);
   const [selectedQuizType, setSelectedQuizType] = useState<QuizType | undefined>(undefined);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const openQuiz = (type?: QuizType) => {
     // Logged-in users go to the quiz page with full features
@@ -36,6 +37,7 @@ export default function LandingPageClient({ user }: LandingPageClientProps) {
     // Anonymous users see the anonymous quiz modal
     setSelectedQuizType(type);
     setShowQuiz(true);
+    setMobileMenuOpen(false);
   };
 
   return (
@@ -65,6 +67,9 @@ export default function LandingPageClient({ user }: LandingPageClientProps) {
                 <Link href="/pricing" className="text-gray-700 hover:text-gray-900 text-sm font-semibold">
                   Learning Plans
                 </Link>
+                <Link href="/contact" className="text-gray-700 hover:text-gray-900 text-sm font-semibold">
+                  Contact Me
+                </Link>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -78,21 +83,86 @@ export default function LandingPageClient({ user }: LandingPageClientProps) {
                 <>
                   <Link
                     href="/login"
-                    className="px-4 py-2 text-gray-700 text-sm font-semibold hover:text-gray-900"
+                    className="hidden sm:block px-4 py-2 text-gray-700 text-sm font-semibold hover:text-gray-900"
                   >
                     Log in
                   </Link>
                   <Link
                     href="/login?tab=register"
-                    className="px-4 py-2 bg-brand text-white text-sm font-semibold rounded-lg hover:bg-brand-dark transition-colors"
+                    className="hidden sm:block px-4 py-2 bg-brand text-white text-sm font-semibold rounded-lg hover:bg-brand-dark transition-colors"
                   >
                     Sign up free
                   </Link>
                 </>
               )}
+              {/* Mobile menu button */}
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="md:hidden p-2 text-gray-700 hover:text-gray-900"
+                aria-label="Toggle mobile menu"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  {mobileMenuOpen ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  )}
+                </svg>
+              </button>
             </div>
           </div>
         </div>
+
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden border-t border-gray-200 bg-white">
+            <div className="px-4 py-3 space-y-3">
+              <button
+                onClick={() => {
+                  openQuiz();
+                  setMobileMenuOpen(false);
+                }}
+                className="block w-full text-left px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg text-sm font-semibold"
+              >
+                Quizzes
+              </button>
+              <Link
+                href="/pricing"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg text-sm font-semibold"
+              >
+                Learning Plans
+              </Link>
+              <Link
+                href="/contact"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg text-sm font-semibold"
+              >
+                Contact Me
+              </Link>
+              {!user && (
+                <>
+                  <div className="pt-3 border-t border-gray-200">
+                    <Link
+                      href="/login"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="block px-3 py-2 text-center text-gray-700 hover:bg-gray-50 rounded-lg text-sm font-semibold"
+                    >
+                      Log in
+                    </Link>
+                    <Link
+                      href="/login?tab=register"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="block mt-2 px-3 py-2 text-center bg-brand text-white rounded-lg text-sm font-semibold hover:bg-brand-dark"
+                    >
+                      Sign up free
+                    </Link>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* Hero Section */}
@@ -336,6 +406,98 @@ export default function LandingPageClient({ user }: LandingPageClientProps) {
               <p className="text-gray-600 text-sm">
                 Compete with others and see where you rank globally
               </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Advanced Features */}
+      <section className="py-16 bg-gradient-to-br from-violet-50 via-white to-purple-50">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">
+              Advanced Learning Features
+            </h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Customize your learning experience with powerful tools and detailed analytics
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="bg-white rounded-xl p-6 shadow-md border border-gray-100">
+              <div className="w-12 h-12 bg-brand/20 rounded-xl flex items-center justify-center mb-4">
+                <span className="text-2xl">🎯</span>
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">Quiz Customization</h3>
+              <p className="text-gray-600 text-sm mb-3">
+                Tailor your practice sessions with customizable quiz settings
+              </p>
+              <ul className="space-y-2 text-sm text-gray-600">
+                <li className="flex items-start gap-2">
+                  <span className="text-brand mt-0.5">•</span>
+                  <span>Choose from 10+ quiz types (staff notation, ear training, theory)</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-brand mt-0.5">•</span>
+                  <span>Mix and match question types for comprehensive practice</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-brand mt-0.5">•</span>
+                  <span>Adjust difficulty levels to match your skill</span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="bg-white rounded-xl p-6 shadow-md border border-gray-100">
+              <div className="w-12 h-12 bg-brand/20 rounded-xl flex items-center justify-center mb-4">
+                <span className="text-2xl">📚</span>
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">Interactive Learning</h3>
+              <p className="text-gray-600 text-sm mb-3">
+                Access comprehensive learning resources with audio examples
+              </p>
+              <ul className="space-y-2 text-sm text-gray-600">
+                <li className="flex items-start gap-2">
+                  <span className="text-brand mt-0.5">•</span>
+                  <span>Step-by-step music theory lessons for beginners</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-brand mt-0.5">•</span>
+                  <span>Interactive audio demonstrations of concepts</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-brand mt-0.5">•</span>
+                  <span>Visual aids with clickable keyboards and notation</span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="bg-white rounded-xl p-6 shadow-md border border-gray-100">
+              <div className="w-12 h-12 bg-brand/20 rounded-xl flex items-center justify-center mb-4">
+                <span className="text-2xl">📈</span>
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">Detailed Analytics</h3>
+              <p className="text-gray-600 text-sm mb-3">
+                Track your progress with comprehensive performance insights
+              </p>
+              <ul className="space-y-2 text-sm text-gray-600">
+                <li className="flex items-start gap-2">
+                  <span className="text-brand mt-0.5">•</span>
+                  <span>Real-time score tracking and accuracy percentages</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-brand mt-0.5">•</span>
+                  <span>Performance breakdown by quiz type and topic</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-brand mt-0.5">•</span>
+                  <span>Streak tracking and achievement progress</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-brand mt-0.5">•</span>
+                  <span>Historical data to track improvement over time</span>
+                </li>
+              </ul>
             </div>
           </div>
         </div>

@@ -5,6 +5,7 @@ import { getSession } from '@/lib/auth'
 import { CheckoutButton } from './checkout-button'
 import { PricingTabs } from './pricing-tabs'
 import ProfileDropdown from '@/components/ProfileDropdown'
+import { PricingNav } from './pricing-nav'
 
 export const dynamic = 'force-dynamic';
 
@@ -16,56 +17,7 @@ export default async function PricingPage() {
   return (
     <div className="min-h-screen bg-white flex flex-col">
       {/* Navigation */}
-      <nav className="border-b border-gray-200 bg-white sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16 items-center">
-            <div className="flex items-center gap-8">
-              <Link href="/" className="flex items-center gap-3">
-                <Image
-                  src="/images/quiznotes logo.jpg"
-                  alt="QuizNotes Logo"
-                  width={36}
-                  height={36}
-                  className="rounded-lg"
-                />
-                <span className="text-xl font-bold text-gray-900">QuizNotes</span>
-              </Link>
-              <div className="hidden md:flex items-center gap-6">
-                <Link href={user ? "/quiz" : "/#quizzes"} className="text-gray-700 hover:text-gray-900 text-sm font-semibold">
-                  Quizzes
-                </Link>
-                <span className="text-brand text-sm font-semibold">
-                  Learning Plans
-                </span>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              {user ? (
-                <ProfileDropdown user={{
-                  ...user,
-                  avatarUrl: user.avatar_url,
-                  themeColor: user.theme_color,
-                }} />
-              ) : (
-                <>
-                  <Link
-                    href="/login"
-                    className="px-4 py-2 text-gray-700 hover:text-gray-900 text-sm font-semibold"
-                  >
-                    Log in
-                  </Link>
-                  <Link
-                    href="/login?tab=register"
-                    className="px-4 py-2 bg-brand text-white rounded-lg hover:bg-brand-dark transition-colors text-sm font-semibold"
-                  >
-                    Sign up free
-                  </Link>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </nav>
+      <PricingNav user={user} />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         {/* Header */}
@@ -96,11 +48,64 @@ export default async function PricingPage() {
           <div className="space-y-6">
             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Can I try before I subscribe?
+                What quiz types are available?
               </h3>
               <p className="text-gray-600">
-                You can create a teacher account and explore the platform. To create classes and assign quizzes,
-                you'll need an active subscription.
+                QuizNotes offers 10+ quiz types including Staff Notation (note identification, key signatures, intervals, chords, scales),
+                Ear Training (note recognition, interval recognition, chord recognition), and Mixed quizzes that combine multiple question types.
+                All quizzes feature professional VexFlow notation and Tone.js audio playback.
+              </p>
+            </div>
+
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                What premium tools are included for students?
+              </h3>
+              <p className="text-gray-600">
+                Premium students get access to three interactive tools: Interactive Piano (2-octave playable piano with recording and playback),
+                Rhythm Game (falling notes timing game with multiple difficulty levels), and Sandbox Composition (full notation editor with playback).
+                Plus increased PDF downloads, premium badge, and priority leaderboard placement.
+              </p>
+            </div>
+
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Is there a free Learning section?
+              </h3>
+              <p className="text-gray-600">
+                Yes! All students (free and premium) have access to our comprehensive Learning page with beginner-friendly music theory lessons.
+                Each lesson includes interactive visuals with clickable keyboards, audio demonstrations of concepts like major vs minor,
+                intervals, scales, and chord progressions.
+              </p>
+            </div>
+
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Can teachers create custom quizzes?
+              </h3>
+              <p className="text-gray-600">
+                Yes! Teachers with an active subscription can use our Custom Quiz Builder to create quizzes with staff notation and ear training questions.
+                Use our generators or create your own questions from scratch. Assign these custom quizzes to your classes alongside standard quiz types.
+              </p>
+            </div>
+
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                What analytics are available?
+              </h3>
+              <p className="text-gray-600">
+                Students see real-time score tracking, accuracy percentages, performance breakdown by quiz type, streak tracking, and achievement progress.
+                Teachers get detailed class analytics including completion rates, average scores, individual student results, and can track performance over time.
+              </p>
+            </div>
+
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Do my students need to pay?
+              </h3>
+              <p className="text-gray-600">
+                No! Students always use QuizNotes for free. They can join your classes, take quizzes, earn XP and achievements,
+                access the Learning page, and track their progress without any payment. Only teacher subscriptions and optional student premium upgrades require payment.
               </p>
             </div>
 
@@ -110,27 +115,7 @@ export default async function PricingPage() {
               </h3>
               <p className="text-gray-600">
                 We accept all major credit cards including Visa, Mastercard, and American Express.
-                Payment is processed securely through Stripe.
-              </p>
-            </div>
-
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Can I cancel my subscription anytime?
-              </h3>
-              <p className="text-gray-600">
-                Yes, you can cancel your subscription at any time. You'll continue to have access
-                until the end of your current billing period.
-              </p>
-            </div>
-
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Do my students need to pay?
-              </h3>
-              <p className="text-gray-600">
-                No! Students always use QuizNotes for free. They can join your classes, take quizzes,
-                and track their progress without any payment.
+                Payment is processed securely through Stripe. You can cancel anytime and retain access until the end of your billing period.
               </p>
             </div>
 
@@ -140,7 +125,7 @@ export default async function PricingPage() {
               </h3>
               <p className="text-gray-600">
                 Yes, we offer special pricing for schools and institutions. Contact us at
-                support@quiznotes.com for more information.
+                support@quiznotes.com for more information about bulk teacher licenses and school-wide deployment.
               </p>
             </div>
           </div>

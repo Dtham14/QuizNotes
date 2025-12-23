@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -35,6 +35,15 @@ const MOTIVATION_QUOTES = [
   { quote: "Music expresses that which cannot be said.", author: "Victor Hugo" },
   { quote: "The only truth is music.", author: "Jack Kerouac" },
 ]
+
+// Premium tools dropdown menu items
+const PREMIUM_TOOLS = [
+  { id: 'piano', icon: '🎹', title: 'Interactive Piano', description: 'Play and record melodies' },
+  { id: 'rhythm', icon: '🎮', title: 'Rhythm Game', description: 'Test your timing skills' },
+  { id: 'composition', icon: '🎼', title: 'Sandbox Composition', description: 'Create your own music' },
+]
+
+const PREMIUM_BLUE = '#439FDD'
 
 interface User {
   id: string
@@ -267,6 +276,10 @@ export default function ProfilePage() {
   const [downloadingPdf, setDownloadingPdf] = useState<string | null>(null)
   const [downloadError, setDownloadError] = useState<string | null>(null)
 
+  // Premium tools dropdown state
+  const [premiumToolsOpen, setPremiumToolsOpen] = useState(false)
+  const premiumToolsRef = useRef<HTMLDivElement>(null)
+
   // Teacher state
   const [teacherTab, setTeacherTab] = useState<TeacherTab>('classes')
   const [teacherClasses, setTeacherClasses] = useState<TeacherClass[]>([])
@@ -294,6 +307,17 @@ export default function ProfilePage() {
   const [adminClasses, setAdminClasses] = useState<AdminClass[]>([])
   const [adminAnalytics, setAdminAnalytics] = useState<AdminAnalytics | null>(null)
   const [adminClassStats, setAdminClassStats] = useState<AdminClassStats | null>(null)
+
+  // Close premium tools dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (premiumToolsRef.current && !premiumToolsRef.current.contains(event.target as Node)) {
+        setPremiumToolsOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   useEffect(() => {
     async function loadData() {
@@ -890,12 +914,75 @@ export default function ProfilePage() {
                       Quizzes
                     </Link>
                     {user.role === 'student' && (
-                      <Link href="/student-premium" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors flex items-center gap-1">
-                        Student Premium
-                        {user.subscriptionStatus !== 'active' && (
-                          <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full">New</span>
+                      <>
+                        <Link href="/learning" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors">
+                          Learning
+                        </Link>
+                        <Link href="/student-premium" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors flex items-center gap-1">
+                          Student Premium
+                          {user.subscriptionStatus !== 'active' && (
+                            <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full">New</span>
+                          )}
+                        </Link>
+                        {/* Premium Tools Dropdown - Only for premium users */}
+                        {user.subscriptionStatus === 'active' && (
+                          <div className="relative" ref={premiumToolsRef}>
+                            <button
+                              onClick={() => setPremiumToolsOpen(!premiumToolsOpen)}
+                              className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-semibold transition-all hover:shadow-md"
+                              style={{
+                                background: `linear-gradient(135deg, ${PREMIUM_BLUE} 0%, #2d7ab8 100%)`,
+                                color: 'white'
+                              }}
+                            >
+                              <span>👑</span>
+                              Premium Tools
+                              <svg
+                                className={`w-4 h-4 transition-transform ${premiumToolsOpen ? 'rotate-180' : ''}`}
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </button>
+
+                            {premiumToolsOpen && (
+                              <div className="absolute top-full left-0 mt-2 w-72 bg-white rounded-xl shadow-2xl border border-blue-100 overflow-hidden z-50">
+                                <div
+                                  className="px-4 py-3 border-b border-blue-100"
+                                  style={{ background: `linear-gradient(135deg, #e8f4fc 0%, #d0e8f7 100%)` }}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <span>👑</span>
+                                    <p className="text-sm font-bold" style={{ color: PREMIUM_BLUE }}>Premium Tools</p>
+                                  </div>
+                                  <p className="text-xs text-gray-500 mt-0.5">Exclusive features for premium members</p>
+                                </div>
+                                {PREMIUM_TOOLS.map(tool => (
+                                  <Link
+                                    key={tool.id}
+                                    href={`/tools/${tool.id}`}
+                                    onClick={() => setPremiumToolsOpen(false)}
+                                    className="w-full px-4 py-3 flex items-center gap-3 hover:bg-blue-50 transition-colors text-left border-b border-gray-50 last:border-b-0"
+                                  >
+                                    <div
+                                      className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                                      style={{ background: `linear-gradient(135deg, #e8f4fc 0%, #d0e8f7 100%)` }}
+                                    >
+                                      <span className="text-xl">{tool.icon}</span>
+                                    </div>
+                                    <div>
+                                      <p className="text-sm font-semibold text-gray-900">{tool.title}</p>
+                                      <p className="text-xs text-gray-500">{tool.description}</p>
+                                    </div>
+                                  </Link>
+                                ))}
+                              </div>
+                            )}
+                          </div>
                         )}
-                      </Link>
+                      </>
                     )}
                   </>
                 )}
