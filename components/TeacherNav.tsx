@@ -53,6 +53,7 @@ interface TeacherNavProps {
 export default function TeacherNav({ user, stats }: TeacherNavProps) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Check if user has a custom avatar image
@@ -111,13 +112,16 @@ export default function TeacherNav({ user, stats }: TeacherNavProps) {
               />
               <span className="text-xl font-bold text-gray-900">QuizNotes</span>
             </Link>
-            <Link href="/profile" className="text-gray-700 hover:text-gray-900 text-sm font-semibold">
-              Dashboard
-            </Link>
+            <div className="hidden md:flex items-center gap-6">
+              <Link href="/profile" className="text-gray-700 hover:text-gray-900 text-sm font-semibold">
+                Dashboard
+              </Link>
+            </div>
           </div>
 
           {/* Profile Dropdown */}
-          <div className="relative" ref={dropdownRef}>
+          <div className="flex items-center gap-3">
+            <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setIsOpen(!isOpen)}
               className={`w-10 h-10 rounded-xl ${gradientClass} flex items-center justify-center text-xl text-white shadow-md hover:shadow-lg transition-all hover:scale-105 focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 overflow-hidden`}
@@ -262,9 +266,39 @@ export default function TeacherNav({ user, stats }: TeacherNavProps) {
                 </div>
               </div>
             )}
+            </div>
+            {/* Mobile menu button */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden p-2 text-gray-700 hover:text-gray-900"
+              aria-label="Toggle mobile menu"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {mobileMenuOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
           </div>
         </div>
       </div>
+
+      {/* Mobile Menu */}
+      {mobileMenuOpen && (
+        <div className="md:hidden border-t border-gray-200 bg-white">
+          <div className="px-4 py-3 space-y-3">
+            <Link
+              href="/profile"
+              onClick={() => setMobileMenuOpen(false)}
+              className="block px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg text-sm font-semibold"
+            >
+              Dashboard
+            </Link>
+          </div>
+        </div>
+      )}
     </nav>
   );
 }

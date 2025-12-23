@@ -278,6 +278,7 @@ export default function ProfilePage() {
 
   // Premium tools dropdown state
   const [premiumToolsOpen, setPremiumToolsOpen] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const premiumToolsRef = useRef<HTMLDivElement>(null)
 
   // Teacher state
@@ -989,9 +990,98 @@ export default function ProfilePage() {
               </div>
             </div>
             {/* Profile Dropdown - Right Corner */}
-            <ProfileDropdown user={user} stats={stats} />
+            <div className="flex items-center gap-3">
+              <ProfileDropdown user={user} stats={stats} />
+              {/* Mobile menu button */}
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="md:hidden p-2 text-gray-700 hover:text-gray-900"
+                aria-label="Toggle mobile menu"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  {mobileMenuOpen ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  )}
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
+
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden border-t border-gray-200 bg-white">
+            <div className="px-4 py-3 space-y-3">
+              {user.role === 'admin' ? (
+                <Link
+                  href="/admin"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg text-sm font-semibold"
+                >
+                  Admin Panel
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    href="/quiz"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg text-sm font-semibold"
+                  >
+                    Quizzes
+                  </Link>
+                  {user.role === 'student' && (
+                    <>
+                      <Link
+                        href="/learning"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="block px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg text-sm font-semibold"
+                      >
+                        Learning
+                      </Link>
+                      <Link
+                        href="/student-premium"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="block px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg text-sm font-semibold flex items-center justify-between"
+                      >
+                        <span>Student Premium</span>
+                        {user.subscriptionStatus !== 'active' && (
+                          <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full">New</span>
+                        )}
+                      </Link>
+                      {/* Premium Tools - Only for premium users */}
+                      {user.subscriptionStatus === 'active' && (
+                        <>
+                          {PREMIUM_TOOLS.map(tool => (
+                            <Link
+                              key={tool.id}
+                              href={`/tools/${tool.id}`}
+                              onClick={() => setMobileMenuOpen(false)}
+                              className="block px-3 py-2 hover:bg-blue-50 rounded-lg text-sm"
+                              style={{
+                                background: 'linear-gradient(135deg, #e8f4fc 0%, #d0e8f7 100%)',
+                                color: PREMIUM_BLUE
+                              }}
+                            >
+                              <div className="flex items-center gap-2">
+                                <span className="text-lg">{tool.icon}</span>
+                                <div>
+                                  <p className="font-semibold">{tool.title}</p>
+                                  <p className="text-xs text-gray-600">{tool.description}</p>
+                                </div>
+                              </div>
+                            </Link>
+                          ))}
+                        </>
+                      )}
+                    </>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </nav>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow w-full relative">

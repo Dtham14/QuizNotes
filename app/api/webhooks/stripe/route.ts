@@ -38,6 +38,7 @@ export async function POST(request: NextRequest) {
         if (plan === 'yearly') {
           expiresAt.setFullYear(expiresAt.getFullYear() + 1)
         } else {
+          // Monthly and student_premium both get 1 month
           expiresAt.setMonth(expiresAt.getMonth() + 1)
         }
 
@@ -49,13 +50,14 @@ export async function POST(request: NextRequest) {
             subscription_plan: plan,
             subscription_expires_at: expiresAt.toISOString(),
             stripe_customer_id: session.customer as string,
+            stripe_subscription_id: session.subscription as string,
           })
           .eq('id', userId)
 
         if (error) {
           console.error('Error updating subscription:', error)
         } else {
-          console.log(`Subscription activated for user ${userId}`)
+          console.log(`Subscription activated for user ${userId}, plan: ${plan}`)
         }
         break
       }
@@ -72,8 +74,10 @@ export async function POST(request: NextRequest) {
           .single()
 
         if (profile) {
-          const status = subscription.status === 'active' ? 'active' : 'canceled'
-          // Use items to get current period end, or fallback to 1 month from now
+          const status = subscription.status === 'active' ? 'active' :
+                        subscription.status === 'past_due' ? 'past_due' :
+                        'canceled'
+          // Use current_period_end to get expiration date
           const periodEnd = (subscription as any).current_period_end
             || Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60
           const expiresAt = new Date(periodEnd * 1000)
@@ -83,8 +87,11 @@ export async function POST(request: NextRequest) {
             .update({
               subscription_status: status,
               subscription_expires_at: expiresAt.toISOString(),
+              stripe_subscription_id: subscription.id,
             })
             .eq('id', profile.id)
+
+          console.log(`Subscription updated for user ${profile.id}, status: ${status}`)
         }
         break
       }
