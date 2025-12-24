@@ -42,22 +42,31 @@ export async function POST(request: NextRequest) {
           expiresAt.setMonth(expiresAt.getMonth() + 1)
         }
 
-        // Update user subscription status
+        // Prepare update data
+        const updateData: any = {
+          subscription_status: 'active',
+          subscription_plan: plan,
+          subscription_expires_at: expiresAt.toISOString(),
+          stripe_customer_id: session.customer as string,
+          stripe_subscription_id: session.subscription as string,
+        }
+
+        // If user subscribed to teacher plan (monthly or yearly), upgrade their role to teacher
+        if (plan === 'monthly' || plan === 'yearly') {
+          updateData.role = 'teacher'
+        }
+
+        // Update user subscription status and role
         const { error } = await supabaseAdmin
           .from('profiles')
-          .update({
-            subscription_status: 'active',
-            subscription_plan: plan,
-            subscription_expires_at: expiresAt.toISOString(),
-            stripe_customer_id: session.customer as string,
-            stripe_subscription_id: session.subscription as string,
-          })
+          .update(updateData)
           .eq('id', userId)
 
         if (error) {
           console.error('Error updating subscription:', error)
         } else {
-          console.log(`Subscription activated for user ${userId}, plan: ${plan}`)
+          const roleInfo = (plan === 'monthly' || plan === 'yearly') ? ', role upgraded to teacher' : ''
+          console.log(`Subscription activated for user ${userId}, plan: ${plan}${roleInfo}`)
         }
         break
       }
