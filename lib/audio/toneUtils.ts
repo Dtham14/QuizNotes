@@ -51,23 +51,16 @@ export async function initializeAudio(): Promise<boolean> {
   isLoading = true;
 
   try {
-    console.log('Loading Tone.js...');
     const Tone = await loadTone();
-    console.log('Tone.js loaded');
 
     // Detect if we're on mobile
     isMobile = detectMobile();
-    console.log('Mobile detected:', isMobile);
 
     // Start audio context - required for mobile browsers
-    console.log('Starting audio context...');
     await Tone.start();
-    console.log('Audio context started, state:', Tone.context.state);
 
     // iOS-specific: Force unlock the audio context
     if (isIOS()) {
-      console.log('iOS detected - applying iOS-specific audio fixes...');
-
       // Create a silent buffer and play it to unlock audio on iOS
       const buffer = Tone.context.createBuffer(1, 1, 22050);
       const source = Tone.context.createBufferSource();
@@ -76,41 +69,31 @@ export async function initializeAudio(): Promise<boolean> {
       const rawContext = Tone.context.rawContext as AudioContext;
       source.connect(rawContext.destination);
       source.start(0);
-      console.log('iOS: Played silent buffer to unlock audio');
 
       // Multiple resume attempts for iOS
       for (let i = 0; i < 3; i++) {
         if (Tone.context.state === 'suspended') {
-          console.log(`iOS: Resume attempt ${i + 1}...`);
           await Tone.context.resume();
           await new Promise(resolve => setTimeout(resolve, 100));
         }
       }
-      console.log('iOS: Final audio context state:', Tone.context.state);
     }
 
     // Explicitly resume audio context if suspended (for all browsers)
     if (Tone.context.state === 'suspended') {
-      console.log('Audio context is suspended, resuming...');
       await Tone.context.resume();
-      console.log('Audio context resumed, state:', Tone.context.state);
     }
 
     // On mobile, use lightweight synth instead of heavy samples
     if (isMobile) {
-      console.log('Using lightweight synth for mobile...');
-
       // iOS-specific: Use even simpler synth for better compatibility
       if (isIOS()) {
-        console.log('iOS: Creating ultra-simple synth for maximum compatibility...');
         const simpleSynth = new Tone.PolySynth(Tone.Synth, {
           oscillator: { type: 'sine' },
           envelope: { attack: 0.01, decay: 0.1, sustain: 0.5, release: 0.5 }
         }).toDestination();
         simpleSynth.volume.value = 0;  // Full volume for iOS
         piano = simpleSynth as any;
-        console.log('iOS: Simple synth created, volume:', simpleSynth.volume.value);
-        console.log('iOS: Synth connected to destination:', !!simpleSynth.output);
       } else {
         // Android and other mobile: Use richer synth
         const mobilePianoSynth = new Tone.PolySynth(Tone.Synth, {
@@ -126,11 +109,9 @@ export async function initializeAudio(): Promise<boolean> {
         }).toDestination();
         mobilePianoSynth.volume.value = -8;
         piano = mobilePianoSynth as any;
-        console.log('Mobile piano synth created');
       }
     } else {
       // Desktop: Use real piano samples from CDN
-      console.log('Loading piano samples for desktop...');
       const baseUrl = 'https://tonejs.github.io/audio/salamander/';
 
       piano = new Tone.Sampler({
@@ -167,20 +148,14 @@ export async function initializeAudio(): Promise<boolean> {
           'C8': 'C8.mp3',
         },
         baseUrl,
-        release: 1,
-        onload: () => {
-          console.log('Piano samples loaded');
-        }
+        release: 1
       }).toDestination();
 
       // Wait for samples to load
-      console.log('Waiting for samples to load...');
       await Tone.loaded();
-      console.log('Piano samples loaded successfully');
     }
 
     // Create synths for other instruments
-    console.log('Creating synth instruments...');
     // Violin - warm, string-like sound using FM synthesis
     const violinSynth = new Tone.PolySynth(Tone.FMSynth, {
       harmonicity: 3.01,
@@ -201,13 +176,10 @@ export async function initializeAudio(): Promise<boolean> {
     fluteSynth.volume.value = -12;
     synths.set('flute', fluteSynth);
 
-    console.log('All instruments created successfully');
     isInitialized = true;
     isLoading = false;
-    console.log('Audio initialization complete!');
     return true;
   } catch (error) {
-    console.error('Failed to initialize audio:', error);
     isLoading = false;
     return false;
   }
@@ -238,48 +210,32 @@ function getActiveInstrument(): import('tone').Sampler | import('tone').PolySynt
 
 // Play a single note
 export async function playNote(note: string, duration: string = '2n'): Promise<void> {
-  console.log('playNote called:', note, duration);
-
   if (!isAudioReady()) {
-    console.log('Audio not ready, initializing...');
     await initializeAudio();
   }
 
   const instrument = getActiveInstrument();
-  console.log('Active instrument:', currentInstrument, 'Instrument ready:', !!instrument);
 
   if (instrument) {
     const Tone = await loadTone();
-    console.log('Audio context state before play:', Tone.context.state);
 
     // iOS-specific: Always resume on iOS before playing
     if (isIOS() && Tone.context.state !== 'running') {
-      console.log('iOS: Forcing audio context resume...');
       await Tone.context.resume();
-      // Wait a bit for iOS to actually resume
       await new Promise(resolve => setTimeout(resolve, 50));
-      console.log('iOS: Audio context state after resume:', Tone.context.state);
     }
 
     // Ensure audio context is resumed (mobile fix)
     if (Tone.context.state === 'suspended') {
-      console.log('Resuming suspended audio context...');
       await Tone.context.resume();
-      console.log('Audio context state after resume:', Tone.context.state);
     }
 
     // Final check - if still not running, try one more time
     if (Tone.context.state !== 'running') {
-      console.log('WARNING: Audio context is not running, state:', Tone.context.state);
-      console.log('Attempting final resume...');
       await Tone.context.resume();
     }
 
-    console.log('Triggering note:', note, 'Context state:', Tone.context.state);
     instrument.triggerAttackRelease(note, duration, Tone.now());
-    console.log('Note triggered successfully');
-  } else {
-    console.error('No instrument available for playback');
   }
 }
 

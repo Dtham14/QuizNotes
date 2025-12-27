@@ -41,14 +41,11 @@ export default function AudioPlayer({ subtype, audioData, onPlay }: AudioPlayerP
   const handlePlay = useCallback(async () => {
     if (isPlaying || isInitializing) return;
 
-    console.log('Play button clicked - starting audio initialization...');
     setIsInitializing(true);
 
     try {
       // Initialize audio context on first play (requires user gesture)
-      console.log('Initializing audio...');
       const initialized = await initializeAudio();
-      console.log('Audio initialized:', initialized);
 
       if (!initialized) {
         throw new Error('Failed to initialize audio');
@@ -57,9 +54,7 @@ export default function AudioPlayer({ subtype, audioData, onPlay }: AudioPlayerP
       setIsInitializing(false);
       setIsPlaying(true);
 
-      console.log('Playing ear training audio:', subtype, audioData);
       await playEarTraining(subtype, audioData);
-      console.log('Audio playback started');
 
       // Wait for audio to finish before allowing replay
       // Longer durations for piano-like sustained sounds
@@ -68,16 +63,9 @@ export default function AudioPlayer({ subtype, audioData, onPlay }: AudioPlayerP
         setIsPlaying(false);
         setHasPlayed(true);
         onPlay?.();
-        console.log('Audio playback finished');
       }, duration);
     } catch (error) {
-      console.error('Failed to play audio:', error);
-      console.error('Error details:', {
-        name: error instanceof Error ? error.name : 'unknown',
-        message: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : 'no stack'
-      });
-      alert('Audio error: ' + (error instanceof Error ? error.message : 'Unknown error') + '\n\nPlease check console for details.');
+      // Silently fail - audio not available on this device/browser
       setIsInitializing(false);
       setIsPlaying(false);
     }

@@ -1074,7 +1074,6 @@ function QuizContent() {
 
                     if (exitWarning === 'shown') {
                       // Second tap - exit immediately
-                      console.log('Mobile: Exiting quiz (second tap)');
                       setQuizType(null);
                       setQuestions([]);
                       setCurrentQuestionIndex(0);
@@ -1086,7 +1085,6 @@ function QuizContent() {
                       window.location.href = '/quiz';
                     } else {
                       // First tap - show warning
-                      console.log('Mobile: Showing exit warning (first tap)');
                       (e.currentTarget as HTMLButtonElement).dataset.exitWarning = 'shown';
                       (e.currentTarget as HTMLButtonElement).textContent = 'Tap again to exit';
                       (e.currentTarget as HTMLButtonElement).classList.add('animate-pulse');
@@ -1108,7 +1106,6 @@ function QuizContent() {
                     // Desktop: use confirm dialog
                     try {
                       const confirmExit = confirm('Are you sure you want to exit? Your progress will be lost.');
-                      console.log('Confirm result:', confirmExit);
 
                       if (confirmExit) {
                         setQuizType(null);
@@ -1122,7 +1119,6 @@ function QuizContent() {
                         window.location.href = '/quiz';
                       }
                     } catch (error) {
-                      console.error('Exit button error:', error);
                       window.location.href = '/quiz';
                     }
                   }
