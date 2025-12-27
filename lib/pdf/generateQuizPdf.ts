@@ -1,6 +1,7 @@
 'use client';
 
 import { jsPDF } from 'jspdf';
+import { svg2pdf } from 'svg2pdf.js';
 
 // Types for quiz data
 export interface QuizQuestion {
@@ -57,13 +58,13 @@ const formatQuizType = (type: string): string => {
   return typeMap[type] || type.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 };
 
-// Render VexFlow notation to a hidden container and return as base64 PNG
-async function renderNotationToImage(
+// Render VexFlow notation to SVG element for direct PDF embedding
+async function renderNotationToSvg(
   notes: string[],
   clef: 'treble' | 'bass' = 'treble',
   keySignature?: string,
   questionType?: string
-): Promise<string | null> {
+): Promise<SVGElement | null> {
   try {
     const VF = await import('vexflow');
 
@@ -202,47 +203,20 @@ async function renderNotationToImage(
       return null;
     }
 
-    // Add white background and ensure black strokes
-    svgElement.style.backgroundColor = 'white';
+    // Clone the SVG to avoid removing it from the container prematurely
+    const clonedSvg = svgElement.cloneNode(true) as SVGElement;
 
-    // Convert SVG to base64 PNG using canvas
-    const svgData = new XMLSerializer().serializeToString(svgElement);
-    const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-    const svgUrl = URL.createObjectURL(svgBlob);
-
-    // Create image and canvas
-    const img = new Image();
-    const canvas = document.createElement('canvas');
-    canvas.width = width * 2; // 2x for better quality
-    canvas.height = height * 2;
-    const ctx = canvas.getContext('2d');
-
-    // Wait for image to load and convert to PNG
-    const base64Image = await new Promise<string | null>((resolve) => {
-      img.onload = () => {
-        if (ctx) {
-          // White background
-          ctx.fillStyle = 'white';
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-          // Draw SVG
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          resolve(canvas.toDataURL('image/png'));
-        } else {
-          resolve(null);
-        }
-        URL.revokeObjectURL(svgUrl);
-      };
-      img.onerror = () => {
-        URL.revokeObjectURL(svgUrl);
-        resolve(null);
-      };
-      img.src = svgUrl;
-    });
+    // Add white background
+    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    rect.setAttribute('width', '100%');
+    rect.setAttribute('height', '100%');
+    rect.setAttribute('fill', 'white');
+    clonedSvg.insertBefore(rect, clonedSvg.firstChild);
 
     // Clean up
     document.body.removeChild(container);
 
-    return base64Image;
+    return clonedSvg;
   } catch (error) {
     console.error('Error rendering notation:', error);
     return null;
@@ -358,37 +332,49 @@ export async function generateQuizResultsPdf(data: QuizPdfData): Promise<Blob> {
     if (!isEarTraining) {
       if (question.notes && question.notes.length > 0) {
         yPosition += 5;
-        const imageData = await renderNotationToImage(
+        const svgElement = await renderNotationToSvg(
           question.notes,
           question.clef || 'treble',
           undefined,
           question.type
         );
 
-        if (imageData) {
+        if (svgElement) {
           try {
-            pdf.addImage(imageData, 'PNG', margin, yPosition, 90, 45);
+            // Use svg2pdf to embed SVG directly into PDF with fonts preserved
+            await svg2pdf(svgElement, pdf, {
+              x: margin,
+              y: yPosition,
+              width: 90,
+              height: 45
+            });
             yPosition += 48;
           } catch (e) {
-            console.error('Error embedding image:', e);
+            console.error('Error embedding SVG:', e);
             yPosition += 5;
           }
         }
       } else if (question.keySignature) {
         yPosition += 5;
-        const imageData = await renderNotationToImage(
+        const svgElement = await renderNotationToSvg(
           [],
           question.clef || 'treble',
           question.keySignature,
           question.type
         );
 
-        if (imageData) {
+        if (svgElement) {
           try {
-            pdf.addImage(imageData, 'PNG', margin, yPosition, 90, 45);
+            // Use svg2pdf to embed SVG directly into PDF with fonts preserved
+            await svg2pdf(svgElement, pdf, {
+              x: margin,
+              y: yPosition,
+              width: 90,
+              height: 45
+            });
             yPosition += 48;
           } catch (e) {
-            console.error('Error embedding image:', e);
+            console.error('Error embedding SVG:', e);
             yPosition += 5;
           }
         }
