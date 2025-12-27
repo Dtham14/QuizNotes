@@ -3,7 +3,9 @@ import Link from 'next/link'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { createServiceClient } from '@/lib/supabase/service'
-import { getSession } from '@/lib/auth'
+import { requireAuth } from '@/lib/auth'
+import ProfileDropdown from '@/components/ProfileDropdown'
+import TeacherNav from '@/components/TeacherNav'
 import type { ForumPost, ForumComment } from '@/lib/types/forum'
 
 interface PageProps {
@@ -35,8 +37,8 @@ export async function generateMetadata({ params }: PageProps) {
 
 export default async function ForumPostPage({ params }: PageProps) {
   const { postId } = await params
+  const user = await requireAuth() // Require authentication
   const supabase = createServiceClient()
-  const user = await getSession()
 
   // Get the post
   const { data: post, error: postError } = await supabase
@@ -93,6 +95,22 @@ export default async function ForumPostPage({ params }: PageProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-purple-50">
+      {/* Navigation */}
+      {user.role === 'teacher' ? (
+        <TeacherNav />
+      ) : (
+        <nav className="bg-white border-b border-gray-200">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between h-16 items-center">
+              <Link href="/" className="flex items-center gap-3">
+                <span className="text-xl font-bold text-gray-900">QuizNotes</span>
+              </Link>
+              <ProfileDropdown user={user} />
+            </div>
+          </div>
+        </nav>
+      )}
+
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Back button */}
         <Link
@@ -187,17 +205,6 @@ export default async function ForumPostPage({ params }: PageProps) {
           <h2 className="text-2xl font-bold text-gray-900 mb-6">
             {transformedPost.reply_count} {transformedPost.reply_count === 1 ? 'Reply' : 'Replies'}
           </h2>
-
-          {!user && !transformedPost.is_locked && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-              <p className="text-sm text-blue-900">
-                <Link href="/login" className="font-semibold hover:underline">
-                  Log in
-                </Link>{' '}
-                to reply to this thread
-              </p>
-            </div>
-          )}
 
           {threadedComments.length === 0 ? (
             <div className="bg-white rounded-xl shadow-md p-8 text-center text-gray-500">

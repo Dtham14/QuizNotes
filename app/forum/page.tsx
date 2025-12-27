@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { createServiceClient } from '@/lib/supabase/service'
-import { getSession } from '@/lib/auth'
+import { getSession, requireAuth } from '@/lib/auth'
+import ProfileDropdown from '@/components/ProfileDropdown'
+import TeacherNav from '@/components/TeacherNav'
 import type { ForumPost, ForumTag } from '@/lib/types/forum'
 
 export const metadata = {
@@ -14,8 +16,8 @@ export default async function ForumPage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
   const params = await searchParams
+  const user = await requireAuth() // Require authentication
   const supabase = createServiceClient()
-  const user = await getSession()
 
   // Get tags for filtering
   const { data: tags } = await supabase
@@ -46,6 +48,22 @@ export default async function ForumPage({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-purple-50">
+      {/* Navigation */}
+      {user.role === 'teacher' ? (
+        <TeacherNav />
+      ) : (
+        <nav className="bg-white border-b border-gray-200">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between h-16 items-center">
+              <Link href="/" className="flex items-center gap-3">
+                <span className="text-xl font-bold text-gray-900">QuizNotes</span>
+              </Link>
+              <ProfileDropdown user={user} />
+            </div>
+          </div>
+        </nav>
+      )}
+
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -54,14 +72,12 @@ export default async function ForumPage({
               <h1 className="text-3xl font-bold text-gray-900">Forum</h1>
               <p className="mt-2 text-gray-600">Discuss music theory and share knowledge</p>
             </div>
-            {user && (
-              <Link
-                href="/forum/create"
-                className="px-6 py-3 bg-brand text-white font-semibold rounded-lg hover:bg-brand-dark transition-colors"
-              >
-                New Post
-              </Link>
-            )}
+            <Link
+              href="/forum/create"
+              className="px-6 py-3 bg-brand text-white font-semibold rounded-lg hover:bg-brand-dark transition-colors"
+            >
+              New Post
+            </Link>
           </div>
         </div>
       </div>
@@ -97,21 +113,6 @@ export default async function ForumPage({
 
           {/* Posts List */}
           <main className="flex-1">
-            {!user && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                <p className="text-sm text-blue-900">
-                  <Link href="/login" className="font-semibold hover:underline">
-                    Log in
-                  </Link>{' '}
-                  or{' '}
-                  <Link href="/login?tab=register" className="font-semibold hover:underline">
-                    create an account
-                  </Link>{' '}
-                  to post and comment
-                </p>
-              </div>
-            )}
-
             <div className="space-y-4">
               {transformedPosts.length === 0 ? (
                 <div className="bg-white rounded-xl shadow-md p-12 text-center">
