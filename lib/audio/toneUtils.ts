@@ -14,6 +14,14 @@ let synths: Map<InstrumentType, import('tone').PolySynth> = new Map();
 let currentInstrument: InstrumentType = 'piano';
 let isInitialized = false;
 let isLoading = false;
+let isMobile = false;
+
+// Detect if we're on mobile
+function detectMobile(): boolean {
+  if (typeof window === 'undefined') return false;
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+         (window.innerWidth <= 768);
+}
 
 // Dynamically import Tone.js (client-side only)
 async function loadTone() {
@@ -41,6 +49,10 @@ export async function initializeAudio(): Promise<boolean> {
     const Tone = await loadTone();
     console.log('Tone.js loaded');
 
+    // Detect if we're on mobile
+    isMobile = detectMobile();
+    console.log('Mobile detected:', isMobile);
+
     // Start audio context - required for mobile browsers
     console.log('Starting audio context...');
     await Tone.start();
@@ -53,55 +65,76 @@ export async function initializeAudio(): Promise<boolean> {
       console.log('Audio context resumed, state:', Tone.context.state);
     }
 
-    // Use real piano samples from a CDN (Salamander Grand Piano)
-    // These are high-quality piano samples
-    console.log('Loading piano samples...');
-    const baseUrl = 'https://tonejs.github.io/audio/salamander/';
+    // On mobile, use lightweight synth instead of heavy samples
+    if (isMobile) {
+      console.log('Using lightweight synth for mobile...');
+      // Create a piano-like synth that doesn't require loading samples
+      const mobilePianoSynth = new Tone.PolySynth(Tone.Synth, {
+        oscillator: {
+          type: 'triangle8'  // Richer harmonics for piano-like sound
+        },
+        envelope: {
+          attack: 0.005,     // Quick attack like a piano
+          decay: 0.3,        // Moderate decay
+          sustain: 0.4,      // Lower sustain
+          release: 1.2       // Longer release for piano-like tail
+        }
+      }).toDestination();
+      mobilePianoSynth.volume.value = -8;
 
-    piano = new Tone.Sampler({
-      urls: {
-        'A0': 'A0.mp3',
-        'C1': 'C1.mp3',
-        'D#1': 'Ds1.mp3',
-        'F#1': 'Fs1.mp3',
-        'A1': 'A1.mp3',
-        'C2': 'C2.mp3',
-        'D#2': 'Ds2.mp3',
-        'F#2': 'Fs2.mp3',
-        'A2': 'A2.mp3',
-        'C3': 'C3.mp3',
-        'D#3': 'Ds3.mp3',
-        'F#3': 'Fs3.mp3',
-        'A3': 'A3.mp3',
-        'C4': 'C4.mp3',
-        'D#4': 'Ds4.mp3',
-        'F#4': 'Fs4.mp3',
-        'A4': 'A4.mp3',
-        'C5': 'C5.mp3',
-        'D#5': 'Ds5.mp3',
-        'F#5': 'Fs5.mp3',
-        'A5': 'A5.mp3',
-        'C6': 'C6.mp3',
-        'D#6': 'Ds6.mp3',
-        'F#6': 'Fs6.mp3',
-        'A6': 'A6.mp3',
-        'C7': 'C7.mp3',
-        'D#7': 'Ds7.mp3',
-        'F#7': 'Fs7.mp3',
-        'A7': 'A7.mp3',
-        'C8': 'C8.mp3',
-      },
-      baseUrl,
-      release: 1,
-      onload: () => {
-        console.log('Piano samples loaded');
-      }
-    }).toDestination();
+      // Store it as piano for mobile
+      piano = mobilePianoSynth as any;
+      console.log('Mobile piano synth created');
+    } else {
+      // Desktop: Use real piano samples from CDN
+      console.log('Loading piano samples for desktop...');
+      const baseUrl = 'https://tonejs.github.io/audio/salamander/';
 
-    // Wait for samples to load
-    console.log('Waiting for samples to load...');
-    await Tone.loaded();
-    console.log('Piano samples loaded successfully');
+      piano = new Tone.Sampler({
+        urls: {
+          'A0': 'A0.mp3',
+          'C1': 'C1.mp3',
+          'D#1': 'Ds1.mp3',
+          'F#1': 'Fs1.mp3',
+          'A1': 'A1.mp3',
+          'C2': 'C2.mp3',
+          'D#2': 'Ds2.mp3',
+          'F#2': 'Fs2.mp3',
+          'A2': 'A2.mp3',
+          'C3': 'C3.mp3',
+          'D#3': 'Ds3.mp3',
+          'F#3': 'Fs3.mp3',
+          'A3': 'A3.mp3',
+          'C4': 'C4.mp3',
+          'D#4': 'Ds4.mp3',
+          'F#4': 'Fs4.mp3',
+          'A4': 'A4.mp3',
+          'C5': 'C5.mp3',
+          'D#5': 'Ds5.mp3',
+          'F#5': 'Fs5.mp3',
+          'A5': 'A5.mp3',
+          'C6': 'C6.mp3',
+          'D#6': 'Ds6.mp3',
+          'F#6': 'Fs6.mp3',
+          'A6': 'A6.mp3',
+          'C7': 'C7.mp3',
+          'D#7': 'Ds7.mp3',
+          'F#7': 'Fs7.mp3',
+          'A7': 'A7.mp3',
+          'C8': 'C8.mp3',
+        },
+        baseUrl,
+        release: 1,
+        onload: () => {
+          console.log('Piano samples loaded');
+        }
+      }).toDestination();
+
+      // Wait for samples to load
+      console.log('Waiting for samples to load...');
+      await Tone.loaded();
+      console.log('Piano samples loaded successfully');
+    }
 
     // Create synths for other instruments
     console.log('Creating synth instruments...');

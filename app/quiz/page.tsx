@@ -1065,12 +1065,16 @@ function QuizContent() {
                   e.preventDefault();
                   e.stopPropagation();
 
-                  try {
-                    const confirmExit = confirm('Are you sure you want to exit? Your progress will be lost.');
-                    console.log('Confirm result:', confirmExit);
+                  // Mobile-friendly approach: double-tap to exit
+                  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-                    if (confirmExit) {
-                      // Reset quiz state
+                  if (isMobile) {
+                    // On mobile: first tap shows warning, second tap exits
+                    const exitWarning = (e.currentTarget as HTMLButtonElement).dataset.exitWarning;
+
+                    if (exitWarning === 'shown') {
+                      // Second tap - exit immediately
+                      console.log('Mobile: Exiting quiz (second tap)');
                       setQuizType(null);
                       setQuestions([]);
                       setCurrentQuestionIndex(0);
@@ -1079,16 +1083,48 @@ function QuizContent() {
                       setShowFeedback(false);
                       setShowResult(false);
                       setScore(0);
-                      // Navigate back to quiz selection
+                      window.location.href = '/quiz';
+                    } else {
+                      // First tap - show warning
+                      console.log('Mobile: Showing exit warning (first tap)');
+                      (e.currentTarget as HTMLButtonElement).dataset.exitWarning = 'shown';
+                      (e.currentTarget as HTMLButtonElement).textContent = 'Tap again to exit';
+                      (e.currentTarget as HTMLButtonElement).classList.add('animate-pulse');
+
+                      // Reset warning after 3 seconds
                       setTimeout(() => {
-                        window.location.href = '/quiz';
-                      }, 100);
+                        (e.currentTarget as HTMLButtonElement).dataset.exitWarning = '';
+                        const span = (e.currentTarget as HTMLButtonElement).querySelector('span');
+                        if (span) {
+                          (e.currentTarget as HTMLButtonElement).innerHTML = '';
+                          (e.currentTarget as HTMLButtonElement).appendChild(span);
+                        } else {
+                          (e.currentTarget as HTMLButtonElement).textContent = 'Exit';
+                        }
+                        (e.currentTarget as HTMLButtonElement).classList.remove('animate-pulse');
+                      }, 3000);
                     }
-                  } catch (error) {
-                    console.error('Exit button error:', error);
-                    // If confirm fails, just navigate anyway after a brief confirmation
-                    alert('Exiting quiz...');
-                    window.location.href = '/quiz';
+                  } else {
+                    // Desktop: use confirm dialog
+                    try {
+                      const confirmExit = confirm('Are you sure you want to exit? Your progress will be lost.');
+                      console.log('Confirm result:', confirmExit);
+
+                      if (confirmExit) {
+                        setQuizType(null);
+                        setQuestions([]);
+                        setCurrentQuestionIndex(0);
+                        setSelectedAnswer(null);
+                        setAnswers([]);
+                        setShowFeedback(false);
+                        setShowResult(false);
+                        setScore(0);
+                        window.location.href = '/quiz';
+                      }
+                    } catch (error) {
+                      console.error('Exit button error:', error);
+                      window.location.href = '/quiz';
+                    }
                   }
                 }}
                 className="relative z-[60] px-4 py-2 text-sm font-semibold text-white bg-red-500 hover:bg-red-600 active:bg-red-700 rounded-lg transition-colors touch-manipulation shadow-sm"
