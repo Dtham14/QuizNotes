@@ -72,7 +72,9 @@ export async function initializeAudio(): Promise<boolean> {
       const buffer = Tone.context.createBuffer(1, 1, 22050);
       const source = Tone.context.createBufferSource();
       source.buffer = buffer;
-      source.connect(Tone.getDestination().input as AudioNode);
+      // Use the raw Web Audio API destination
+      const rawContext = Tone.context.rawContext as AudioContext;
+      source.connect(rawContext.destination);
       source.start(0);
       console.log('iOS: Played silent buffer to unlock audio');
 
