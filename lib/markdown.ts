@@ -1,4 +1,4 @@
-import DOMPurify from 'isomorphic-dompurify'
+import sanitizeHtml from 'sanitize-html'
 import { remark } from 'remark'
 import remarkGfm from 'remark-gfm'
 import remarkHtml from 'remark-html'
@@ -8,8 +8,8 @@ import remarkHtml from 'remark-html'
  * Strips dangerous HTML tags and attributes
  */
 export function sanitizeMarkdown(content: string): string {
-  return DOMPurify.sanitize(content, {
-    ALLOWED_TAGS: [
+  return sanitizeHtml(content, {
+    allowedTags: [
       'p', 'br', 'strong', 'em', 'u', 's', 'code', 'pre',
       'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
       'ul', 'ol', 'li',
@@ -17,9 +17,18 @@ export function sanitizeMarkdown(content: string): string {
       'a',
       'img',
       'table', 'thead', 'tbody', 'tr', 'th', 'td',
+      'del', 'input', // For GFM strikethrough and task lists
     ],
-    ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'class'],
-    ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|cid|xmpp|data):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
+    allowedAttributes: {
+      'a': ['href', 'title'],
+      'img': ['src', 'alt', 'title'],
+      '*': ['class'],
+      'input': ['type', 'checked', 'disabled'],
+    },
+    allowedSchemes: ['http', 'https', 'mailto'],
+    allowedSchemesByTag: {
+      img: ['http', 'https', 'data'],
+    },
   })
 }
 
