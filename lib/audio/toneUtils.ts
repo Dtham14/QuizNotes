@@ -23,6 +23,12 @@ function detectMobile(): boolean {
          (window.innerWidth <= 768);
 }
 
+// Detect if we're on iOS
+function isIOS(): boolean {
+  if (typeof window === 'undefined') return false;
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+}
+
 // Dynamically import Tone.js (client-side only)
 async function loadTone() {
   if (!ToneModule) {
@@ -58,7 +64,30 @@ export async function initializeAudio(): Promise<boolean> {
     await Tone.start();
     console.log('Audio context started, state:', Tone.context.state);
 
-    // Explicitly resume audio context if suspended (iOS Safari fix)
+    // iOS-specific: Force unlock the audio context
+    if (isIOS()) {
+      console.log('iOS detected - applying iOS-specific audio fixes...');
+
+      // Create a silent buffer and play it to unlock audio on iOS
+      const buffer = Tone.context.createBuffer(1, 1, 22050);
+      const source = Tone.context.createBufferSource();
+      source.buffer = buffer;
+      source.connect(Tone.context.destination);
+      source.start(0);
+      console.log('iOS: Played silent buffer to unlock audio');
+
+      // Multiple resume attempts for iOS
+      for (let i = 0; i < 3; i++) {
+        if (Tone.context.state === 'suspended') {
+          console.log(`iOS: Resume attempt ${i + 1}...`);
+          await Tone.context.resume();
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      }
+      console.log('iOS: Final audio context state:', Tone.context.state);
+    }
+
+    // Explicitly resume audio context if suspended (for all browsers)
     if (Tone.context.state === 'suspended') {
       console.log('Audio context is suspended, resuming...');
       await Tone.context.resume();
@@ -209,6 +238,15 @@ export async function playNote(note: string, duration: string = '2n'): Promise<v
     const Tone = await loadTone();
     console.log('Audio context state before play:', Tone.context.state);
 
+    // iOS-specific: Always resume on iOS before playing
+    if (isIOS() && Tone.context.state !== 'running') {
+      console.log('iOS: Forcing audio context resume...');
+      await Tone.context.resume();
+      // Wait a bit for iOS to actually resume
+      await new Promise(resolve => setTimeout(resolve, 50));
+      console.log('iOS: Audio context state after resume:', Tone.context.state);
+    }
+
     // Ensure audio context is resumed (mobile fix)
     if (Tone.context.state === 'suspended') {
       console.log('Resuming suspended audio context...');
@@ -216,7 +254,14 @@ export async function playNote(note: string, duration: string = '2n'): Promise<v
       console.log('Audio context state after resume:', Tone.context.state);
     }
 
-    console.log('Triggering note:', note);
+    // Final check - if still not running, try one more time
+    if (Tone.context.state !== 'running') {
+      console.log('WARNING: Audio context is not running, state:', Tone.context.state);
+      console.log('Attempting final resume...');
+      await Tone.context.resume();
+    }
+
+    console.log('Triggering note:', note, 'Context state:', Tone.context.state);
     instrument.triggerAttackRelease(note, duration, Tone.now());
     console.log('Note triggered successfully');
   } else {
@@ -233,6 +278,12 @@ export async function playChord(notes: string[], duration: string = '2n'): Promi
   const instrument = getActiveInstrument();
   if (instrument) {
     const Tone = await loadTone();
+
+    // iOS-specific: Always resume on iOS before playing
+    if (isIOS() && Tone.context.state !== 'running') {
+      await Tone.context.resume();
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
 
     // Ensure audio context is resumed (mobile fix)
     if (Tone.context.state === 'suspended') {
@@ -252,6 +303,12 @@ export async function playInterval(notes: string[], duration: string = '2n'): Pr
   const instrument = getActiveInstrument();
   if (instrument) {
     const Tone = await loadTone();
+
+    // iOS-specific: Always resume on iOS before playing
+    if (isIOS() && Tone.context.state !== 'running') {
+      await Tone.context.resume();
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
 
     // Ensure audio context is resumed (mobile fix)
     if (Tone.context.state === 'suspended') {
@@ -276,6 +333,12 @@ export async function playSequence(noteGroups: string[][], duration: string = '2
   const instrument = getActiveInstrument();
   if (instrument) {
     const Tone = await loadTone();
+
+    // iOS-specific: Always resume on iOS before playing
+    if (isIOS() && Tone.context.state !== 'running') {
+      await Tone.context.resume();
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
 
     // Ensure audio context is resumed (mobile fix)
     if (Tone.context.state === 'suspended') {
