@@ -1,7 +1,6 @@
 'use client';
 
 import { jsPDF } from 'jspdf';
-import { svg2pdf } from 'svg2pdf.js';
 
 // Types for quiz data
 export interface QuizQuestion {
@@ -58,13 +57,13 @@ const formatQuizType = (type: string): string => {
   return typeMap[type] || type.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 };
 
-// Render VexFlow notation to SVG element for direct PDF embedding
-async function renderNotationToSvg(
+// Render VexFlow notation to canvas image for PDF embedding
+async function renderNotationToImage(
   notes: string[],
   clef: 'treble' | 'bass' = 'treble',
   keySignature?: string,
   questionType?: string
-): Promise<SVGElement | null> {
+): Promise<string | null> {
   try {
     const VF = await import('vexflow');
 
@@ -79,8 +78,8 @@ async function renderNotationToSvg(
     const width = 300;
     const height = 150;
 
-    // Create renderer
-    const renderer = new VF.Renderer(container, VF.Renderer.Backends.SVG);
+    // Create canvas renderer (not SVG) to properly capture fonts
+    const renderer = new VF.Renderer(container, VF.Renderer.Backends.CANVAS);
     renderer.resize(width, height);
     const context = renderer.getContext();
 
@@ -196,27 +195,20 @@ async function renderNotationToSvg(
       });
     }
 
-    // Get the SVG element
-    const svgElement = container.querySelector('svg');
-    if (!svgElement) {
+    // Get the canvas element
+    const canvas = container.querySelector('canvas');
+    if (!canvas) {
       document.body.removeChild(container);
       return null;
     }
 
-    // Clone the SVG to avoid removing it from the container prematurely
-    const clonedSvg = svgElement.cloneNode(true) as SVGElement;
-
-    // Add white background
-    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-    rect.setAttribute('width', '100%');
-    rect.setAttribute('height', '100%');
-    rect.setAttribute('fill', 'white');
-    clonedSvg.insertBefore(rect, clonedSvg.firstChild);
+    // Convert canvas to base64 image
+    const imageData = canvas.toDataURL('image/png');
 
     // Clean up
     document.body.removeChild(container);
 
-    return clonedSvg;
+    return imageData;
   } catch (error) {
     console.error('Error rendering notation:', error);
     return null;
@@ -332,49 +324,39 @@ export async function generateQuizResultsPdf(data: QuizPdfData): Promise<Blob> {
     if (!isEarTraining) {
       if (question.notes && question.notes.length > 0) {
         yPosition += 5;
-        const svgElement = await renderNotationToSvg(
+        const imageData = await renderNotationToImage(
           question.notes,
           question.clef || 'treble',
           undefined,
           question.type
         );
 
-        if (svgElement) {
+        if (imageData) {
           try {
-            // Use svg2pdf to embed SVG directly into PDF with fonts preserved
-            await svg2pdf(svgElement, pdf, {
-              x: margin,
-              y: yPosition,
-              width: 90,
-              height: 45
-            });
+            // Add the canvas image to PDF
+            pdf.addImage(imageData, 'PNG', margin, yPosition, 90, 45);
             yPosition += 48;
           } catch (e) {
-            console.error('Error embedding SVG:', e);
+            console.error('Error embedding image:', e);
             yPosition += 5;
           }
         }
       } else if (question.keySignature) {
         yPosition += 5;
-        const svgElement = await renderNotationToSvg(
+        const imageData = await renderNotationToImage(
           [],
           question.clef || 'treble',
           question.keySignature,
           question.type
         );
 
-        if (svgElement) {
+        if (imageData) {
           try {
-            // Use svg2pdf to embed SVG directly into PDF with fonts preserved
-            await svg2pdf(svgElement, pdf, {
-              x: margin,
-              y: yPosition,
-              width: 90,
-              height: 45
-            });
+            // Add the canvas image to PDF
+            pdf.addImage(imageData, 'PNG', margin, yPosition, 90, 45);
             yPosition += 48;
           } catch (e) {
-            console.error('Error embedding SVG:', e);
+            console.error('Error embedding image:', e);
             yPosition += 5;
           }
         }

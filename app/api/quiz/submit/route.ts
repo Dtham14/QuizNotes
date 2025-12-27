@@ -94,6 +94,28 @@ export async function POST(request: NextRequest) {
       console.error('Gamification processing error:', gamificationError)
     }
 
+    // Cleanup: Keep only the 5 most recent quiz attempts per user
+    try {
+      // Get all attempts for this user, ordered by date
+      const { data: allAttempts } = await supabaseAdmin
+        .from('quiz_attempts')
+        .select('id, created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+
+      // If more than 5, delete the oldest ones
+      if (allAttempts && allAttempts.length > 5) {
+        const attemptsToDelete = allAttempts.slice(5).map(a => a.id)
+        await supabaseAdmin
+          .from('quiz_attempts')
+          .delete()
+          .in('id', attemptsToDelete)
+      }
+    } catch (cleanupError) {
+      // Log but don't fail the request if cleanup fails
+      console.error('Cleanup error:', cleanupError)
+    }
+
     return NextResponse.json(
       {
         message: 'Quiz submitted successfully',

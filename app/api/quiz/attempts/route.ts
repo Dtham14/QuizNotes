@@ -24,11 +24,13 @@ export async function GET() {
 
     const supabaseAdmin = getSupabaseAdmin()
 
+    // Only fetch the 5 most recent quiz attempts
     const { data: attempts, error } = await supabaseAdmin
       .from('quiz_attempts')
       .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
+      .limit(5)
 
     if (error) {
       console.error('Error fetching attempts:', error)
