@@ -1061,8 +1061,11 @@ function QuizContent() {
             <div className="flex items-center gap-2 sm:gap-4">
               {/* Exit Quiz Button */}
               <button
-                onClick={() => {
-                  if (confirm('Are you sure you want to exit? Your progress will be lost.')) {
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  const confirmExit = window.confirm('Are you sure you want to exit? Your progress will be lost.');
+                  if (confirmExit) {
                     setQuizType(null);
                     setQuestions([]);
                     setCurrentQuestionIndex(0);
@@ -1073,11 +1076,17 @@ function QuizContent() {
                     setScore(0);
                   }
                 }}
-                className="px-3 py-2 sm:px-3 sm:py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 active:bg-gray-200 rounded-lg transition-colors touch-manipulation"
+                className="relative z-[60] px-4 py-2 text-sm font-semibold text-white bg-red-500 hover:bg-red-600 active:bg-red-700 rounded-lg transition-colors touch-manipulation shadow-sm"
                 aria-label="Exit Quiz"
+                type="button"
               >
                 <span className="hidden sm:inline">Exit Quiz</span>
-                <span className="sm:hidden">Exit</span>
+                <span className="sm:hidden flex items-center gap-1">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  Exit
+                </span>
               </button>
               {/* Profile Dropdown - Right Corner */}
               {user && <ProfileDropdown user={user} stats={gamificationStats} />}
