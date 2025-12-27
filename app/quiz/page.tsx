@@ -1064,18 +1064,30 @@ function QuizContent() {
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  const confirmExit = window.confirm('Are you sure you want to exit? Your progress will be lost.');
-                  if (confirmExit) {
-                    // Reset quiz state
-                    setQuizType(null);
-                    setQuestions([]);
-                    setCurrentQuestionIndex(0);
-                    setSelectedAnswer(null);
-                    setAnswers([]);
-                    setShowFeedback(false);
-                    setShowResult(false);
-                    setScore(0);
-                    // Navigate back to quiz selection
+
+                  try {
+                    const confirmExit = confirm('Are you sure you want to exit? Your progress will be lost.');
+                    console.log('Confirm result:', confirmExit);
+
+                    if (confirmExit) {
+                      // Reset quiz state
+                      setQuizType(null);
+                      setQuestions([]);
+                      setCurrentQuestionIndex(0);
+                      setSelectedAnswer(null);
+                      setAnswers([]);
+                      setShowFeedback(false);
+                      setShowResult(false);
+                      setScore(0);
+                      // Navigate back to quiz selection
+                      setTimeout(() => {
+                        window.location.href = '/quiz';
+                      }, 100);
+                    }
+                  } catch (error) {
+                    console.error('Exit button error:', error);
+                    // If confirm fails, just navigate anyway after a brief confirmation
+                    alert('Exiting quiz...');
                     window.location.href = '/quiz';
                   }
                 }}

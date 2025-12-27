@@ -37,18 +37,25 @@ export async function initializeAudio(): Promise<boolean> {
   isLoading = true;
 
   try {
+    console.log('Loading Tone.js...');
     const Tone = await loadTone();
+    console.log('Tone.js loaded');
 
     // Start audio context - required for mobile browsers
+    console.log('Starting audio context...');
     await Tone.start();
+    console.log('Audio context started, state:', Tone.context.state);
 
     // Explicitly resume audio context if suspended (iOS Safari fix)
     if (Tone.context.state === 'suspended') {
+      console.log('Audio context is suspended, resuming...');
       await Tone.context.resume();
+      console.log('Audio context resumed, state:', Tone.context.state);
     }
 
     // Use real piano samples from a CDN (Salamander Grand Piano)
     // These are high-quality piano samples
+    console.log('Loading piano samples...');
     const baseUrl = 'https://tonejs.github.io/audio/salamander/';
 
     piano = new Tone.Sampler({
@@ -92,9 +99,12 @@ export async function initializeAudio(): Promise<boolean> {
     }).toDestination();
 
     // Wait for samples to load
+    console.log('Waiting for samples to load...');
     await Tone.loaded();
+    console.log('Piano samples loaded successfully');
 
     // Create synths for other instruments
+    console.log('Creating synth instruments...');
     // Violin - warm, string-like sound using FM synthesis
     const violinSynth = new Tone.PolySynth(Tone.FMSynth, {
       harmonicity: 3.01,
@@ -115,8 +125,10 @@ export async function initializeAudio(): Promise<boolean> {
     fluteSynth.volume.value = -12;
     synths.set('flute', fluteSynth);
 
+    console.log('All instruments created successfully');
     isInitialized = true;
     isLoading = false;
+    console.log('Audio initialization complete!');
     return true;
   } catch (error) {
     console.error('Failed to initialize audio:', error);
@@ -150,20 +162,32 @@ function getActiveInstrument(): import('tone').Sampler | import('tone').PolySynt
 
 // Play a single note
 export async function playNote(note: string, duration: string = '2n'): Promise<void> {
+  console.log('playNote called:', note, duration);
+
   if (!isAudioReady()) {
+    console.log('Audio not ready, initializing...');
     await initializeAudio();
   }
 
   const instrument = getActiveInstrument();
+  console.log('Active instrument:', currentInstrument, 'Instrument ready:', !!instrument);
+
   if (instrument) {
     const Tone = await loadTone();
+    console.log('Audio context state before play:', Tone.context.state);
 
     // Ensure audio context is resumed (mobile fix)
     if (Tone.context.state === 'suspended') {
+      console.log('Resuming suspended audio context...');
       await Tone.context.resume();
+      console.log('Audio context state after resume:', Tone.context.state);
     }
 
+    console.log('Triggering note:', note);
     instrument.triggerAttackRelease(note, duration, Tone.now());
+    console.log('Note triggered successfully');
+  } else {
+    console.error('No instrument available for playback');
   }
 }
 
