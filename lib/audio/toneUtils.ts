@@ -72,7 +72,7 @@ export async function initializeAudio(): Promise<boolean> {
       const buffer = Tone.context.createBuffer(1, 1, 22050);
       const source = Tone.context.createBufferSource();
       source.buffer = buffer;
-      source.connect(Tone.context.destination);
+      source.connect(Tone.getDestination().input as AudioNode);
       source.start(0);
       console.log('iOS: Played silent buffer to unlock audio');
 
@@ -97,23 +97,35 @@ export async function initializeAudio(): Promise<boolean> {
     // On mobile, use lightweight synth instead of heavy samples
     if (isMobile) {
       console.log('Using lightweight synth for mobile...');
-      // Create a piano-like synth that doesn't require loading samples
-      const mobilePianoSynth = new Tone.PolySynth(Tone.Synth, {
-        oscillator: {
-          type: 'triangle8'  // Richer harmonics for piano-like sound
-        },
-        envelope: {
-          attack: 0.005,     // Quick attack like a piano
-          decay: 0.3,        // Moderate decay
-          sustain: 0.4,      // Lower sustain
-          release: 1.2       // Longer release for piano-like tail
-        }
-      }).toDestination();
-      mobilePianoSynth.volume.value = -8;
 
-      // Store it as piano for mobile
-      piano = mobilePianoSynth as any;
-      console.log('Mobile piano synth created');
+      // iOS-specific: Use even simpler synth for better compatibility
+      if (isIOS()) {
+        console.log('iOS: Creating ultra-simple synth for maximum compatibility...');
+        const simpleSynth = new Tone.PolySynth(Tone.Synth, {
+          oscillator: { type: 'sine' },
+          envelope: { attack: 0.01, decay: 0.1, sustain: 0.5, release: 0.5 }
+        }).toDestination();
+        simpleSynth.volume.value = 0;  // Full volume for iOS
+        piano = simpleSynth as any;
+        console.log('iOS: Simple synth created, volume:', simpleSynth.volume.value);
+        console.log('iOS: Synth connected to destination:', !!simpleSynth.output);
+      } else {
+        // Android and other mobile: Use richer synth
+        const mobilePianoSynth = new Tone.PolySynth(Tone.Synth, {
+          oscillator: {
+            type: 'triangle8'  // Richer harmonics for piano-like sound
+          },
+          envelope: {
+            attack: 0.005,     // Quick attack like a piano
+            decay: 0.3,        // Moderate decay
+            sustain: 0.4,      // Lower sustain
+            release: 1.2       // Longer release for piano-like tail
+          }
+        }).toDestination();
+        mobilePianoSynth.volume.value = -8;
+        piano = mobilePianoSynth as any;
+        console.log('Mobile piano synth created');
+      }
     } else {
       // Desktop: Use real piano samples from CDN
       console.log('Loading piano samples for desktop...');

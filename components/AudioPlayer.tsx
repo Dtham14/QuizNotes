@@ -72,7 +72,12 @@ export default function AudioPlayer({ subtype, audioData, onPlay }: AudioPlayerP
       }, duration);
     } catch (error) {
       console.error('Failed to play audio:', error);
-      alert('Audio error: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      console.error('Error details:', {
+        name: error instanceof Error ? error.name : 'unknown',
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : 'no stack'
+      });
+      alert('Audio error: ' + (error instanceof Error ? error.message : 'Unknown error') + '\n\nPlease check console for details.');
       setIsInitializing(false);
       setIsPlaying(false);
     }
