@@ -1,4 +1,5 @@
-import Filter from 'bad-words'
+// @ts-ignore - bad-words package has module resolution issues
+const Filter = require('bad-words')
 
 // Initialize profanity filter
 const filter = new Filter()
