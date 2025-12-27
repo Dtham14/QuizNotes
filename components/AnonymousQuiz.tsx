@@ -261,7 +261,8 @@ export default function AnonymousQuiz({ onClose, initialType }: AnonymousQuizPro
             </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              className="p-2 hover:bg-gray-100 active:bg-gray-200 rounded-full transition-colors touch-manipulation"
+              aria-label="Close quiz"
             >
               <svg className="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -481,13 +482,13 @@ export default function AnonymousQuiz({ onClose, initialType }: AnonymousQuizPro
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <button
                 onClick={resetQuiz}
-                className="px-6 py-3 bg-brand text-white font-semibold rounded-lg hover:bg-brand-dark transition-colors"
+                className="px-6 py-3 bg-brand text-white font-semibold rounded-lg hover:bg-brand-dark active:bg-brand-dark transition-colors touch-manipulation"
               >
                 Try Another Quiz
               </button>
               <button
                 onClick={onClose}
-                className="px-6 py-3 bg-white text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors border-2 border-gray-200"
+                className="px-6 py-3 bg-white text-gray-700 font-semibold rounded-lg hover:bg-gray-50 active:bg-gray-100 transition-colors border-2 border-gray-200 touch-manipulation"
               >
                 Close
               </button>
@@ -523,7 +524,8 @@ export default function AnonymousQuiz({ onClose, initialType }: AnonymousQuizPro
           </span>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            className="p-2 hover:bg-gray-100 active:bg-gray-200 rounded-full transition-colors touch-manipulation"
+            aria-label="Close quiz"
           >
             <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -626,7 +628,7 @@ export default function AnonymousQuiz({ onClose, initialType }: AnonymousQuizPro
             <button
               onClick={handleNext}
               disabled={selectedAnswer === null || loading}
-              className="px-5 py-2.5 bg-brand text-white font-semibold rounded-lg hover:bg-brand-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-5 py-2.5 bg-brand text-white font-semibold rounded-lg hover:bg-brand-dark active:bg-brand-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
             >
               {loading ? 'Submitting...' : !showFeedback ? 'Check Answer' : currentQuestionIndex === questions.length - 1 ? 'Finish Quiz' : 'Continue'}
             </button>

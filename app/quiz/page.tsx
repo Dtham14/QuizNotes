@@ -1058,7 +1058,7 @@ function QuizContent() {
                 <span className="text-brand font-semibold text-sm">Quizzes</span>
               </div>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4">
               {/* Exit Quiz Button */}
               <button
                 onClick={() => {
@@ -1073,9 +1073,11 @@ function QuizContent() {
                     setScore(0);
                   }
                 }}
-                className="px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                className="px-3 py-2 sm:px-3 sm:py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 active:bg-gray-200 rounded-lg transition-colors touch-manipulation"
+                aria-label="Exit Quiz"
               >
-                Exit Quiz
+                <span className="hidden sm:inline">Exit Quiz</span>
+                <span className="sm:hidden">Exit</span>
               </button>
               {/* Profile Dropdown - Right Corner */}
               {user && <ProfileDropdown user={user} stats={gamificationStats} />}
@@ -1258,7 +1260,7 @@ function QuizContent() {
             <button
               onClick={handleNext}
               disabled={selectedAnswer === null}
-              className="px-8 py-3 bg-brand text-white font-semibold rounded-lg hover:bg-brand-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 sm:px-8 py-3 bg-brand text-white font-semibold rounded-lg hover:bg-brand-dark active:bg-brand-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
             >
               {showFeedback
                 ? currentQuestionIndex === questions.length - 1
