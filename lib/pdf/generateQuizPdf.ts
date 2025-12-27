@@ -57,7 +57,7 @@ const formatQuizType = (type: string): string => {
   return typeMap[type] || type.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 };
 
-// Render VexFlow notation to canvas image for PDF embedding
+// Render VexFlow notation to image for PDF embedding
 async function renderNotationToImage(
   notes: string[],
   clef: 'treble' | 'bass' = 'treble',
@@ -78,8 +78,8 @@ async function renderNotationToImage(
     const width = 300;
     const height = 150;
 
-    // Create canvas renderer (not SVG) to properly capture fonts
-    const renderer = new VF.Renderer(container, VF.Renderer.Backends.CANVAS);
+    // First render with SVG so fonts load properly
+    const renderer = new VF.Renderer(container, VF.Renderer.Backends.SVG);
     renderer.resize(width, height);
     const context = renderer.getContext();
 
@@ -195,18 +195,51 @@ async function renderNotationToImage(
       });
     }
 
-    // Get the canvas element
-    const canvas = container.querySelector('canvas');
-    if (!canvas) {
+    // Get the SVG element
+    const svgElement = container.querySelector('svg');
+    if (!svgElement) {
       document.body.removeChild(container);
       return null;
     }
 
-    // Convert canvas to base64 image
-    const imageData = canvas.toDataURL('image/png');
+    // Convert SVG to canvas to capture fonts properly
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
 
-    // Clean up
-    document.body.removeChild(container);
+    if (!ctx) {
+      document.body.removeChild(container);
+      return null;
+    }
+
+    // Fill white background
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, width, height);
+
+    // Serialize SVG to string
+    const svgString = new XMLSerializer().serializeToString(svgElement);
+    const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(svgBlob);
+
+    // Create an image and draw it on canvas
+    const img = new Image();
+
+    // Wait for image to load before converting to base64
+    const imageData = await new Promise<string>((resolve, reject) => {
+      img.onload = () => {
+        ctx.drawImage(img, 0, 0);
+        URL.revokeObjectURL(url);
+        document.body.removeChild(container);
+        resolve(canvas.toDataURL('image/png'));
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        document.body.removeChild(container);
+        reject(new Error('Failed to load SVG image'));
+      };
+      img.src = url;
+    });
 
     return imageData;
   } catch (error) {
