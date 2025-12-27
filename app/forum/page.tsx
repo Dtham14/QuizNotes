@@ -1,8 +1,7 @@
 import Link from 'next/link'
 import { createServiceClient } from '@/lib/supabase/service'
-import { getSession, requireAuth } from '@/lib/auth'
-import ProfileDropdown from '@/components/ProfileDropdown'
-import TeacherNav from '@/components/TeacherNav'
+import { requireAuth } from '@/lib/auth'
+import ForumNav from '@/components/ForumNav'
 import type { ForumPost, ForumTag } from '@/lib/types/forum'
 
 export const metadata = {
@@ -49,20 +48,7 @@ export default async function ForumPage({
   return (
     <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-purple-50">
       {/* Navigation */}
-      {user.role === 'teacher' ? (
-        <TeacherNav />
-      ) : (
-        <nav className="bg-white border-b border-gray-200">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between h-16 items-center">
-              <Link href="/" className="flex items-center gap-3">
-                <span className="text-xl font-bold text-gray-900">QuizNotes</span>
-              </Link>
-              <ProfileDropdown user={user} />
-            </div>
-          </div>
-        </nav>
-      )}
+      <ForumNav user={user} />
 
       {/* Header */}
       <div className="bg-white border-b border-gray-200">

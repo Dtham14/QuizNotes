@@ -70,15 +70,22 @@ export default function CreatePostForm({ tags }: CreatePostFormProps) {
         }),
       })
 
+      const text = await response.text()
+      let data
+
+      try {
+        data = text ? JSON.parse(text) : {}
+      } catch (e) {
+        console.error('Invalid JSON response:', text)
+        throw new Error('Server returned an invalid response')
+      }
+
       if (!response.ok) {
-        const data = await response.json()
         throw new Error(data.error || 'Failed to create post')
       }
 
-      const post = await response.json()
-
       // Redirect to the new post
-      router.push(`/forum/${post.id}`)
+      router.push(`/forum/${data.id}`)
     } catch (err) {
       console.error('Error creating post:', err)
       setError(err instanceof Error ? err.message : 'Failed to create post')
