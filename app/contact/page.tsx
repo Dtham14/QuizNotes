@@ -37,7 +37,7 @@ export default async function ContactPage() {
 
             <div className="prose prose-lg max-w-none text-gray-700 space-y-4">
               <p>
-                As a music educator and developer, I've always been passionate about making music theory accessible and engaging
+                I'm Daniel Tham, a music educator and developer who has always been passionate about making music theory accessible and engaging
                 for students of all levels. I noticed that traditional music theory learning often felt disconnected from the
                 actual experience of making music—too much rote memorization, not enough hands-on practice.
               </p>

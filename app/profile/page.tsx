@@ -1094,7 +1094,7 @@ export default function ProfilePage() {
           <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
             {/* Gradient header strip */}
             <div
-              className={`h-52 ${hasCustomAvatar ? '' : `bg-gradient-to-r ${currentAvatar.color}`} relative overflow-hidden`}
+              className={`h-52 md:h-52 ${hasCustomAvatar ? '' : `bg-gradient-to-r ${currentAvatar.color}`} relative overflow-hidden`}
               style={customGradientStyle}
             >
               <div className="absolute inset-0 opacity-20">
@@ -1102,14 +1102,99 @@ export default function ProfilePage() {
                 <div className="absolute bottom-2 right-20 text-5xl text-white/20">♪</div>
                 <div className="absolute top-4 right-40 text-4xl text-white/25">♫</div>
               </div>
+
+              {/* Mobile: Avatar and Name on colored card */}
+              <div className="md:hidden absolute bottom-0 left-0 right-0 px-6 pb-6">
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={() => setShowAvatarPicker(true)}
+                    className="group relative flex-shrink-0"
+                  >
+                    <div
+                      className={`w-20 h-20 rounded-xl ${hasCustomAvatar ? '' : `bg-gradient-to-br ${currentAvatar.color}`} flex items-center justify-center text-4xl text-white shadow-lg border-3 border-white/50 transition-transform group-hover:scale-105 overflow-hidden`}
+                      style={hasCustomAvatar ? { background: `linear-gradient(135deg, ${themeColor}, ${adjustColor(themeColor, -40)})` } : undefined}
+                    >
+                      {hasCustomAvatar ? (
+                        <Image
+                          key={user.avatarUrl}
+                          src={user.avatarUrl!}
+                          alt="Profile"
+                          width={80}
+                          height={80}
+                          className="w-full h-full object-cover"
+                          unoptimized
+                        />
+                      ) : (
+                        currentAvatar.icon
+                      )}
+                    </div>
+                    <div className="absolute inset-0 rounded-xl bg-black/0 group-hover:bg-black/20 flex items-center justify-center transition-all">
+                      <span className="text-white opacity-0 group-hover:opacity-100 text-xs font-medium">Change</span>
+                    </div>
+                  </button>
+                  <div className="flex-1 min-w-0">
+                    {isEditingName ? (
+                      <div className="flex items-center gap-2 mb-1">
+                        <input
+                          type="text"
+                          value={editedName}
+                          onChange={(e) => setEditedName(e.target.value)}
+                          className="text-xl font-bold text-gray-900 bg-white border-2 border-white/50 rounded-lg px-3 py-1 focus:outline-none focus:border-white w-full"
+                          placeholder="Enter your name"
+                          autoFocus
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleNameSave()
+                            if (e.key === 'Escape') setIsEditingName(false)
+                          }}
+                        />
+                        <button
+                          onClick={handleNameSave}
+                          disabled={savingName}
+                          className="p-2 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-colors disabled:opacity-50"
+                          title="Save"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => setIsEditingName(false)}
+                          className="p-2 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-colors"
+                          title="Cancel"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 mb-1 group">
+                        <h1 className="text-xl font-bold text-white drop-shadow-sm truncate">
+                          {user.name || 'Music Learner'}
+                        </h1>
+                        <button
+                          onClick={startEditingName}
+                          className="p-1 text-white/70 hover:text-white hover:bg-white/20 rounded-lg transition-colors opacity-0 group-hover:opacity-100 flex-shrink-0"
+                          title="Edit name"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                          </svg>
+                        </button>
+                      </div>
+                    )}
+                    <p className="text-white/90 text-sm font-medium drop-shadow-sm truncate">{user.email}</p>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div className="px-8 pb-8 -mt-36 relative">
+            <div className="px-8 pb-8 md:-mt-36 relative">
               <div className="flex flex-col md:flex-row gap-6 items-start md:items-end">
-                {/* Avatar */}
+                {/* Desktop Avatar */}
                 <button
                   onClick={() => setShowAvatarPicker(true)}
-                  className="group relative"
+                  className="group relative hidden md:block"
                 >
                   <div
                     className={`w-32 h-32 rounded-2xl ${hasCustomAvatar ? '' : `bg-gradient-to-br ${currentAvatar.color}`} flex items-center justify-center text-6xl text-white shadow-2xl border-4 border-white transition-transform group-hover:scale-105 overflow-hidden`}
@@ -1134,8 +1219,8 @@ export default function ProfilePage() {
                   </div>
                 </button>
 
-                {/* User Info */}
-                <div className="flex-1 pt-4 md:pt-0">
+                {/* User Info - Desktop only */}
+                <div className="flex-1 pt-4 md:pt-0 hidden md:block">
                   {isEditingName ? (
                     <div className="flex items-center gap-2 mb-1">
                       <input
@@ -1236,10 +1321,69 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
-                {/* Logout button */}
+                {/* Logout button - Desktop */}
                 <button
                   onClick={handleLogout}
-                  className="px-6 py-3 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white font-semibold rounded-xl transition-colors flex items-center gap-2 border border-white/30"
+                  className="hidden md:flex px-6 py-3 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white font-semibold rounded-xl transition-colors items-center gap-2 border border-white/30"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                  Logout
+                </button>
+              </div>
+
+              {/* Mobile: Badges and Logout */}
+              <div className="md:hidden pt-4 space-y-4">
+                <div className="flex flex-wrap gap-2">
+                  {user.role === 'admin' ? (
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-purple-500/20 to-violet-500/20 backdrop-blur-sm rounded-full border border-purple-300/50">
+                      <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                      </svg>
+                      <span className="text-gray-900 font-bold text-sm">Admin</span>
+                    </div>
+                  ) : (
+                    <>
+                      {user.subscriptionStatus === 'active' ? (
+                        <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-amber-400/20 to-yellow-400/20 backdrop-blur-sm rounded-full border border-amber-300/50">
+                          <span className="text-base">👑</span>
+                          <span className="text-gray-900 font-bold text-sm">Premium</span>
+                        </div>
+                      ) : (
+                        <Link
+                          href="/pricing"
+                          className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 backdrop-blur-sm rounded-full border border-gray-200 hover:bg-gray-200 transition-colors"
+                        >
+                          <span className="text-gray-900 font-medium text-sm">Free Plan</span>
+                          <span className="text-xs bg-gray-300 px-2 py-0.5 rounded-full text-gray-900">Upgrade</span>
+                        </Link>
+                      )}
+                      {stats && (
+                        <>
+                          <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 backdrop-blur-sm rounded-full border border-gray-200">
+                            <span className="text-gray-900 font-bold text-sm">Level {stats.current_level}</span>
+                            <span className="text-gray-400">•</span>
+                            <span className="text-gray-700 text-sm">{stats.level_info?.name || 'Beginner'}</span>
+                          </div>
+                          <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 backdrop-blur-sm rounded-full border border-gray-200">
+                            <span className="text-gray-900 font-bold text-sm">{stats.total_xp.toLocaleString()} XP</span>
+                          </div>
+                          {stats.current_streak > 0 && (
+                            <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 backdrop-blur-sm rounded-full border border-gray-200">
+                              <span className="text-base">🔥</span>
+                              <span className="text-gray-900 font-bold text-sm">{stats.current_streak} day streak</span>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </>
+                  )}
+                </div>
+
+                <button
+                  onClick={handleLogout}
+                  className="w-full px-6 py-3 bg-gray-900 hover:bg-gray-800 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />

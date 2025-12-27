@@ -252,12 +252,12 @@ export default function AnonymousQuiz({ onClose, initialType }: AnonymousQuizPro
   // Topic selection screen - matching landing page format
   if (!quizCategory) {
     return (
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-50">
         <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-          <div className="p-6 border-b flex justify-between items-center">
+          <div className="p-4 sm:p-6 border-b flex justify-between items-center">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Choose a Quiz Topic</h2>
-              <p className="text-gray-600">No account required - just pick a topic and start!</p>
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Choose a Quiz Topic</h2>
+              <p className="text-sm sm:text-base text-gray-600">No account required - just pick a topic and start!</p>
             </div>
             <button
               onClick={onClose}
@@ -269,7 +269,7 @@ export default function AnonymousQuiz({ onClose, initialType }: AnonymousQuizPro
             </button>
           </div>
 
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             {/* Quick Start */}
             <div className="mb-8">
               <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Quick Start</h3>
@@ -431,15 +431,15 @@ export default function AnonymousQuiz({ onClose, initialType }: AnonymousQuizPro
   if (showResult) {
     const percentage = Math.round((score / questions.length) * 100);
     return (
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-50">
         <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-          <div className="p-8">
+          <div className="p-4 sm:p-6 md:p-8">
             <div className="text-center mb-8">
               <div className="w-20 h-20 bg-brand/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-4xl">{percentage >= 70 ? '🎉' : '📚'}</span>
               </div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">Quiz Complete!</h2>
-              <p className="text-xl text-gray-600">
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Quiz Complete!</h2>
+              <p className="text-lg sm:text-xl text-gray-600">
                 You scored <span className="font-bold text-brand">{score}</span> out of{' '}
                 <span className="font-bold">{questions.length}</span>
               </p>
@@ -515,7 +515,7 @@ export default function AnonymousQuiz({ onClose, initialType }: AnonymousQuizPro
   const isEarTraining = currentQuestion.audioData !== undefined;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-50">
       <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-4 border-b flex justify-between items-center">
           <span className="px-3 py-1 bg-brand/20 text-brand rounded-full text-sm font-semibold">
@@ -531,7 +531,7 @@ export default function AnonymousQuiz({ onClose, initialType }: AnonymousQuizPro
           </button>
         </div>
 
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           <div className="mb-4">
             <div className="w-full bg-gray-200 rounded-full h-2">
               <div
@@ -541,31 +541,33 @@ export default function AnonymousQuiz({ onClose, initialType }: AnonymousQuizPro
             </div>
           </div>
 
-          <h3 className="text-xl font-bold text-gray-900 mb-6">{currentQuestion.question}</h3>
+          <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-6">{currentQuestion.question}</h3>
 
-          <div className="flex justify-center mb-6">
-            {isEarTraining && currentQuestion.audioData ? (
-              <AudioPlayer
-                subtype={currentQuestion.audioData.subtype}
-                audioData={{ notes: currentQuestion.audioData.notes, duration: currentQuestion.audioData.duration }}
-              />
-            ) : currentQuestion.notes && currentQuestion.notes.length > 0 ? (
-              <MusicNotation
-                notes={convertToNotes(currentQuestion.notes, currentQuestion.type)}
-                clef={currentQuestion.clef || 'treble'}
-                keySignature={currentQuestion.keySignature}
-                width={450}
-                height={160}
-              />
-            ) : currentQuestion.keySignature ? (
-              <MusicNotation
-                notes={[]}
-                clef={currentQuestion.clef || 'treble'}
-                keySignature={currentQuestion.keySignature}
-                width={450}
-                height={160}
-              />
-            ) : null}
+          <div className="flex justify-center mb-6 overflow-x-auto">
+            <div className="min-w-0 w-full max-w-full flex justify-center">
+              {isEarTraining && currentQuestion.audioData ? (
+                <AudioPlayer
+                  subtype={currentQuestion.audioData.subtype}
+                  audioData={{ notes: currentQuestion.audioData.notes, duration: currentQuestion.audioData.duration }}
+                />
+              ) : currentQuestion.notes && currentQuestion.notes.length > 0 ? (
+                <MusicNotation
+                  notes={convertToNotes(currentQuestion.notes, currentQuestion.type)}
+                  clef={currentQuestion.clef || 'treble'}
+                  keySignature={currentQuestion.keySignature}
+                  width={Math.min(450, typeof window !== 'undefined' ? window.innerWidth - 80 : 450)}
+                  height={160}
+                />
+              ) : currentQuestion.keySignature ? (
+                <MusicNotation
+                  notes={[]}
+                  clef={currentQuestion.clef || 'treble'}
+                  keySignature={currentQuestion.keySignature}
+                  width={Math.min(450, typeof window !== 'undefined' ? window.innerWidth - 80 : 450)}
+                  height={160}
+                />
+              ) : null}
+            </div>
           </div>
 
           <div className="space-y-3 mb-6">

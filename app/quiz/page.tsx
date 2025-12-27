@@ -784,13 +784,13 @@ function QuizContent() {
           />
         )}
 
-        <div className="max-w-2xl w-full bg-white rounded-2xl shadow-xl p-8">
+        <div className="max-w-2xl w-full bg-white rounded-2xl shadow-xl p-4 sm:p-6 md:p-8">
           <div className="text-center mb-8">
             <div className="w-20 h-20 bg-brand/20 rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="text-4xl">{percentage >= 70 ? '🎉' : '📚'}</span>
             </div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">Quiz Complete!</h2>
-            <p className="text-xl text-gray-600">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Quiz Complete!</h2>
+            <p className="text-lg sm:text-xl text-gray-600">
               You scored <span className="font-bold text-brand">{score}</span> out of{' '}
               <span className="font-bold">{questions.length}</span>
             </p>
@@ -1084,8 +1084,8 @@ function QuizContent() {
         </div>
       </nav>
 
-      <main className="max-w-3xl mx-auto px-4 py-16">
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-16">
+        <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-6 md:p-8">
           <div className="mb-6">
             {/* Category label at top left */}
             <div className="mb-4">
@@ -1101,7 +1101,7 @@ function QuizContent() {
               </span>
             </div>
             {/* Question underneath */}
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">{currentQuestion.question}</h2>
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-4">{currentQuestion.question}</h2>
             {/* Segmented progress bar */}
             <div className="flex gap-1.5">
               {questions.map((q, index) => {
@@ -1126,36 +1126,42 @@ function QuizContent() {
             </div>
           </div>
 
-          <div className="flex justify-center mb-8">
-            {isEarTraining ? (
-              // Handle both old earTraining format and new audioData format
-              'earTraining' in currentQuestion && currentQuestion.earTraining ? (
-                <AudioPlayer
-                  subtype={currentQuestion.earTraining.subtype}
-                  audioData={currentQuestion.earTraining.audioData}
-                />
-              ) : 'audioData' in currentQuestion && currentQuestion.audioData ? (
-                <AudioPlayer
-                  subtype={currentQuestion.audioData.subtype}
-                  audioData={{ notes: currentQuestion.audioData.notes, duration: currentQuestion.audioData.duration }}
-                />
-              ) : null
-            ) : 'keySignature' in currentQuestion && currentQuestion.keySignature ? (
-              // Key signature questions - show staff with clef and key signature only
-              <MusicNotation
-                clef={currentQuestion.clef || 'treble'}
-                keySignature={currentQuestion.keySignature}
-                width={500}
-                height={180}
-              />
-            ) : 'notes' in currentQuestion && currentQuestion.notes ? (
-              <MusicNotation
-                notes={convertToNotes(currentQuestion.notes, 'type' in currentQuestion ? currentQuestion.type : undefined)}
-                clef={currentQuestion.clef || 'treble'}
-                width={'type' in currentQuestion && currentQuestion.type === 'scaleIdentification' ? 600 : 500}
-                height={180}
-              />
-            ) : null}
+          <div className="flex justify-center mb-8 overflow-x-auto">
+            <div className="min-w-0 w-full max-w-full">
+              {isEarTraining ? (
+                // Handle both old earTraining format and new audioData format
+                'earTraining' in currentQuestion && currentQuestion.earTraining ? (
+                  <AudioPlayer
+                    subtype={currentQuestion.earTraining.subtype}
+                    audioData={currentQuestion.earTraining.audioData}
+                  />
+                ) : 'audioData' in currentQuestion && currentQuestion.audioData ? (
+                  <AudioPlayer
+                    subtype={currentQuestion.audioData.subtype}
+                    audioData={{ notes: currentQuestion.audioData.notes, duration: currentQuestion.audioData.duration }}
+                  />
+                ) : null
+              ) : 'keySignature' in currentQuestion && currentQuestion.keySignature ? (
+                // Key signature questions - show staff with clef and key signature only
+                <div className="flex justify-center">
+                  <MusicNotation
+                    clef={currentQuestion.clef || 'treble'}
+                    keySignature={currentQuestion.keySignature}
+                    width={Math.min(500, typeof window !== 'undefined' ? window.innerWidth - 80 : 500)}
+                    height={180}
+                  />
+                </div>
+              ) : 'notes' in currentQuestion && currentQuestion.notes ? (
+                <div className="flex justify-center">
+                  <MusicNotation
+                    notes={convertToNotes(currentQuestion.notes, 'type' in currentQuestion ? currentQuestion.type : undefined)}
+                    clef={currentQuestion.clef || 'treble'}
+                    width={Math.min('type' in currentQuestion && currentQuestion.type === 'scaleIdentification' ? 600 : 500, typeof window !== 'undefined' ? window.innerWidth - 80 : 500)}
+                    height={180}
+                  />
+                </div>
+              ) : null}
+            </div>
           </div>
 
           <div className="space-y-3 mb-8">
