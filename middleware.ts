@@ -42,7 +42,16 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   // Protected routes that require authentication
-  const protectedPaths = ['/profile', '/quiz', '/teacher', '/achievements', '/leaderboard']
+  const protectedPaths = [
+    '/profile',
+    '/quiz',
+    '/teacher',
+    '/achievements',
+    '/leaderboard',
+    '/forum/create',
+    '/forum/edit',
+    '/forum/moderation',
+  ]
   const isProtectedPath = protectedPaths.some((path) =>
     request.nextUrl.pathname.startsWith(path)
   )
@@ -117,6 +126,22 @@ export async function middleware(request: NextRequest) {
           { status: 402 }
         )
       }
+    }
+  }
+
+  // Forum moderation routes require teacher/admin role
+  if (request.nextUrl.pathname.startsWith('/forum/moderation') && user) {
+    const supabaseAdmin = getSupabaseAdmin()
+    const { data: profile } = await supabaseAdmin
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (profile?.role !== 'teacher' && profile?.role !== 'admin') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/forum'
+      return NextResponse.redirect(url)
     }
   }
 

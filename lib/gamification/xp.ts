@@ -13,6 +13,13 @@ export const XP_REWARDS = {
   DAILY_GOAL_MET: 15,
   FIRST_QUIZ_OF_DAY: 5,
   ACHIEVEMENT_BONUS: 0, // Achievements have their own XP rewards
+  // Forum rewards
+  FORUM_FIRST_POST: 25,
+  FORUM_POST_CREATED: 15,
+  FORUM_COMMENT_CREATED: 5,
+  FORUM_POST_UPVOTED: 10, // Author receives when their post is upvoted
+  FORUM_COMMENT_UPVOTED: 3, // Author receives when their comment is upvoted
+  FORUM_HELPFUL_ANSWER: 50, // Post/comment with 5+ upvotes
 } as const
 
 export type XPReason =
@@ -23,6 +30,12 @@ export type XPReason =
   | 'daily_goal'
   | 'first_quiz_of_day'
   | 'achievement'
+  | 'forum_first_post'
+  | 'forum_post_created'
+  | 'forum_comment_created'
+  | 'forum_post_upvoted'
+  | 'forum_comment_upvoted'
+  | 'forum_helpful_answer'
 
 export interface XPAwardResult {
   totalXpAwarded: number

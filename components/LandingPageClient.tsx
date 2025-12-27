@@ -64,6 +64,9 @@ export default function LandingPageClient({ user }: LandingPageClientProps) {
                 >
                   Quizzes
                 </button>
+                <Link href="/forum" className="text-gray-700 hover:text-gray-900 text-sm font-semibold">
+                  Forum
+                </Link>
                 <Link href="/pricing" className="text-gray-700 hover:text-gray-900 text-sm font-semibold">
                   Learning Plans
                 </Link>
@@ -126,6 +129,13 @@ export default function LandingPageClient({ user }: LandingPageClientProps) {
               >
                 Quizzes
               </button>
+              <Link
+                href="/forum"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg text-sm font-semibold"
+              >
+                Forum
+              </Link>
               <Link
                 href="/pricing"
                 onClick={() => setMobileMenuOpen(false)}
