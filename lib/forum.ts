@@ -330,9 +330,10 @@ async function incrementUserReputation(userId: string, type: 'post' | 'comment')
       .from('user_forum_reputation')
       .select('*')
       .eq('user_id', userId)
-      .single()
+      .maybeSingle()
 
     if (reputation) {
+      // Update existing record
       const newCount = type === 'post'
         ? reputation.posts_created + 1
         : reputation.comments_created + 1
@@ -351,6 +352,16 @@ async function incrementUserReputation(userId: string, type: 'post' | 'comment')
           updated_at: new Date().toISOString(),
         })
         .eq('user_id', userId)
+    } else {
+      // Create new record for first-time poster
+      await supabase
+        .from('user_forum_reputation')
+        .insert({
+          user_id: userId,
+          posts_created: type === 'post' ? 1 : 0,
+          comments_created: type === 'comment' ? 1 : 0,
+          reputation_score: type === 'post' ? 5 : 2,
+        })
     }
   }
 }
