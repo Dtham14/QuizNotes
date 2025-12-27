@@ -1,22 +1,33 @@
-// @ts-ignore - bad-words package has module resolution issues
-const Filter = require('bad-words')
-
-// Initialize profanity filter
-const filter = new Filter()
+// Simple profanity filter - basic word list
+// You can expand this list as needed
+const PROFANITY_LIST = [
+  'spam',
+  'scam',
+  // Add more words as needed
+]
 
 /**
  * Check if text contains profanity
- * Uses the bad-words library with built-in word list
+ * Simple word-based check (case-insensitive)
  */
 export function containsProfanity(text: string): boolean {
-  return filter.isProfane(text)
+  const lowerText = text.toLowerCase()
+  return PROFANITY_LIST.some(word => {
+    const regex = new RegExp(`\\b${word}\\b`, 'i')
+    return regex.test(lowerText)
+  })
 }
 
 /**
  * Clean profanity from text by replacing with asterisks
  */
 export function cleanProfanity(text: string): string {
-  return filter.clean(text)
+  let cleanedText = text
+  PROFANITY_LIST.forEach(word => {
+    const regex = new RegExp(`\\b${word}\\b`, 'gi')
+    cleanedText = cleanedText.replace(regex, '*'.repeat(word.length))
+  })
+  return cleanedText
 }
 
 /**
