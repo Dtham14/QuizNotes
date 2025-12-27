@@ -1075,8 +1075,8 @@ function QuizContent() {
                     setShowFeedback(false);
                     setShowResult(false);
                     setScore(0);
-                    // Navigate back to profile/dashboard
-                    router.push('/profile');
+                    // Navigate back to quiz selection
+                    window.location.href = '/quiz';
                   }
                 }}
                 className="relative z-[60] px-4 py-2 text-sm font-semibold text-white bg-red-500 hover:bg-red-600 active:bg-red-700 rounded-lg transition-colors touch-manipulation shadow-sm"

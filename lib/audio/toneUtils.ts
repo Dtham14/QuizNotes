@@ -38,7 +38,14 @@ export async function initializeAudio(): Promise<boolean> {
 
   try {
     const Tone = await loadTone();
+
+    // Start audio context - required for mobile browsers
     await Tone.start();
+
+    // Explicitly resume audio context if suspended (iOS Safari fix)
+    if (Tone.context.state === 'suspended') {
+      await Tone.context.resume();
+    }
 
     // Use real piano samples from a CDN (Salamander Grand Piano)
     // These are high-quality piano samples
@@ -150,6 +157,12 @@ export async function playNote(note: string, duration: string = '2n'): Promise<v
   const instrument = getActiveInstrument();
   if (instrument) {
     const Tone = await loadTone();
+
+    // Ensure audio context is resumed (mobile fix)
+    if (Tone.context.state === 'suspended') {
+      await Tone.context.resume();
+    }
+
     instrument.triggerAttackRelease(note, duration, Tone.now());
   }
 }
@@ -163,6 +176,12 @@ export async function playChord(notes: string[], duration: string = '2n'): Promi
   const instrument = getActiveInstrument();
   if (instrument) {
     const Tone = await loadTone();
+
+    // Ensure audio context is resumed (mobile fix)
+    if (Tone.context.state === 'suspended') {
+      await Tone.context.resume();
+    }
+
     instrument.triggerAttackRelease(notes, duration, Tone.now());
   }
 }
@@ -176,6 +195,12 @@ export async function playInterval(notes: string[], duration: string = '2n'): Pr
   const instrument = getActiveInstrument();
   if (instrument) {
     const Tone = await loadTone();
+
+    // Ensure audio context is resumed (mobile fix)
+    if (Tone.context.state === 'suspended') {
+      await Tone.context.resume();
+    }
+
     const now = Tone.now();
 
     notes.forEach((note, index) => {
@@ -194,6 +219,12 @@ export async function playSequence(noteGroups: string[][], duration: string = '2
   const instrument = getActiveInstrument();
   if (instrument) {
     const Tone = await loadTone();
+
+    // Ensure audio context is resumed (mobile fix)
+    if (Tone.context.state === 'suspended') {
+      await Tone.context.resume();
+    }
+
     const now = Tone.now();
 
     noteGroups.forEach((group, index) => {

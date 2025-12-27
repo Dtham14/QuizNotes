@@ -97,15 +97,16 @@ export default function AudioPlayer({ subtype, audioData, onPlay }: AudioPlayerP
         disabled={isPlaying || isInitializing}
         className={`
           w-24 h-24 rounded-full flex items-center justify-center
-          transition-all duration-200 shadow-lg
+          transition-all duration-200 shadow-lg touch-manipulation
           ${isPlaying
             ? 'bg-brand scale-110 animate-pulse'
-            : 'bg-brand hover:bg-brand-dark hover:scale-105'
+            : 'bg-brand hover:bg-brand-dark hover:scale-105 active:scale-95'
           }
           ${isInitializing ? 'cursor-wait' : 'cursor-pointer'}
-          disabled:cursor-not-allowed
+          disabled:cursor-not-allowed disabled:opacity-50
         `}
         aria-label={`Play ${getSubtypeLabel()}`}
+        type="button"
       >
         {isPlaying ? (
           <svg
@@ -146,13 +147,14 @@ export default function AudioPlayer({ subtype, audioData, onPlay }: AudioPlayerP
             onClick={() => handleInstrumentChange(instrument.id)}
             disabled={isPlaying || isInitializing}
             className={`
-              px-3 py-1.5 text-xs font-medium rounded-full transition-all
+              px-3 py-1.5 text-xs font-medium rounded-full transition-all touch-manipulation
               ${selectedInstrument === instrument.id
                 ? 'bg-brand text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200 active:bg-gray-300'
               }
               disabled:opacity-50 disabled:cursor-not-allowed
             `}
+            type="button"
           >
             {instrument.label}
           </button>
