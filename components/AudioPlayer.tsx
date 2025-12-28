@@ -22,6 +22,7 @@ export default function AudioPlayer({ subtype, audioData, onPlay }: AudioPlayerP
   const [hasPlayed, setHasPlayed] = useState(false);
   const [isInitializing, setIsInitializing] = useState(false);
   const [selectedInstrument, setSelectedInstrument] = useState<InstrumentType>('piano');
+  const [error, setError] = useState<string | null>(null);
 
   // Load saved instrument preference from localStorage
   useEffect(() => {
@@ -42,6 +43,7 @@ export default function AudioPlayer({ subtype, audioData, onPlay }: AudioPlayerP
     if (isPlaying || isInitializing) return;
 
     setIsInitializing(true);
+    setError(null); // Clear previous errors
 
     try {
       // Initialize audio context on first play (requires user gesture)
@@ -64,8 +66,15 @@ export default function AudioPlayer({ subtype, audioData, onPlay }: AudioPlayerP
         setHasPlayed(true);
         onPlay?.();
       }, duration);
-    } catch (error) {
-      // Silently fail - audio not available on this device/browser
+    } catch (err) {
+      // Show error to user with helpful message
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      console.error('[AudioPlayer] Failed to play audio:', errorMessage);
+
+      setError(
+        'Audio playback failed. Please check your device volume and try again. ' +
+        'If the problem persists, try refreshing the page.'
+      );
       setIsInitializing(false);
       setIsPlaying(false);
     }
@@ -164,6 +173,44 @@ export default function AudioPlayer({ subtype, audioData, onPlay }: AudioPlayerP
           </button>
         ))}
       </div>
+
+      {/* Error Message */}
+      {error && (
+        <div className="mt-4 max-w-md mx-auto">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <svg
+                className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <div className="flex-1">
+                <h3 className="text-sm font-semibold text-red-800 mb-1">
+                  Audio Error
+                </h3>
+                <p className="text-sm text-red-700">
+                  {error}
+                </p>
+                <button
+                  onClick={() => setError(null)}
+                  className="mt-2 text-xs text-red-600 hover:text-red-800 underline"
+                  type="button"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

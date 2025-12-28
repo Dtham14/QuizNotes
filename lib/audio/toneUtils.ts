@@ -41,8 +41,13 @@ async function loadTone() {
 export async function initializeAudio(): Promise<boolean> {
   if (isInitialized) return true;
   if (isLoading) {
-    // Wait for loading to complete
+    // Wait for loading to complete with timeout
+    const maxWaitTime = 10000; // 10 seconds max
+    const startTime = Date.now();
     while (isLoading) {
+      if (Date.now() - startTime > maxWaitTime) {
+        throw new Error('Audio initialization timeout');
+      }
       await new Promise(resolve => setTimeout(resolve, 100));
     }
     return isInitialized;
@@ -56,104 +61,93 @@ export async function initializeAudio(): Promise<boolean> {
     // Detect if we're on mobile
     isMobile = detectMobile();
 
-    // Start audio context - required for mobile browsers
-    await Tone.start();
-
-    // iOS-specific: Force unlock the audio context
+    // iOS-specific: Force unlock the audio context BEFORE Tone.start()
     if (isIOS()) {
-      // Create a silent buffer and play it to unlock audio on iOS
-      const buffer = Tone.context.createBuffer(1, 1, 22050);
-      const source = Tone.context.createBufferSource();
-      source.buffer = buffer;
-      // Use the raw Web Audio API destination
-      const rawContext = Tone.context.rawContext as AudioContext;
-      source.connect(rawContext.destination);
-      source.start(0);
+      try {
+        // Start audio context first
+        await Tone.start();
 
-      // Multiple resume attempts for iOS
-      for (let i = 0; i < 3; i++) {
-        if (Tone.context.state === 'suspended') {
-          await Tone.context.resume();
-          await new Promise(resolve => setTimeout(resolve, 100));
+        // Create a silent buffer and play it to unlock audio on iOS
+        const buffer = Tone.context.createBuffer(1, 1, 22050);
+        const source = Tone.context.createBufferSource();
+        source.buffer = buffer;
+        // Use the raw Web Audio API destination
+        const rawContext = Tone.context.rawContext as AudioContext;
+        source.connect(rawContext.destination);
+        source.start(0);
+
+        // Multiple resume attempts for iOS with longer delays
+        for (let i = 0; i < 5; i++) {
+          if (Tone.context.state === 'suspended') {
+            await Tone.context.resume();
+            // Increase delay for older devices
+            await new Promise(resolve => setTimeout(resolve, 200));
+          } else if (Tone.context.state === 'running') {
+            break; // Successfully unlocked
+          }
         }
+
+        // Final verification
+        if (Tone.context.state !== 'running') {
+          console.warn('[Audio] iOS audio context still not running after unlock attempts');
+        }
+      } catch (err) {
+        console.error('[Audio] iOS audio unlock failed:', err);
+        throw new Error('Failed to unlock iOS audio context');
       }
+    } else {
+      // Non-iOS: Standard start
+      await Tone.start();
     }
 
     // Explicitly resume audio context if suspended (for all browsers)
     if (Tone.context.state === 'suspended') {
       await Tone.context.resume();
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
 
-    // On mobile, use lightweight synth instead of heavy samples
-    if (isMobile) {
-      // iOS-specific: Use even simpler synth for better compatibility
-      if (isIOS()) {
-        const simpleSynth = new Tone.PolySynth(Tone.Synth, {
-          oscillator: { type: 'sine' },
-          envelope: { attack: 0.01, decay: 0.1, sustain: 0.5, release: 0.5 }
-        }).toDestination();
-        simpleSynth.volume.value = 0;  // Full volume for iOS
-        piano = simpleSynth as any;
-      } else {
-        // Android and other mobile: Use richer synth
-        const mobilePianoSynth = new Tone.PolySynth(Tone.Synth, {
-          oscillator: {
-            type: 'triangle8'  // Richer harmonics for piano-like sound
-          },
-          envelope: {
-            attack: 0.005,     // Quick attack like a piano
-            decay: 0.3,        // Moderate decay
-            sustain: 0.4,      // Lower sustain
-            release: 1.2       // Longer release for piano-like tail
-          }
-        }).toDestination();
-        mobilePianoSynth.volume.value = -8;
-        piano = mobilePianoSynth as any;
-      }
-    } else {
-      // Desktop: Use real piano samples from CDN
-      const baseUrl = 'https://tonejs.github.io/audio/salamander/';
+    // Use real piano samples from CDN for all devices
+    const baseUrl = 'https://tonejs.github.io/audio/salamander/';
 
-      piano = new Tone.Sampler({
-        urls: {
-          'A0': 'A0.mp3',
-          'C1': 'C1.mp3',
-          'D#1': 'Ds1.mp3',
-          'F#1': 'Fs1.mp3',
-          'A1': 'A1.mp3',
-          'C2': 'C2.mp3',
-          'D#2': 'Ds2.mp3',
-          'F#2': 'Fs2.mp3',
-          'A2': 'A2.mp3',
-          'C3': 'C3.mp3',
-          'D#3': 'Ds3.mp3',
-          'F#3': 'Fs3.mp3',
-          'A3': 'A3.mp3',
-          'C4': 'C4.mp3',
-          'D#4': 'Ds4.mp3',
-          'F#4': 'Fs4.mp3',
-          'A4': 'A4.mp3',
-          'C5': 'C5.mp3',
-          'D#5': 'Ds5.mp3',
-          'F#5': 'Fs5.mp3',
-          'A5': 'A5.mp3',
-          'C6': 'C6.mp3',
-          'D#6': 'Ds6.mp3',
-          'F#6': 'Fs6.mp3',
-          'A6': 'A6.mp3',
-          'C7': 'C7.mp3',
-          'D#7': 'Ds7.mp3',
-          'F#7': 'Fs7.mp3',
-          'A7': 'A7.mp3',
-          'C8': 'C8.mp3',
-        },
-        baseUrl,
-        release: 1
-      }).toDestination();
+    piano = new Tone.Sampler({
+      urls: {
+        'A0': 'A0.mp3',
+        'C1': 'C1.mp3',
+        'D#1': 'Ds1.mp3',
+        'F#1': 'Fs1.mp3',
+        'A1': 'A1.mp3',
+        'C2': 'C2.mp3',
+        'D#2': 'Ds2.mp3',
+        'F#2': 'Fs2.mp3',
+        'A2': 'A2.mp3',
+        'C3': 'C3.mp3',
+        'D#3': 'Ds3.mp3',
+        'F#3': 'Fs3.mp3',
+        'A3': 'A3.mp3',
+        'C4': 'C4.mp3',
+        'D#4': 'Ds4.mp3',
+        'F#4': 'Fs4.mp3',
+        'A4': 'A4.mp3',
+        'C5': 'C5.mp3',
+        'D#5': 'Ds5.mp3',
+        'F#5': 'Fs5.mp3',
+        'A5': 'A5.mp3',
+        'C6': 'C6.mp3',
+        'D#6': 'Ds6.mp3',
+        'F#6': 'Fs6.mp3',
+        'A6': 'A6.mp3',
+        'C7': 'C7.mp3',
+        'D#7': 'Ds7.mp3',
+        'F#7': 'Fs7.mp3',
+        'A7': 'A7.mp3',
+        'C8': 'C8.mp3',
+      },
+      baseUrl,
+      release: 1
+    }).toDestination();
 
-      // Wait for samples to load
-      await Tone.loaded();
-    }
+    // Wait for samples to load
+    await Tone.loaded();
 
     // Create synths for other instruments
     // Violin - warm, string-like sound using FM synthesis
@@ -221,18 +215,30 @@ export async function playNote(note: string, duration: string = '2n'): Promise<v
 
     // iOS-specific: Always resume on iOS before playing
     if (isIOS() && Tone.context.state !== 'running') {
-      await Tone.context.resume();
-      await new Promise(resolve => setTimeout(resolve, 50));
+      try {
+        await Tone.context.resume();
+        await new Promise(resolve => setTimeout(resolve, 50));
+      } catch (err) {
+        console.error('[Audio] Failed to resume iOS audio context:', err);
+      }
     }
 
     // Ensure audio context is resumed (mobile fix)
     if (Tone.context.state === 'suspended') {
-      await Tone.context.resume();
+      try {
+        await Tone.context.resume();
+      } catch (err) {
+        console.error('[Audio] Failed to resume audio context:', err);
+      }
     }
 
     // Final check - if still not running, try one more time
     if (Tone.context.state !== 'running') {
-      await Tone.context.resume();
+      try {
+        await Tone.context.resume();
+      } catch (err) {
+        console.error('[Audio] Final resume attempt failed:', err);
+      }
     }
 
     instrument.triggerAttackRelease(note, duration, Tone.now());
@@ -251,13 +257,21 @@ export async function playChord(notes: string[], duration: string = '2n'): Promi
 
     // iOS-specific: Always resume on iOS before playing
     if (isIOS() && Tone.context.state !== 'running') {
-      await Tone.context.resume();
-      await new Promise(resolve => setTimeout(resolve, 50));
+      try {
+        await Tone.context.resume();
+        await new Promise(resolve => setTimeout(resolve, 50));
+      } catch (err) {
+        console.error('[Audio] Failed to resume iOS audio context:', err);
+      }
     }
 
     // Ensure audio context is resumed (mobile fix)
     if (Tone.context.state === 'suspended') {
-      await Tone.context.resume();
+      try {
+        await Tone.context.resume();
+      } catch (err) {
+        console.error('[Audio] Failed to resume audio context:', err);
+      }
     }
 
     instrument.triggerAttackRelease(notes, duration, Tone.now());
@@ -276,13 +290,21 @@ export async function playInterval(notes: string[], duration: string = '2n'): Pr
 
     // iOS-specific: Always resume on iOS before playing
     if (isIOS() && Tone.context.state !== 'running') {
-      await Tone.context.resume();
-      await new Promise(resolve => setTimeout(resolve, 50));
+      try {
+        await Tone.context.resume();
+        await new Promise(resolve => setTimeout(resolve, 50));
+      } catch (err) {
+        console.error('[Audio] Failed to resume iOS audio context:', err);
+      }
     }
 
     // Ensure audio context is resumed (mobile fix)
     if (Tone.context.state === 'suspended') {
-      await Tone.context.resume();
+      try {
+        await Tone.context.resume();
+      } catch (err) {
+        console.error('[Audio] Failed to resume audio context:', err);
+      }
     }
 
     const now = Tone.now();
@@ -306,13 +328,21 @@ export async function playSequence(noteGroups: string[][], duration: string = '2
 
     // iOS-specific: Always resume on iOS before playing
     if (isIOS() && Tone.context.state !== 'running') {
-      await Tone.context.resume();
-      await new Promise(resolve => setTimeout(resolve, 50));
+      try {
+        await Tone.context.resume();
+        await new Promise(resolve => setTimeout(resolve, 50));
+      } catch (err) {
+        console.error('[Audio] Failed to resume iOS audio context:', err);
+      }
     }
 
     // Ensure audio context is resumed (mobile fix)
     if (Tone.context.state === 'suspended') {
-      await Tone.context.resume();
+      try {
+        await Tone.context.resume();
+      } catch (err) {
+        console.error('[Audio] Failed to resume audio context:', err);
+      }
     }
 
     const now = Tone.now();

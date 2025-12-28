@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { createServiceClient } from '@/lib/supabase/service'
 import { requireAuth } from '@/lib/auth'
 import ForumNav from '@/components/ForumNav'
@@ -18,14 +19,17 @@ export default async function ForumPage({
   const user = await requireAuth() // Require authentication
   const supabase = createServiceClient()
 
+  // Get selected tag from query params
+  const selectedTagSlug = params.tag as string | undefined
+
   // Get tags for filtering
   const { data: tags } = await supabase
     .from('forum_tags')
     .select('*')
     .order('name', { ascending: true })
 
-  // Get posts
-  const { data: posts } = await supabase
+  // Get posts - filter by tag if selected
+  let postsQuery = supabase
     .from('forum_posts')
     .select(
       `
@@ -39,11 +43,20 @@ export default async function ForumPage({
     .order('last_activity_at', { ascending: false })
     .limit(20)
 
+  const { data: posts } = await postsQuery
+
   // Transform posts
-  const transformedPosts = posts?.map((post: any) => ({
+  let transformedPosts = posts?.map((post: any) => ({
     ...post,
     tags: post.tags?.map((pt: any) => pt.tag) || [],
   })) as ForumPost[] || []
+
+  // Filter by tag if selected (client-side filtering since Supabase query is complex)
+  if (selectedTagSlug && transformedPosts) {
+    transformedPosts = transformedPosts.filter((post) =>
+      post.tags?.some((tag) => tag.slug === selectedTagSlug)
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-purple-50">
@@ -78,7 +91,11 @@ export default async function ForumPage({
               <div className="space-y-2">
                 <Link
                   href="/forum"
-                  className="block px-3 py-2 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors text-gray-700"
+                  className={`block px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    !selectedTagSlug
+                      ? 'bg-brand text-white'
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`}
                 >
                   All Topics
                 </Link>
@@ -86,11 +103,17 @@ export default async function ForumPage({
                   <Link
                     key={tag.id}
                     href={`/forum?tag=${tag.slug}`}
-                    className="block px-3 py-2 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors text-gray-700"
+                    className={`block px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      selectedTagSlug === tag.slug
+                        ? 'bg-brand text-white'
+                        : 'text-gray-700 hover:bg-gray-100'
+                    }`}
                   >
                     <span className="mr-2">{tag.icon}</span>
                     {tag.name}
-                    <span className="ml-2 text-xs text-gray-500">({tag.post_count})</span>
+                    <span className={`ml-2 text-xs ${selectedTagSlug === tag.slug ? 'text-white/80' : 'text-gray-500'}`}>
+                      ({tag.post_count})
+                    </span>
                   </Link>
                 ))}
               </div>
@@ -99,10 +122,33 @@ export default async function ForumPage({
 
           {/* Posts List */}
           <main className="flex-1">
+            {/* Filter indicator */}
+            {selectedTagSlug && (
+              <div className="mb-4 flex items-center gap-3 text-sm">
+                <span className="text-gray-600">Filtered by:</span>
+                <span className="inline-flex items-center px-3 py-1 rounded-full bg-brand text-white font-medium">
+                  <span className="mr-1">
+                    {tags?.find((t) => t.slug === selectedTagSlug)?.icon}
+                  </span>
+                  {tags?.find((t) => t.slug === selectedTagSlug)?.name}
+                </span>
+                <Link
+                  href="/forum"
+                  className="text-brand hover:text-brand-dark font-medium"
+                >
+                  Clear filter
+                </Link>
+              </div>
+            )}
+
             <div className="space-y-4">
               {transformedPosts.length === 0 ? (
                 <div className="bg-white rounded-xl shadow-md p-12 text-center">
-                  <p className="text-gray-500">No posts yet. Be the first to start a discussion!</p>
+                  <p className="text-gray-500">
+                    {selectedTagSlug
+                      ? 'No posts found with this topic. Try a different filter or create a new post!'
+                      : 'No posts yet. Be the first to start a discussion!'}
+                  </p>
                 </div>
               ) : (
                 transformedPosts.map((post) => (
@@ -114,9 +160,19 @@ export default async function ForumPage({
                     <div className="flex gap-4">
                       {/* Avatar */}
                       <div className="flex-shrink-0">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white text-lg font-bold">
-                          {post.author?.name?.[0] || '?'}
-                        </div>
+                        {post.author?.avatar_url ? (
+                          <Image
+                            src={post.author.avatar_url}
+                            alt={post.author.name || 'User'}
+                            width={48}
+                            height={48}
+                            className="w-12 h-12 rounded-xl object-cover"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white text-lg font-bold">
+                            {post.author?.name?.[0] || '?'}
+                          </div>
+                        )}
                       </div>
 
                       {/* Content */}

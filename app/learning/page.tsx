@@ -1520,6 +1520,9 @@ export default function LearningPage() {
                 <Link href="/quiz" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors">
                   Quizzes
                 </Link>
+                <Link href="/forum" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors">
+                  Forum
+                </Link>
                 <span className="text-brand font-semibold text-sm">Learning</span>
                 {user.subscriptionStatus === 'active' && (
                   <Link href="/tools/piano" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors flex items-center gap-1">
@@ -1566,6 +1569,13 @@ export default function LearningPage() {
                 className="block px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg text-sm font-semibold"
               >
                 Quizzes
+              </Link>
+              <Link
+                href="/forum"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg text-sm font-semibold"
+              >
+                Forum
               </Link>
               <Link
                 href="/learning"

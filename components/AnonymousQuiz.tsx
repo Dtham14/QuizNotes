@@ -252,7 +252,7 @@ export default function AnonymousQuiz({ onClose, initialType }: AnonymousQuizPro
   // Topic selection screen - matching landing page format
   if (!quizCategory) {
     return (
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-50">
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-[60]">
         <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
           <div className="p-4 sm:p-6 border-b flex justify-between items-center">
             <div>
@@ -420,7 +420,7 @@ export default function AnonymousQuiz({ onClose, initialType }: AnonymousQuizPro
   // Loading state while questions are being populated
   if (quizCategory && questions.length === 0) {
     return (
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[60]">
         <div className="bg-white rounded-2xl shadow-2xl p-8">
           <p className="text-gray-600">Loading quiz...</p>
         </div>
@@ -432,7 +432,7 @@ export default function AnonymousQuiz({ onClose, initialType }: AnonymousQuizPro
   if (showResult) {
     const percentage = Math.round((score / questions.length) * 100);
     return (
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-50">
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-[60]">
         <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
           <div className="p-4 sm:p-6 md:p-8">
             <div className="text-center mb-8">
