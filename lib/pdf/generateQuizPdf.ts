@@ -57,48 +57,8 @@ const formatQuizType = (type: string): string => {
   return typeMap[type] || type.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 };
 
-// Helper function to inline all styles from an SVG element
-function inlineSvgStyles(svgElement: SVGElement): void {
-  const allElements = svgElement.querySelectorAll('*');
-
-  allElements.forEach((el) => {
-    if (el instanceof SVGElement || el instanceof HTMLElement) {
-      const computedStyle = window.getComputedStyle(el);
-      const importantStyles = [
-        'fill', 'stroke', 'stroke-width', 'font-family', 'font-size',
-        'font-weight', 'opacity', 'transform', 'visibility', 'display'
-      ];
-
-      importantStyles.forEach(prop => {
-        const value = computedStyle.getPropertyValue(prop);
-        if (value && value !== 'none' && value !== '') {
-          (el as HTMLElement).style.setProperty(prop, value);
-        }
-      });
-    }
-  });
-}
-
-// Helper function to convert SVG text elements using fonts to paths
-// This ensures music glyphs render correctly when serialized
-async function convertTextToPathsInSvg(svgElement: SVGElement): Promise<void> {
-  // VexFlow 5.x renders glyphs as <path> elements directly, but some text elements
-  // may still reference fonts. We need to ensure all text is properly styled.
-  const textElements = svgElement.querySelectorAll('text');
-
-  textElements.forEach((textEl) => {
-    // Ensure text elements have explicit fill color
-    if (!textEl.getAttribute('fill')) {
-      textEl.setAttribute('fill', '#000000');
-    }
-    // Set explicit font properties
-    const computedStyle = window.getComputedStyle(textEl);
-    textEl.setAttribute('font-family', computedStyle.fontFamily || 'Arial, sans-serif');
-    textEl.setAttribute('font-size', computedStyle.fontSize || '12px');
-  });
-}
-
-// Render VexFlow notation to image for PDF embedding
+// Render VexFlow notation directly to Canvas for reliable PDF embedding
+// Using Canvas renderer eliminates SVG-to-canvas conversion issues that cause black boxes
 async function renderNotationToImage(
   notes: string[],
   clef: 'treble' | 'bass' = 'treble',
@@ -108,21 +68,36 @@ async function renderNotationToImage(
   try {
     const VF = await import('vexflow');
 
-    // Create a hidden container
-    const container = document.createElement('div');
-    container.style.position = 'absolute';
-    container.style.left = '-9999px';
-    container.style.top = '-9999px';
-    container.style.backgroundColor = 'white';
-    document.body.appendChild(container);
-
     const width = 300;
     const height = 150;
+    const scale = 2; // Higher resolution for better PDF quality
 
-    // Use SVG renderer - VexFlow 5.x renders glyphs as paths, not font references
-    const renderer = new VF.Renderer(container, VF.Renderer.Backends.SVG);
+    // Create a canvas element directly - this avoids SVG-to-canvas conversion issues
+    const canvas = document.createElement('canvas');
+    canvas.width = width * scale;
+    canvas.height = height * scale;
+
+    // Get 2D context and scale it for high DPI rendering
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      return null;
+    }
+
+    // Fill white background first
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Scale for high DPI
+    ctx.scale(scale, scale);
+
+    // Use VexFlow's native Canvas renderer - this draws directly to canvas
+    // without any SVG intermediate step, avoiding black box issues
+    const renderer = new VF.Renderer(canvas, VF.Renderer.Backends.CANVAS);
     renderer.resize(width, height);
     const context = renderer.getContext();
+
+    // Set background color on VexFlow context as well
+    context.setBackgroundFillStyle('white');
 
     // Create stave
     const stave = new VF.Stave(10, 10, width - 20);
@@ -236,83 +211,9 @@ async function renderNotationToImage(
       });
     }
 
-    // Get the SVG element
-    const svgElement = container.querySelector('svg');
-    if (!svgElement) {
-      document.body.removeChild(container);
-      return null;
-    }
-
-    // CRITICAL: Inline all styles and prepare SVG for serialization
-    // This ensures music notation renders correctly in the PDF
-    inlineSvgStyles(svgElement);
-    await convertTextToPathsInSvg(svgElement);
-
-    // Set explicit dimensions and namespace on SVG for proper rendering
-    svgElement.setAttribute('width', String(width));
-    svgElement.setAttribute('height', String(height));
-    svgElement.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-    svgElement.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
-
-    // Add white background rect to SVG itself
-    const bgRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-    bgRect.setAttribute('width', '100%');
-    bgRect.setAttribute('height', '100%');
-    bgRect.setAttribute('fill', 'white');
-    svgElement.insertBefore(bgRect, svgElement.firstChild);
-
-    // Serialize SVG to string with proper XML declaration
-    const serializer = new XMLSerializer();
-    let svgString = serializer.serializeToString(svgElement);
-
-    // Ensure proper XML encoding
-    if (!svgString.startsWith('<?xml')) {
-      svgString = '<?xml version="1.0" encoding="UTF-8"?>' + svgString;
-    }
-
-    // Convert SVG to canvas using a data URL instead of blob URL
-    // Data URLs work better across security contexts
-    const svgBase64 = btoa(unescape(encodeURIComponent(svgString)));
-    const dataUrl = `data:image/svg+xml;base64,${svgBase64}`;
-
-    const canvas = document.createElement('canvas');
-    // Use higher resolution for better PDF quality
-    const scale = 2;
-    canvas.width = width * scale;
-    canvas.height = height * scale;
-    const ctx = canvas.getContext('2d');
-
-    if (!ctx) {
-      document.body.removeChild(container);
-      return null;
-    }
-
-    // Scale context for higher resolution
-    ctx.scale(scale, scale);
-
-    // Fill white background
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, width, height);
-
-    // Create an image and draw it on canvas
-    const img = new Image();
-
-    // Wait for image to load before converting to base64
-    const imageData = await new Promise<string>((resolve, reject) => {
-      img.onload = () => {
-        ctx.drawImage(img, 0, 0, width, height);
-        document.body.removeChild(container);
-        resolve(canvas.toDataURL('image/png', 1.0));
-      };
-      img.onerror = (e) => {
-        console.error('Image load error:', e);
-        document.body.removeChild(container);
-        reject(new Error('Failed to load SVG image'));
-      };
-      img.src = dataUrl;
-    });
-
-    return imageData;
+    // Canvas is already rendered - just export to PNG data URL
+    // This is much more reliable than SVG->Image->Canvas conversion
+    return canvas.toDataURL('image/png', 1.0);
   } catch (error) {
     console.error('Error rendering notation:', error);
     return null;
