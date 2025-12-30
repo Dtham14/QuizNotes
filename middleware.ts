@@ -48,7 +48,8 @@ export async function middleware(request: NextRequest) {
     '/teacher',
     '/achievements',
     '/leaderboard',
-    '/forum', // Entire forum requires authentication
+    '/forum/create', // Creating posts requires authentication
+    '/forum/edit', // Editing posts requires authentication
   ]
   const isProtectedPath = protectedPaths.some((path) =>
     request.nextUrl.pathname.startsWith(path)
