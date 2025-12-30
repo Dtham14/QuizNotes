@@ -75,15 +75,18 @@ export async function GET(
     }
 
     // Format messages for the frontend
-    const formattedMessages = messages.map((msg: any) => ({
-      id: msg.id,
-      author: msg.user?.name || msg.user?.email || 'Unknown',
-      role: msg.user?.role || 'student',
-      content: msg.content,
-      timestamp: msg.created_at,
-      avatar: msg.user?.avatar_url,
-      themeColor: msg.user?.theme_color,
-    }))
+    const formattedMessages = messages.map((msg: any) => {
+      const userProfile = Array.isArray(msg.user) ? msg.user[0] : msg.user
+      return {
+        id: msg.id,
+        author: userProfile?.name || userProfile?.email || 'Unknown',
+        role: userProfile?.role || 'student',
+        content: msg.content,
+        timestamp: msg.created_at,
+        avatar: userProfile?.avatar_url,
+        themeColor: userProfile?.theme_color,
+      }
+    })
 
     return NextResponse.json({ messages: formattedMessages })
   } catch (error) {
@@ -184,14 +187,15 @@ export async function POST(
     }
 
     // Format the message for the frontend
+    const userProfile = Array.isArray(newMessage.user) ? newMessage.user[0] : newMessage.user
     const formattedMessage = {
       id: newMessage.id,
-      author: newMessage.user?.name || newMessage.user?.email || 'Unknown',
-      role: newMessage.user?.role || 'student',
+      author: userProfile?.name || userProfile?.email || 'Unknown',
+      role: userProfile?.role || 'student',
       content: newMessage.content,
       timestamp: newMessage.created_at,
-      avatar: newMessage.user?.avatar_url,
-      themeColor: newMessage.user?.theme_color,
+      avatar: userProfile?.avatar_url,
+      themeColor: userProfile?.theme_color,
     }
 
     return NextResponse.json({ message: formattedMessage }, { status: 201 })

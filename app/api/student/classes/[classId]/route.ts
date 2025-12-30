@@ -111,14 +111,16 @@ export async function GET(
       })
     )
 
+    // Handle teacher data (could be array or object)
+    const teacherData: any = classData.teacher
+    const teacher = Array.isArray(teacherData) ? teacherData[0] : teacherData
+
     return NextResponse.json({
       class: {
         id: classData.id,
         name: classData.name,
         description: classData.description,
-        teacherName: Array.isArray(classData.teacher)
-          ? classData.teacher[0]?.name || classData.teacher[0]?.email
-          : classData.teacher?.name || classData.teacher?.email,
+        teacherName: teacher?.name || teacher?.email || 'Unknown',
       },
       assignments: assignmentsWithProgress,
     })
