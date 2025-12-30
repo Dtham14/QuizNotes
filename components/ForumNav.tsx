@@ -13,7 +13,7 @@ interface ForumNavProps {
     avatar?: string | null
     avatar_url?: string | null
     theme_color?: string | null
-  }
+  } | null
 }
 
 export default function ForumNav({ user }: ForumNavProps) {
@@ -33,10 +33,12 @@ export default function ForumNav({ user }: ForumNavProps) {
               <span className="text-xl font-bold text-gray-900">QuizNotes</span>
             </Link>
             <div className="hidden md:flex items-center gap-6">
-              <Link href="/profile" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors">
-                Dashboard
-              </Link>
-              <Link href="/quiz" className="text-gray-700 hover:text-gray-900 text-sm font-semibold">
+              {user && (
+                <Link href="/profile" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors">
+                  Dashboard
+                </Link>
+              )}
+              <Link href={user ? "/quiz" : "/#quizzes"} className="text-gray-700 hover:text-gray-900 text-sm font-semibold">
                 Quizzes
               </Link>
               <span className="text-brand font-semibold text-sm">Forum</span>
@@ -49,13 +51,30 @@ export default function ForumNav({ user }: ForumNavProps) {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <ProfileDropdown
-              user={{
-                ...user,
-                avatarUrl: user.avatar_url,
-                themeColor: user.theme_color,
-              }}
-            />
+            {user ? (
+              <ProfileDropdown
+                user={{
+                  ...user,
+                  avatarUrl: user.avatar_url,
+                  themeColor: user.theme_color,
+                }}
+              />
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="hidden sm:block px-4 py-2 text-gray-700 hover:text-gray-900 text-sm font-semibold"
+                >
+                  Log in
+                </Link>
+                <Link
+                  href="/login?tab=register"
+                  className="hidden sm:block px-4 py-2 bg-brand text-white rounded-lg hover:bg-brand-dark transition-colors text-sm font-semibold"
+                >
+                  Sign up free
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </div>
