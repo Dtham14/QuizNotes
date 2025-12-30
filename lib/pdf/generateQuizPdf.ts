@@ -57,6 +57,124 @@ const formatQuizType = (type: string): string => {
   return typeMap[type] || type.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 };
 
+// Track if VexFlow fonts have been loaded for canvas rendering
+let vexflowFontsLoaded = false;
+let fontLoadPromise: Promise<void> | null = null;
+
+/**
+ * Ensures VexFlow music fonts are loaded before canvas rendering.
+ * VexFlow 5.x loads fonts asynchronously, and canvas rendering requires
+ * fonts to be fully loaded BEFORE drawing (unlike SVG which can re-render).
+ * Without this, music notation appears as black boxes/tofu characters.
+ */
+async function ensureVexFlowFontsLoaded(): Promise<void> {
+  if (vexflowFontsLoaded) {
+    console.log('[VexFlow Fonts] Already loaded, skipping');
+    return;
+  }
+
+  if (fontLoadPromise) {
+    console.log('[VexFlow Fonts] Load already in progress, waiting...');
+    return fontLoadPromise;
+  }
+
+  fontLoadPromise = (async () => {
+    try {
+      console.log('[VexFlow Fonts] Starting font loading process...');
+
+      // Import VexFlow - this triggers the font loading in vexflow.js
+      const VF = await import('vexflow');
+      console.log('[VexFlow Fonts] VexFlow imported, checking for loadFonts method...');
+
+      // VexFlow 5.x has a loadFonts method that we can use to explicitly load fonts
+      // Check if VexFlow.default has the loadFonts method (it should for VexFlow 5.x)
+      // Using type assertion because the loadFonts method exists at runtime but TypeScript types don't expose it
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const VexFlowClass = (VF.default || VF) as any;
+
+      if (typeof VexFlowClass?.loadFonts === 'function') {
+        console.log('[VexFlow Fonts] Using VexFlow.loadFonts() to load Bravura font...');
+        try {
+          // Load the essential music notation font
+          await VexFlowClass.loadFonts('Bravura', 'Academico');
+          console.log('[VexFlow Fonts] VexFlow.loadFonts() completed');
+        } catch (loadError) {
+          console.warn('[VexFlow Fonts] VexFlow.loadFonts() failed:', loadError);
+        }
+      }
+
+      // Check if document.fonts API is available (browser environment)
+      if (typeof document !== 'undefined' && document.fonts) {
+        console.log('[VexFlow Fonts] Using document.fonts API to verify font loading...');
+
+        // List all fonts currently registered
+        const fontFamilies = new Set<string>();
+        document.fonts.forEach((font) => {
+          fontFamilies.add(font.family);
+        });
+        console.log('[VexFlow Fonts] Registered font families:', Array.from(fontFamilies).join(', '));
+
+        // Wait for the critical music fonts to be loaded
+        // Bravura is the music notation font (notes, clefs, accidentals, etc.)
+        const fontChecks: Promise<FontFace[]>[] = [];
+
+        // Check for Bravura (the main music font)
+        fontChecks.push(
+          document.fonts.load('40px Bravura').catch((err) => {
+            console.warn('[VexFlow Fonts] Bravura font load check failed:', err);
+            return [];
+          })
+        );
+
+        // Also ensure Academico is ready for any text rendering
+        fontChecks.push(
+          document.fonts.load('12px Academico').catch(() => [])
+        );
+
+        const results = await Promise.all(fontChecks);
+        console.log('[VexFlow Fonts] Font load checks completed, Bravura result:', results[0]?.length || 0, 'faces');
+
+        // Give a small delay to ensure fonts are fully registered
+        // This helps with edge cases where fonts report "loaded" but aren't quite ready
+        await new Promise(resolve => setTimeout(resolve, 150));
+
+        // Double-check by waiting for document.fonts.ready
+        await document.fonts.ready;
+
+        // Log which fonts are now available
+        const loadedFonts = new Set<string>();
+        document.fonts.forEach((font) => {
+          if (font.status === 'loaded') {
+            loadedFonts.add(font.family);
+          }
+        });
+        console.log('[VexFlow Fonts] Loaded font families:', Array.from(loadedFonts).join(', '));
+
+        // Check specifically if Bravura is loaded
+        const hasBravura = Array.from(loadedFonts).some(f => f.toLowerCase().includes('bravura'));
+        if (!hasBravura) {
+          console.error('[VexFlow Fonts] WARNING: Bravura font may not be loaded! Music notation may show as boxes.');
+        } else {
+          console.log('[VexFlow Fonts] Bravura font confirmed loaded');
+        }
+      } else {
+        // Fallback: just wait a bit for fonts to load
+        console.warn('[VexFlow Fonts] document.fonts API not available, using timeout fallback');
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+
+      vexflowFontsLoaded = true;
+      console.log('[VexFlow Fonts] Font loading complete');
+    } catch (error) {
+      console.error('[VexFlow Fonts] Error during font loading:', error);
+      // Mark as loaded anyway to prevent infinite retries
+      vexflowFontsLoaded = true;
+    }
+  })();
+
+  return fontLoadPromise;
+}
+
 // Render VexFlow notation directly to Canvas for reliable PDF embedding
 // Using Canvas renderer eliminates SVG-to-canvas conversion issues that cause black boxes
 async function renderNotationToImage(
@@ -66,6 +184,10 @@ async function renderNotationToImage(
   questionType?: string
 ): Promise<string | null> {
   try {
+    // CRITICAL: Wait for VexFlow fonts to load before rendering
+    // Without this, canvas rendering produces black boxes instead of music notation
+    await ensureVexFlowFontsLoaded();
+
     const VF = await import('vexflow');
 
     const width = 300;
@@ -213,15 +335,35 @@ async function renderNotationToImage(
 
     // Canvas is already rendered - just export to PNG data URL
     // This is much more reliable than SVG->Image->Canvas conversion
-    return canvas.toDataURL('image/png', 1.0);
+    const dataUrl = canvas.toDataURL('image/png', 1.0);
+
+    // Debug: Log the data URL length to verify content was rendered
+    console.log('[PDF Notation] Canvas exported, data URL length:', dataUrl.length);
+
+    // A very small data URL likely means the canvas is mostly empty/blank
+    // A proper notation render should produce a data URL of at least 10KB
+    if (dataUrl.length < 5000) {
+      console.warn('[PDF Notation] Warning: Canvas data URL is suspiciously small, notation may not have rendered correctly');
+    }
+
+    return dataUrl;
   } catch (error) {
-    console.error('Error rendering notation:', error);
+    console.error('[PDF Notation] Error rendering notation:', error);
     return null;
   }
 }
 
 export async function generateQuizResultsPdf(data: QuizPdfData): Promise<Blob> {
   const { quizType, score, totalQuestions, questions, answers, completedAt } = data;
+
+  console.log('[PDF Generation] Starting PDF generation for quiz type:', quizType);
+  console.log('[PDF Generation] Total questions:', totalQuestions);
+
+  // Pre-load VexFlow fonts before starting PDF generation
+  // This ensures fonts are ready when we render notation images
+  console.log('[PDF Generation] Pre-loading VexFlow fonts...');
+  await ensureVexFlowFontsLoaded();
+  console.log('[PDF Generation] VexFlow fonts ready');
 
   // Create PDF document (A4 size)
   const pdf = new jsPDF({
