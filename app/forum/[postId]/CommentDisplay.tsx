@@ -4,18 +4,29 @@ import { useState } from 'react'
 import Image from 'next/image'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { useRouter } from 'next/navigation'
 import CommentForm from './CommentForm'
 
 interface CommentDisplayProps {
   comment: any
   depth?: number
   postId?: string
+  isAuthenticated?: boolean
 }
 
-export default function CommentDisplay({ comment, depth = 0, postId }: CommentDisplayProps) {
+export default function CommentDisplay({ comment, depth = 0, postId, isAuthenticated = true }: CommentDisplayProps) {
+  const router = useRouter()
   const maxDepth = 5
   const shouldIndent = depth < maxDepth
   const [showReplyForm, setShowReplyForm] = useState(false)
+
+  const handleReplyClick = () => {
+    if (!isAuthenticated) {
+      router.push('/login')
+      return
+    }
+    setShowReplyForm(!showReplyForm)
+  }
 
   return (
     <div
@@ -70,7 +81,7 @@ export default function CommentDisplay({ comment, depth = 0, postId }: CommentDi
         <span>👍 {comment.vote_score} votes</span>
         {depth < maxDepth && postId && (
           <button
-            onClick={() => setShowReplyForm(!showReplyForm)}
+            onClick={handleReplyClick}
             className="text-brand hover:text-brand-dark font-medium"
           >
             {showReplyForm ? 'Cancel' : 'Reply'}
@@ -86,6 +97,7 @@ export default function CommentDisplay({ comment, depth = 0, postId }: CommentDi
             parentId={comment.id}
             onCancel={() => setShowReplyForm(false)}
             placeholder="Write your reply..."
+            isAuthenticated={isAuthenticated}
           />
         </div>
       )}
@@ -94,7 +106,7 @@ export default function CommentDisplay({ comment, depth = 0, postId }: CommentDi
       {comment.replies && comment.replies.length > 0 && (
         <div className="mt-4 space-y-4">
           {comment.replies.map((reply: any) => (
-            <CommentDisplay key={reply.id} comment={reply} depth={depth + 1} postId={postId} />
+            <CommentDisplay key={reply.id} comment={reply} depth={depth + 1} postId={postId} isAuthenticated={isAuthenticated} />
           ))}
         </div>
       )}

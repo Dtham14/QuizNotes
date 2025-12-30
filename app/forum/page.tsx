@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { createServiceClient } from '@/lib/supabase/service'
-import { requireAuth } from '@/lib/auth'
+import { getSession } from '@/lib/auth'
 import ForumNav from '@/components/ForumNav'
 import type { ForumPost, ForumTag } from '@/lib/types/forum'
 
@@ -16,7 +16,7 @@ export default async function ForumPage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
   const params = await searchParams
-  const user = await requireAuth() // Require authentication
+  const user = await getSession() // Allow viewing without authentication
   const supabase = createServiceClient()
 
   // Get selected tag from query params
@@ -71,12 +71,21 @@ export default async function ForumPage({
               <h1 className="text-3xl font-bold text-gray-900">Forum</h1>
               <p className="mt-2 text-gray-600">Discuss music theory and share knowledge</p>
             </div>
-            <Link
-              href="/forum/create"
-              className="px-6 py-3 bg-brand text-white font-semibold rounded-lg hover:bg-brand-dark transition-colors"
-            >
-              New Post
-            </Link>
+            {user ? (
+              <Link
+                href="/forum/create"
+                className="px-6 py-3 bg-brand text-white font-semibold rounded-lg hover:bg-brand-dark transition-colors"
+              >
+                New Post
+              </Link>
+            ) : (
+              <Link
+                href="/login"
+                className="px-6 py-3 bg-brand text-white font-semibold rounded-lg hover:bg-brand-dark transition-colors"
+              >
+                Login to Post
+              </Link>
+            )}
           </div>
         </div>
       </div>

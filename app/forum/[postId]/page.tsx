@@ -4,7 +4,7 @@ import Image from 'next/image'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { createServiceClient } from '@/lib/supabase/service'
-import { requireAuth } from '@/lib/auth'
+import { getSession } from '@/lib/auth'
 import ForumNav from '@/components/ForumNav'
 import PostActions from './PostActions'
 import CommentForm from './CommentForm'
@@ -41,7 +41,7 @@ export async function generateMetadata({ params }: PageProps) {
 
 export default async function ForumPostPage({ params }: PageProps) {
   const { postId } = await params
-  const user = await requireAuth() // Require authentication
+  const user = await getSession() // Allow viewing without authentication
   const supabase = createServiceClient()
 
   // Get the post
@@ -163,12 +163,14 @@ export default async function ForumPostPage({ params }: PageProps) {
               </div>
 
               {/* Edit/Delete buttons */}
-              <PostActions
-                postId={transformedPost.id}
-                authorId={transformedPost.author_id}
-                currentUserId={user.id}
-                currentUserRole={user.role}
-              />
+              {user && (
+                <PostActions
+                  postId={transformedPost.id}
+                  authorId={transformedPost.author_id}
+                  currentUserId={user.id}
+                  currentUserRole={user.role}
+                />
+              )}
             </div>
 
             {/* Tags */}
@@ -202,7 +204,7 @@ export default async function ForumPostPage({ params }: PageProps) {
               initialScore={transformedPost.vote_score}
               initialUserVote={userVote as 'upvote' | 'downvote' | null}
               authorId={transformedPost.author_id}
-              currentUserId={user.id}
+              currentUserId={user?.id || null}
             />
             <div className="flex items-center gap-6 text-sm text-gray-600">
               <span>💬 {transformedPost.reply_count} replies</span>
@@ -228,7 +230,7 @@ export default async function ForumPostPage({ params }: PageProps) {
           {/* Add Comment Form */}
           {!transformedPost.is_locked && (
             <div className="mb-6">
-              <CommentForm postId={transformedPost.id} />
+              <CommentForm postId={transformedPost.id} isAuthenticated={!!user} />
             </div>
           )}
 
@@ -239,7 +241,7 @@ export default async function ForumPostPage({ params }: PageProps) {
           ) : (
             <div className="space-y-4">
               {threadedComments.map((comment) => (
-                <CommentDisplay key={comment.id} comment={comment} postId={transformedPost.id} />
+                <CommentDisplay key={comment.id} comment={comment} postId={transformedPost.id} isAuthenticated={!!user} />
               ))}
             </div>
           )}

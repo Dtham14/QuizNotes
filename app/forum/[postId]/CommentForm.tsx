@@ -2,12 +2,14 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 interface CommentFormProps {
   postId: string
   parentId?: string
   onCancel?: () => void
   placeholder?: string
+  isAuthenticated?: boolean
 }
 
 export default function CommentForm({
@@ -15,12 +17,28 @@ export default function CommentForm({
   parentId,
   onCancel,
   placeholder = 'Add your comment...',
+  isAuthenticated = true,
 }: CommentFormProps) {
   const router = useRouter()
   const [content, setContent] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showPreview, setShowPreview] = useState(false)
+
+  // Show login prompt if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="bg-white rounded-xl shadow-md p-6 text-center">
+        <p className="text-gray-700 mb-4">You need to be logged in to comment</p>
+        <Link
+          href="/login"
+          className="inline-block px-6 py-2 bg-brand text-white font-semibold rounded-lg hover:bg-brand-dark transition-colors"
+        >
+          Login to Comment
+        </Link>
+      </div>
+    )
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

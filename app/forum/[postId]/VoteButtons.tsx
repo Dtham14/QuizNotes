@@ -8,7 +8,7 @@ interface VoteButtonsProps {
   initialScore: number
   initialUserVote: 'upvote' | 'downvote' | null
   authorId: string
-  currentUserId: string
+  currentUserId: string | null
 }
 
 export default function VoteButtons({
@@ -24,9 +24,15 @@ export default function VoteButtons({
   const [isVoting, setIsVoting] = useState(false)
 
   // Can't vote on your own post
-  const isOwnPost = authorId === currentUserId
+  const isOwnPost = currentUserId && authorId === currentUserId
 
   const handleVote = async (voteType: 'upvote' | 'downvote') => {
+    // Redirect to login if not authenticated
+    if (!currentUserId) {
+      router.push('/login')
+      return
+    }
+
     if (isVoting) return
 
     setIsVoting(true)
@@ -112,7 +118,7 @@ export default function VoteButtons({
             ? 'bg-green-100 text-green-700'
             : 'bg-gray-100 text-gray-600 hover:bg-green-50 hover:text-green-600'
         } disabled:opacity-50 disabled:cursor-not-allowed`}
-        title="Upvote"
+        title={currentUserId ? "Upvote" : "Login to vote"}
       >
         <svg
           className="w-5 h-5"
@@ -143,7 +149,7 @@ export default function VoteButtons({
             ? 'bg-red-100 text-red-700'
             : 'bg-gray-100 text-gray-600 hover:bg-red-50 hover:text-red-600'
         } disabled:opacity-50 disabled:cursor-not-allowed`}
-        title="Downvote"
+        title={currentUserId ? "Downvote" : "Login to vote"}
       >
         <svg
           className="w-5 h-5"
