@@ -4,6 +4,7 @@ import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import TeacherNav from '@/components/TeacherNav';
+import ClassDiscussion from './ClassDiscussion';
 
 type Student = {
   id: string;
@@ -59,7 +60,7 @@ export default function ClassDetailPage({ params }: { params: Promise<{ classId:
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'students' | 'assignments'>('students');
+  const [activeTab, setActiveTab] = useState<'students' | 'assignments' | 'discussion'>('students');
 
   useEffect(() => {
     fetchUser();
@@ -199,6 +200,16 @@ export default function ClassDetailPage({ params }: { params: Promise<{ classId:
               >
                 Assignments ({assignments.length})
               </button>
+              <button
+                onClick={() => setActiveTab('discussion')}
+                className={`px-6 py-4 text-sm font-medium ${
+                  activeTab === 'discussion'
+                    ? 'border-b-2 border-brand text-brand'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Discussion 💬
+              </button>
             </nav>
           </div>
 
@@ -330,6 +341,17 @@ export default function ClassDetailPage({ params }: { params: Promise<{ classId:
                   ))}
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Discussion Tab */}
+          {activeTab === 'discussion' && (
+            <div className="p-6">
+              <ClassDiscussion
+                classId={classId}
+                currentUserRole="teacher"
+                currentUserName={user?.name || user?.email || 'Teacher'}
+              />
             </div>
           )}
         </div>

@@ -2359,12 +2359,16 @@ export default function ProfilePage() {
                 ) : (
                   <div className="space-y-2">
                     {classes.slice(0, 3).map((cls) => (
-                      <div key={cls.id} className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+                      <Link
+                        key={cls.id}
+                        href={`/class/${cls.id}`}
+                        className="block bg-gray-50 rounded-lg p-3 border border-gray-100 hover:bg-gray-100 hover:border-brand/50 transition-all cursor-pointer"
+                      >
                         <h3 className="font-semibold text-gray-900 text-sm">{cls.name}</h3>
                         {cls.teacherName && (
                           <p className="text-xs text-gray-500">{cls.teacherName}</p>
                         )}
-                      </div>
+                      </Link>
                     ))}
                     {classes.length > 3 && (
                       <p className="text-xs text-gray-500 text-center">+{classes.length - 3} more</p>
