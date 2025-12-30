@@ -39,11 +39,9 @@ export function PricingNav({ user }: PricingNavProps) {
               <Link href={user ? "/quiz" : "/#quizzes"} className="text-gray-700 hover:text-gray-900 text-sm font-semibold">
                 Quizzes
               </Link>
-              {user && (
-                <Link href="/forum" className="text-gray-700 hover:text-gray-900 text-sm font-semibold">
-                  Forum
-                </Link>
-              )}
+              <Link href="/forum" className="text-gray-700 hover:text-gray-900 text-sm font-semibold">
+                Forum
+              </Link>
               <span className="text-brand text-sm font-semibold">
                 Learning Plans
               </span>
@@ -104,15 +102,13 @@ export function PricingNav({ user }: PricingNavProps) {
             >
               Quizzes
             </Link>
-            {user && (
-              <Link
-                href="/forum"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg text-sm font-semibold"
-              >
-                Forum
-              </Link>
-            )}
+            <Link
+              href="/forum"
+              onClick={() => setMobileMenuOpen(false)}
+              className="block px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg text-sm font-semibold"
+            >
+              Forum
+            </Link>
             <Link
               href="/pricing"
               onClick={() => setMobileMenuOpen(false)}
