@@ -61,7 +61,7 @@ export default function CommentDisplay({ comment, depth = 0, postId }: CommentDi
       </div>
 
       {/* Comment content */}
-      <div className="prose prose-sm max-w-none mb-2 [&_p]:!text-gray-900 [&_li]:!text-gray-900 [&_h1]:!text-gray-900 [&_h2]:!text-gray-900 [&_h3]:!text-gray-900 [&_strong]:!text-gray-900 [&_em]:!text-gray-900 [&_code]:!text-gray-900 [&_blockquote]:!text-gray-900 [&_a]:!text-brand">
+      <div className="prose prose-sm max-w-none mb-2 whitespace-pre-wrap [&_p]:!text-gray-900 [&_li]:!text-gray-900 [&_h1]:!text-gray-900 [&_h2]:!text-gray-900 [&_h3]:!text-gray-900 [&_strong]:!text-gray-900 [&_em]:!text-gray-900 [&_code]:!text-gray-900 [&_blockquote]:!text-gray-900 [&_a]:!text-brand">
         <ReactMarkdown remarkPlugins={[remarkGfm]}>{comment.content}</ReactMarkdown>
       </div>
 

@@ -33,12 +33,13 @@ export default function ForumNav({ user }: ForumNavProps) {
               <span className="text-xl font-bold text-gray-900">QuizNotes</span>
             </Link>
             <div className="hidden md:flex items-center gap-6">
+              <Link href="/profile" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors">
+                Dashboard
+              </Link>
               <Link href="/quiz" className="text-gray-700 hover:text-gray-900 text-sm font-semibold">
                 Quizzes
               </Link>
-              <Link href="/forum" className="text-gray-700 hover:text-gray-900 text-sm font-semibold">
-                Forum
-              </Link>
+              <span className="text-brand font-semibold text-sm">Forum</span>
               <Link href="/pricing" className="text-gray-700 hover:text-gray-900 text-sm font-semibold">
                 Learning Plans
               </Link>

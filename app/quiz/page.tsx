@@ -56,7 +56,7 @@ function QuizContent() {
   const [showResult, setShowResult] = useState(false);
   const [score, setScore] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [user, setUser] = useState<{ id: string; email: string; name?: string | null; avatar?: string | null; avatarUrl?: string | null; themeColor?: string | null } | null>(null);
+  const [user, setUser] = useState<{ id: string; email: string; name?: string | null; avatar?: string | null; avatarUrl?: string | null; themeColor?: string | null; role?: string } | null>(null);
   const [gamificationStats, setGamificationStats] = useState<GamificationStats | null>(null);
   const [assignmentId, setAssignmentId] = useState<string | null>(null);
   const [assignmentInfo, setAssignmentInfo] = useState<{ maxAttempts: number; attemptsUsed: number; attemptsRemaining: number } | null>(null);
@@ -365,6 +365,19 @@ function QuizContent() {
                     Dashboard
                   </Link>
                   <span className="text-brand font-semibold text-sm">Quizzes</span>
+                  <Link href="/forum" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors">
+                    Forum
+                  </Link>
+                  {user?.role === 'student' && (
+                    <>
+                      <Link href="/learning" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors">
+                        Learning
+                      </Link>
+                      <Link href="/student-premium" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors">
+                        Student Premium
+                      </Link>
+                    </>
+                  )}
                 </div>
               </div>
               {/* Profile Dropdown - Right Corner */}
@@ -1056,6 +1069,19 @@ function QuizContent() {
                   Dashboard
                 </Link>
                 <span className="text-brand font-semibold text-sm">Quizzes</span>
+                <Link href="/forum" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors">
+                  Forum
+                </Link>
+                {user?.role === 'student' && (
+                  <>
+                    <Link href="/learning" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors">
+                      Learning
+                    </Link>
+                    <Link href="/student-premium" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors">
+                      Student Premium
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-2 sm:gap-4">

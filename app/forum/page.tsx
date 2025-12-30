@@ -226,6 +226,16 @@ export default async function ForumPage({
                           </div>
                         )}
 
+                        {/* Content Preview */}
+                        {post.content && (
+                          <p className="text-sm text-gray-600 mb-3 line-clamp-2 whitespace-pre-wrap">
+                            {post.content.length > 150
+                              ? post.content.substring(0, 150) + '...'
+                              : post.content
+                            }
+                          </p>
+                        )}
+
                         {/* Stats */}
                         <div className="flex items-center gap-4 text-sm text-gray-500">
                           <span>👍 {post.vote_score}</span>

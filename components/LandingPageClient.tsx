@@ -58,6 +58,11 @@ export default function LandingPageClient({ user }: LandingPageClientProps) {
                 <span className="text-xl font-bold text-gray-900">QuizNotes</span>
               </div>
               <div className="hidden md:flex items-center gap-6">
+                {user && (
+                  <Link href="/profile" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors">
+                    Dashboard
+                  </Link>
+                )}
                 <button
                   onClick={() => openQuiz()}
                   className="text-gray-700 hover:text-gray-900 text-sm font-semibold"
@@ -120,6 +125,15 @@ export default function LandingPageClient({ user }: LandingPageClientProps) {
         {mobileMenuOpen && (
           <div className="md:hidden border-t border-gray-200 bg-white">
             <div className="px-4 py-3 space-y-3">
+              {user && (
+                <Link
+                  href="/profile"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg text-sm font-semibold"
+                >
+                  Dashboard
+                </Link>
+              )}
               <button
                 onClick={() => {
                   openQuiz();

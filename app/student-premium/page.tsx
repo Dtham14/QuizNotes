@@ -153,6 +153,9 @@ export default function StudentPremiumPage() {
                 <Link href="/quiz" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors">
                   Quizzes
                 </Link>
+                <Link href="/forum" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors">
+                  Forum
+                </Link>
                 <Link href="/learning" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors">
                   Learning
                 </Link>

@@ -1524,6 +1524,9 @@ export default function LearningPage() {
                   Forum
                 </Link>
                 <span className="text-brand font-semibold text-sm">Learning</span>
+                <Link href="/student-premium" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors">
+                  Student Premium
+                </Link>
                 {user.subscriptionStatus === 'active' && (
                   <Link href="/tools/piano" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors flex items-center gap-1">
                     <span>👑</span>
