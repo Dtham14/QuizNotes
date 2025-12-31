@@ -75,8 +75,8 @@ export default function ProfileCard({ user, onUpdate }: ProfileCardProps) {
   const handleSaveName = async () => {
     setSavingName(true);
     try {
-      const response = await fetch('/api/profile/update', {
-        method: 'PATCH',
+      const response = await fetch('/api/profile/name', {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: editedName }),
       });
@@ -94,24 +94,81 @@ export default function ProfileCard({ user, onUpdate }: ProfileCardProps) {
 
   const handleSaveAvatar = async () => {
     setSavingAvatar(true);
+    setAvatarError(null);
     try {
-      const response = await fetch('/api/profile/update', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          avatar: selectedAvatar,
-          themeColor: selectedThemeColor,
-        }),
-      });
+      // If there's a custom avatar file to upload
+      if (avatarFile) {
+        setUploadingAvatar(true);
+        const formData = new FormData();
+        formData.append('avatar', avatarFile);
 
-      if (response.ok) {
+        const uploadRes = await fetch('/api/profile/avatar-upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!uploadRes.ok) {
+          const data = await uploadRes.json();
+          setAvatarError(data.error || 'Failed to upload avatar');
+          setUploadingAvatar(false);
+          setSavingAvatar(false);
+          return;
+        }
+
+        const uploadData = await uploadRes.json();
+
+        // Save theme color
+        await fetch('/api/profile/theme', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ themeColor: selectedThemeColor }),
+        });
+
+        setAvatarFile(null);
+        setAvatarPreview(uploadData.avatarUrl);
         setShowAvatarPicker(false);
         onUpdate?.();
+      } else if (avatarPreview && user.avatarUrl) {
+        // User has existing custom avatar, just update theme color
+        await fetch('/api/profile/theme', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ themeColor: selectedThemeColor }),
+        });
+        setShowAvatarPicker(false);
+        onUpdate?.();
+      } else {
+        // Save predefined avatar
+        const res = await fetch('/api/profile/avatar', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ avatar: selectedAvatar }),
+        });
+
+        if (res.ok) {
+          // Clear custom avatar if using predefined
+          if (user.avatarUrl) {
+            await fetch('/api/profile/avatar-upload', { method: 'DELETE' });
+          }
+
+          // Save theme color
+          await fetch('/api/profile/theme', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ themeColor: selectedThemeColor }),
+          });
+
+          setAvatarPreview(null);
+          setShowAvatarPicker(false);
+          onUpdate?.();
+        }
       }
     } catch (error) {
-      console.error('Error saving avatar:', error);
+      console.error('Failed to save avatar:', error);
+      setAvatarError('Failed to save avatar. Please try again.');
     } finally {
       setSavingAvatar(false);
+      setUploadingAvatar(false);
     }
   };
 
@@ -121,13 +178,16 @@ export default function ProfileCard({ user, onUpdate }: ProfileCardProps) {
 
     setAvatarError(null);
 
-    if (file.size > 5 * 1024 * 1024) {
-      setAvatarError('File size must be less than 5MB');
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      setAvatarError('Invalid file type. Please use JPEG, PNG, GIF, or WebP.');
       return;
     }
 
-    if (!file.type.startsWith('image/')) {
-      setAvatarError('File must be an image');
+    // Validate file size (2MB to match backend)
+    if (file.size > 2 * 1024 * 1024) {
+      setAvatarError('File size must be less than 2MB');
       return;
     }
 
@@ -139,41 +199,9 @@ export default function ProfileCard({ user, onUpdate }: ProfileCardProps) {
     reader.readAsDataURL(file);
   };
 
-  const handleUploadAvatar = async () => {
-    if (!avatarFile) return;
-
-    setUploadingAvatar(true);
-    setAvatarError(null);
-
-    try {
-      const formData = new FormData();
-      formData.append('avatar', avatarFile);
-
-      const response = await fetch('/api/profile/avatar', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setAvatarPreview(data.avatarUrl);
-        setAvatarFile(null);
-        setShowAvatarPicker(false);
-        onUpdate?.();
-      } else {
-        const error = await response.json();
-        setAvatarError(error.error || 'Failed to upload avatar');
-      }
-    } catch (error) {
-      setAvatarError('Failed to upload avatar');
-    } finally {
-      setUploadingAvatar(false);
-    }
-  };
-
   const handleRemoveCustomAvatar = async () => {
     try {
-      await fetch('/api/profile/avatar', { method: 'DELETE' });
+      await fetch('/api/profile/avatar-upload', { method: 'DELETE' });
       setAvatarPreview(null);
       setAvatarFile(null);
       onUpdate?.();
@@ -292,27 +320,26 @@ export default function ProfileCard({ user, onUpdate }: ProfileCardProps) {
                 onClick={() => fileInputRef.current?.click()}
                 className="px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg hover:border-violet-500 transition-colors text-sm text-gray-600 hover:text-violet-600 w-full"
               >
-                Click to upload image (max 5MB)
+                Click to upload image (max 2MB)
               </button>
               {avatarError && <p className="text-red-600 text-sm mt-2">{avatarError}</p>}
               {avatarFile && (
-                <div className="mt-3 flex items-center gap-3">
-                  <button
-                    onClick={handleUploadAvatar}
-                    disabled={uploadingAvatar}
-                    className="px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 disabled:opacity-50 text-sm font-medium"
-                  >
-                    {uploadingAvatar ? 'Uploading...' : 'Upload'}
-                  </button>
-                  {hasCustomAvatar && (
-                    <button
-                      onClick={handleRemoveCustomAvatar}
-                      className="px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 text-sm font-medium"
-                    >
-                      Remove Custom Avatar
-                    </button>
-                  )}
+                <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-700">
+                    <span className="font-medium">Selected:</span> {avatarFile.name}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Click "Save Changes" below to upload
+                  </p>
                 </div>
+              )}
+              {hasCustomAvatar && !avatarFile && (
+                <button
+                  onClick={handleRemoveCustomAvatar}
+                  className="mt-3 px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 text-sm font-medium w-full"
+                >
+                  Remove Custom Avatar
+                </button>
               )}
             </div>
 

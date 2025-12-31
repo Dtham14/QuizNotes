@@ -33,8 +33,8 @@ export default function AuthCompletePage() {
         }
       }
 
-      // Default: redirect to profile
-      router.push('/profile')
+      // Default: redirect to dashboard (will redirect to role-specific dashboard)
+      router.push('/dashboard')
     }
 
     handleRedirect()

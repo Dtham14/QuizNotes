@@ -62,8 +62,8 @@ function LoginContent() {
       if (planParam && ['monthly', 'yearly', 'student_premium'].includes(planParam)) {
         await initiateCheckout(planParam)
       } else {
-        // Redirect to profile for all users
-        router.push('/profile')
+        // Redirect to dashboard (will redirect to role-specific dashboard)
+        router.push('/dashboard')
         router.refresh()
       }
     } catch (err) {
@@ -99,12 +99,12 @@ function LoginContent() {
       // Check if email confirmation is required
       setSuccess('Account created successfully! Please check your email to confirm your account.')
 
-      // If no email confirmation required, redirect to checkout or profile
+      // If no email confirmation required, redirect to checkout or dashboard
       setTimeout(async () => {
         if (planParam && ['monthly', 'yearly', 'student_premium'].includes(planParam)) {
           await initiateCheckout(planParam)
         } else {
-          router.push('/profile')
+          router.push('/dashboard')
           router.refresh()
         }
       }, 2000)
