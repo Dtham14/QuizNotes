@@ -18,15 +18,6 @@ const AVATAR_OPTIONS = [
   { id: 'conductor', icon: '🪄', label: 'Conductor', color: 'from-purple-600 to-violet-700' },
 ];
 
-const THEME_COLORS = [
-  { name: 'Violet', value: '#8b5cf6' },
-  { name: 'Blue', value: '#3b82f6' },
-  { name: 'Green', value: '#10b981' },
-  { name: 'Pink', value: '#ec4899' },
-  { name: 'Purple', value: '#a855f7' },
-  { name: 'Red', value: '#ef4444' },
-];
-
 const DEFAULT_THEME_COLOR = '#8b5cf6';
 
 function adjustColor(hex: string, amount: number): string {
@@ -55,7 +46,6 @@ export default function ProfileCard({ user, onUpdate }: ProfileCardProps) {
   const [savingName, setSavingName] = useState(false);
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [selectedAvatar, setSelectedAvatar] = useState(user.avatar || 'conductor');
-  const [selectedThemeColor, setSelectedThemeColor] = useState(user.themeColor || DEFAULT_THEME_COLOR);
   const [savingAvatar, setSavingAvatar] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(user.avatarUrl || null);
@@ -65,7 +55,7 @@ export default function ProfileCard({ user, onUpdate }: ProfileCardProps) {
 
   const hasCustomAvatar = !!avatarPreview;
   const avatarData = AVATAR_OPTIONS.find(a => a.id === selectedAvatar) || AVATAR_OPTIONS[11];
-  const themeColor = selectedThemeColor || DEFAULT_THEME_COLOR;
+  const themeColor = user.themeColor || DEFAULT_THEME_COLOR;
 
   const gradientStyle = hasCustomAvatar
     ? { background: `linear-gradient(135deg, ${themeColor}, ${adjustColor(themeColor, -30)})` }
@@ -116,25 +106,8 @@ export default function ProfileCard({ user, onUpdate }: ProfileCardProps) {
         }
 
         const uploadData = await uploadRes.json();
-
-        // Save theme color
-        await fetch('/api/profile/theme', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ themeColor: selectedThemeColor }),
-        });
-
         setAvatarFile(null);
         setAvatarPreview(uploadData.avatarUrl);
-        setShowAvatarPicker(false);
-        onUpdate?.();
-      } else if (avatarPreview && user.avatarUrl) {
-        // User has existing custom avatar, just update theme color
-        await fetch('/api/profile/theme', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ themeColor: selectedThemeColor }),
-        });
         setShowAvatarPicker(false);
         onUpdate?.();
       } else {
@@ -150,13 +123,6 @@ export default function ProfileCard({ user, onUpdate }: ProfileCardProps) {
           if (user.avatarUrl) {
             await fetch('/api/profile/avatar-upload', { method: 'DELETE' });
           }
-
-          // Save theme color
-          await fetch('/api/profile/theme', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ themeColor: selectedThemeColor }),
-          });
 
           setAvatarPreview(null);
           setShowAvatarPicker(false);
@@ -362,26 +328,6 @@ export default function ProfileCard({ user, onUpdate }: ProfileCardProps) {
                     </div>
                     <p className="text-xs text-gray-600 text-center">{avatar.label}</p>
                   </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Theme Color */}
-            <div className="mb-6">
-              <h4 className="font-semibold text-gray-900 mb-3">Theme Color</h4>
-              <div className="flex gap-3">
-                {THEME_COLORS.map((color) => (
-                  <button
-                    key={color.value}
-                    onClick={() => setSelectedThemeColor(color.value)}
-                    className={`w-12 h-12 rounded-full transition-all ${
-                      selectedThemeColor === color.value
-                        ? 'ring-2 ring-offset-2 ring-gray-900'
-                        : 'hover:scale-110'
-                    }`}
-                    style={{ backgroundColor: color.value }}
-                    title={color.name}
-                  />
                 ))}
               </div>
             </div>
