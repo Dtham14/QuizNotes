@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import StatsCard from '@/components/StatsCard';
+import ProfileCard from '@/components/ProfileCard';
 
 interface DashboardStats {
   classCount: number;
@@ -26,18 +27,38 @@ interface UpcomingAssignment {
   classes: { name: string };
 }
 
+interface User {
+  id: string;
+  email: string;
+  name?: string | null;
+  avatar?: string | null;
+  avatarUrl?: string | null;
+  themeColor?: string | null;
+  role: string;
+}
+
 export default function TeacherDashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentEnrollments, setRecentEnrollments] = useState<Enrollment[]>([]);
   const [upcomingAssignments, setUpcomingAssignments] = useState<UpcomingAssignment[]>([]);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchDashboardData() {
       try {
-        const response = await fetch('/api/teacher/dashboard/stats');
-        if (response.ok) {
-          const data = await response.json();
+        const [userRes, statsRes] = await Promise.all([
+          fetch('/api/auth/me'),
+          fetch('/api/teacher/dashboard/stats'),
+        ]);
+
+        if (userRes.ok) {
+          const userData = await userRes.json();
+          setUser(userData.user);
+        }
+
+        if (statsRes.ok) {
+          const data = await statsRes.json();
           setStats(data.stats);
           setRecentEnrollments(data.recentActivity.enrollments);
           setUpcomingAssignments(data.recentActivity.upcomingAssignments);
@@ -75,6 +96,18 @@ export default function TeacherDashboardPage() {
         <StatsCard value={stats?.quizCount || 0} label="Quizzes" icon="📝" color="amber" />
         <StatsCard value={stats?.assignmentCount || 0} label="Assignments" icon="📋" color="purple" />
       </div>
+
+      {/* Profile Card */}
+      {user && (
+        <ProfileCard
+          user={user}
+          onUpdate={() => {
+            fetch('/api/auth/me').then(res => res.json()).then(data => {
+              if (data.user) setUser(data.user);
+            });
+          }}
+        />
+      )}
 
       {/* Quick Actions */}
       <div>
