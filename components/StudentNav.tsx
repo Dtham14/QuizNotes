@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
 
-// Avatar options with musical themes (same as student)
+// Avatar options with musical themes
 const AVATAR_OPTIONS: Record<string, { icon: string; color: string }> = {
   'treble-clef': { icon: '𝄞', color: 'from-violet-500 to-purple-600' },
   'bass-clef': { icon: '𝄢', color: 'from-blue-500 to-cyan-600' },
@@ -33,7 +33,7 @@ function adjustColor(hex: string, amount: number): string {
   return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
 }
 
-interface TeacherNavProps {
+interface StudentNavProps {
   user?: {
     id: string;
     email: string;
@@ -42,15 +42,11 @@ interface TeacherNavProps {
     avatarUrl?: string | null;
     themeColor?: string | null;
   } | null;
-  stats?: {
-    classCount: number;
-    studentCount: number;
-    quizCount: number;
-    assignmentCount: number;
-  } | null;
+  level?: number;
+  xp?: number;
 }
 
-export default function TeacherNav({ user, stats }: TeacherNavProps) {
+export default function StudentNav({ user, level, xp }: StudentNavProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
@@ -115,9 +111,9 @@ export default function TeacherNav({ user, stats }: TeacherNavProps) {
             </Link>
             <div className="hidden md:flex items-center gap-6">
               <Link
-                href="/teacher/dashboard"
+                href="/student/dashboard"
                 className={`text-sm font-semibold transition-colors ${
-                  pathname === '/teacher/dashboard'
+                  pathname === '/student/dashboard'
                     ? 'text-violet-600'
                     : 'text-gray-700 hover:text-gray-900'
                 }`}
@@ -125,34 +121,34 @@ export default function TeacherNav({ user, stats }: TeacherNavProps) {
                 Dashboard
               </Link>
               <Link
-                href="/teacher/classes"
+                href="/student/classes"
                 className={`text-sm font-semibold transition-colors ${
-                  pathname?.startsWith('/teacher/classes')
+                  pathname?.startsWith('/student/classes') || pathname?.startsWith('/class/')
                     ? 'text-violet-600'
                     : 'text-gray-700 hover:text-gray-900'
                 }`}
               >
-                Classes
+                My Classes
               </Link>
               <Link
-                href="/teacher/quizzes"
+                href="/student/assignments"
                 className={`text-sm font-semibold transition-colors ${
-                  pathname?.startsWith('/teacher/quizzes')
-                    ? 'text-violet-600'
-                    : 'text-gray-700 hover:text-gray-900'
-                }`}
-              >
-                Quizzes
-              </Link>
-              <Link
-                href="/teacher/assignments"
-                className={`text-sm font-semibold transition-colors ${
-                  pathname?.startsWith('/teacher/assignments')
+                  pathname?.startsWith('/student/assignments')
                     ? 'text-violet-600'
                     : 'text-gray-700 hover:text-gray-900'
                 }`}
               >
                 Assignments
+              </Link>
+              <Link
+                href="/quiz"
+                className={`text-sm font-semibold transition-colors ${
+                  pathname === '/quiz'
+                    ? 'text-violet-600'
+                    : 'text-gray-700 hover:text-gray-900'
+                }`}
+              >
+                Practice
               </Link>
             </div>
           </div>
@@ -200,36 +196,34 @@ export default function TeacherNav({ user, stats }: TeacherNavProps) {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-bold text-white truncate">
-                        {user?.name || 'Teacher'}
+                        {user?.name || 'Student'}
                       </p>
                       <p className="text-sm text-white/80 truncate">{user?.email || ''}</p>
-                      <span className="inline-block mt-1 px-2 py-0.5 bg-white/20 rounded-full text-xs text-white font-medium">
-                        Teacher Account
-                      </span>
+                      {level !== undefined && (
+                        <span className="inline-block mt-1 px-2 py-0.5 bg-white/20 rounded-full text-xs text-white font-medium">
+                          Level {level}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
 
                 {/* Quick Stats */}
-                {stats && (
+                {(level !== undefined || xp !== undefined) && (
                   <div className="px-4 py-3 bg-gray-50 border-b border-gray-100">
                     <div className="grid grid-cols-2 gap-2">
-                      <div className="text-center">
-                        <p className="text-lg font-bold text-gray-900">{stats.classCount}</p>
-                        <p className="text-xs text-gray-500">Classes</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-lg font-bold text-gray-900">{stats.studentCount}</p>
-                        <p className="text-xs text-gray-500">Students</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-lg font-bold text-gray-900">{stats.quizCount}</p>
-                        <p className="text-xs text-gray-500">Quizzes</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-lg font-bold text-gray-900">{stats.assignmentCount}</p>
-                        <p className="text-xs text-gray-500">Assignments</p>
-                      </div>
+                      {level !== undefined && (
+                        <div className="text-center">
+                          <p className="text-lg font-bold text-gray-900">{level}</p>
+                          <p className="text-xs text-gray-500">Level</p>
+                        </div>
+                      )}
+                      {xp !== undefined && (
+                        <div className="text-center">
+                          <p className="text-lg font-bold text-gray-900">{xp}</p>
+                          <p className="text-xs text-gray-500">XP</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -237,34 +231,18 @@ export default function TeacherNav({ user, stats }: TeacherNavProps) {
                 {/* Menu Items */}
                 <div className="py-2">
                   <Link
-                    href="/profile"
+                    href="/student/dashboard"
                     onClick={() => setIsOpen(false)}
                     className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors"
                   >
                     <div className="w-9 h-9 rounded-lg bg-violet-100 flex items-center justify-center">
                       <svg className="w-5 h-5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                       </svg>
                     </div>
                     <div>
                       <p className="font-semibold text-gray-900">Dashboard</p>
                       <p className="text-xs text-gray-500">Back to your dashboard</p>
-                    </div>
-                  </Link>
-
-                  <Link
-                    href="/teacher/quizzes/create"
-                    onClick={() => setIsOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors"
-                  >
-                    <div className="w-9 h-9 rounded-lg bg-emerald-100 flex items-center justify-center">
-                      <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="font-semibold text-gray-900">Create Quiz</p>
-                      <p className="text-xs text-gray-500">Build a new custom quiz</p>
                     </div>
                   </Link>
 
@@ -280,7 +258,23 @@ export default function TeacherNav({ user, stats }: TeacherNavProps) {
                     </div>
                     <div>
                       <p className="font-semibold text-gray-900">Practice Quizzes</p>
-                      <p className="text-xs text-gray-500">Take quizzes as a student</p>
+                      <p className="text-xs text-gray-500">Improve your skills</p>
+                    </div>
+                  </Link>
+
+                  <Link
+                    href="/forum"
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="w-9 h-9 rounded-lg bg-emerald-100 flex items-center justify-center">
+                      <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900">Forum</p>
+                      <p className="text-xs text-gray-500">Join the community</p>
                     </div>
                   </Link>
                 </div>
@@ -328,10 +322,10 @@ export default function TeacherNav({ user, stats }: TeacherNavProps) {
         <div className="md:hidden border-t border-gray-200 bg-white">
           <div className="px-4 py-3 space-y-2">
             <Link
-              href="/teacher/dashboard"
+              href="/student/dashboard"
               onClick={() => setMobileMenuOpen(false)}
               className={`block px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
-                pathname === '/teacher/dashboard'
+                pathname === '/student/dashboard'
                   ? 'bg-violet-50 text-violet-600'
                   : 'text-gray-700 hover:bg-gray-50'
               }`}
@@ -339,37 +333,37 @@ export default function TeacherNav({ user, stats }: TeacherNavProps) {
               Dashboard
             </Link>
             <Link
-              href="/teacher/classes"
+              href="/student/classes"
               onClick={() => setMobileMenuOpen(false)}
               className={`block px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
-                pathname?.startsWith('/teacher/classes')
+                pathname?.startsWith('/student/classes') || pathname?.startsWith('/class/')
                   ? 'bg-violet-50 text-violet-600'
                   : 'text-gray-700 hover:bg-gray-50'
               }`}
             >
-              Classes
+              My Classes
             </Link>
             <Link
-              href="/teacher/quizzes"
+              href="/student/assignments"
               onClick={() => setMobileMenuOpen(false)}
               className={`block px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
-                pathname?.startsWith('/teacher/quizzes')
-                  ? 'bg-violet-50 text-violet-600'
-                  : 'text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              Quizzes
-            </Link>
-            <Link
-              href="/teacher/assignments"
-              onClick={() => setMobileMenuOpen(false)}
-              className={`block px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
-                pathname?.startsWith('/teacher/assignments')
+                pathname?.startsWith('/student/assignments')
                   ? 'bg-violet-50 text-violet-600'
                   : 'text-gray-700 hover:bg-gray-50'
               }`}
             >
               Assignments
+            </Link>
+            <Link
+              href="/quiz"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`block px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                pathname === '/quiz'
+                  ? 'bg-violet-50 text-violet-600'
+                  : 'text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              Practice
             </Link>
           </div>
         </div>

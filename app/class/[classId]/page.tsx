@@ -3,7 +3,7 @@
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import ForumNav from '@/components/ForumNav';
+import StudentNav from '@/components/StudentNav';
 import ClassDiscussion from '@/app/teacher/classes/[classId]/ClassDiscussion';
 
 type Assignment = {
@@ -40,6 +40,7 @@ export default function StudentClassPage({ params }: { params: Promise<{ classId
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'assignments' | 'discussion'>('assignments');
+  const [gamificationStats, setGamificationStats] = useState<{ level: number; xp: number } | null>(null);
 
   useEffect(() => {
     fetchUser();
@@ -52,6 +53,16 @@ export default function StudentClassPage({ params }: { params: Promise<{ classId
       if (res.ok) {
         const data = await res.json();
         setUser(data.user);
+
+        // Fetch gamification stats for nav
+        const statsRes = await fetch('/api/gamification/stats');
+        if (statsRes.ok) {
+          const statsData = await statsRes.json();
+          setGamificationStats({
+            level: statsData.stats.currentLevel,
+            xp: statsData.stats.totalXp,
+          });
+        }
       }
     } catch (err) {
       console.error('Error fetching user:', err);
@@ -92,8 +103,8 @@ export default function StudentClassPage({ params }: { params: Promise<{ classId
 
   if (error || !classData) {
     return (
-      <div className="min-h-screen bg-white">
-        <ForumNav user={user} />
+      <div className="min-h-screen bg-gray-50">
+        <StudentNav user={user} level={gamificationStats?.level} xp={gamificationStats?.xp} />
         <main className="max-w-7xl mx-auto px-4 py-8">
           <div className="bg-white rounded-xl shadow-lg p-8 text-center">
             <p className="text-red-600 mb-4">{error || 'Class not found'}</p>
@@ -107,13 +118,13 @@ export default function StudentClassPage({ params }: { params: Promise<{ classId
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <ForumNav user={user} />
+    <div className="min-h-screen bg-gray-50">
+      <StudentNav user={user} level={gamificationStats?.level} xp={gamificationStats?.xp} />
       <main className="max-w-7xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-6">
-          <Link href="/profile" className="text-brand hover:text-brand-dark text-sm mb-2 inline-block">
-            &larr; Back to Dashboard
+          <Link href="/student/classes" className="text-violet-600 hover:text-violet-700 text-sm mb-2 inline-block">
+            &larr; Back to My Classes
           </Link>
           <div className="flex justify-between items-start">
             <div>

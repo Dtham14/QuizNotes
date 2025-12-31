@@ -330,6 +330,16 @@ export default function ProfilePage() {
         }
         const userData = await userRes.json()
         setUser(userData.user)
+
+        // Redirect to role-specific dashboards
+        if (userData.user.role === 'teacher' || userData.user.role === 'admin') {
+          router.push('/teacher/dashboard')
+          return
+        } else if (userData.user.role === 'student') {
+          router.push('/student/dashboard')
+          return
+        }
+
         setSelectedAvatar(userData.user.avatar || 'treble-clef')
         setSelectedThemeColor(userData.user.themeColor || '#8b5cf6')
         if (userData.user.avatarUrl) {
