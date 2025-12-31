@@ -55,7 +55,13 @@ export default function TeacherNav({ user, stats }: TeacherNavProps) {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [classesMenuOpen, setClassesMenuOpen] = useState(false);
+  const [quizzesMenuOpen, setQuizzesMenuOpen] = useState(false);
+  const [assignmentsMenuOpen, setAssignmentsMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const classesMenuRef = useRef<HTMLDivElement>(null);
+  const quizzesMenuRef = useRef<HTMLDivElement>(null);
+  const assignmentsMenuRef = useRef<HTMLDivElement>(null);
 
   // Check if user has a custom avatar image
   const hasCustomAvatar = !!user?.avatarUrl;
@@ -69,22 +75,34 @@ export default function TeacherNav({ user, stats }: TeacherNavProps) {
     : undefined;
   const gradientClass = hasCustomAvatar ? '' : `bg-gradient-to-br ${avatarData.color}`;
 
-  // Close dropdown when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
+      }
+      if (classesMenuRef.current && !classesMenuRef.current.contains(event.target as Node)) {
+        setClassesMenuOpen(false);
+      }
+      if (quizzesMenuRef.current && !quizzesMenuRef.current.contains(event.target as Node)) {
+        setQuizzesMenuOpen(false);
+      }
+      if (assignmentsMenuRef.current && !assignmentsMenuRef.current.contains(event.target as Node)) {
+        setAssignmentsMenuOpen(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Close dropdown on escape key
+  // Close dropdowns on escape key
   useEffect(() => {
     function handleEscape(event: KeyboardEvent) {
       if (event.key === 'Escape') {
         setIsOpen(false);
+        setClassesMenuOpen(false);
+        setQuizzesMenuOpen(false);
+        setAssignmentsMenuOpen(false);
       }
     }
     document.addEventListener('keydown', handleEscape);
@@ -114,6 +132,7 @@ export default function TeacherNav({ user, stats }: TeacherNavProps) {
               <span className="text-xl font-bold text-gray-900">QuizNotes</span>
             </Link>
             <div className="hidden md:flex items-center gap-6">
+              {/* Dashboard Link */}
               <Link
                 href="/teacher/dashboard"
                 className={`text-sm font-semibold transition-colors ${
@@ -124,36 +143,117 @@ export default function TeacherNav({ user, stats }: TeacherNavProps) {
               >
                 Dashboard
               </Link>
-              <Link
-                href="/teacher/classes"
-                className={`text-sm font-semibold transition-colors ${
-                  pathname?.startsWith('/teacher/classes')
-                    ? 'text-violet-600'
-                    : 'text-gray-700 hover:text-gray-900'
-                }`}
-              >
-                Classes
-              </Link>
-              <Link
-                href="/teacher/quizzes"
-                className={`text-sm font-semibold transition-colors ${
-                  pathname?.startsWith('/teacher/quizzes')
-                    ? 'text-violet-600'
-                    : 'text-gray-700 hover:text-gray-900'
-                }`}
-              >
-                Quizzes
-              </Link>
-              <Link
-                href="/teacher/assignments"
-                className={`text-sm font-semibold transition-colors ${
-                  pathname?.startsWith('/teacher/assignments')
-                    ? 'text-violet-600'
-                    : 'text-gray-700 hover:text-gray-900'
-                }`}
-              >
-                Assignments
-              </Link>
+
+              {/* Classes Dropdown */}
+              <div className="relative" ref={classesMenuRef}>
+                <button
+                  onClick={() => setClassesMenuOpen(!classesMenuOpen)}
+                  className={`text-sm font-semibold transition-colors flex items-center gap-1 ${
+                    pathname?.startsWith('/teacher/classes')
+                      ? 'text-violet-600'
+                      : 'text-gray-700 hover:text-gray-900'
+                  }`}
+                >
+                  Classes
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                {classesMenuOpen && (
+                  <div className="absolute left-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-50">
+                    <Link
+                      href="/teacher/classes"
+                      onClick={() => setClassesMenuOpen(false)}
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-violet-50 hover:text-violet-600 transition-colors"
+                    >
+                      <div className="font-semibold">All Classes</div>
+                      <div className="text-xs text-gray-500">Manage your classes</div>
+                    </Link>
+                    <Link
+                      href="/teacher/classes/new"
+                      onClick={() => setClassesMenuOpen(false)}
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-violet-50 hover:text-violet-600 transition-colors"
+                    >
+                      <div className="font-semibold">Create Class</div>
+                      <div className="text-xs text-gray-500">Start a new class</div>
+                    </Link>
+                  </div>
+                )}
+              </div>
+
+              {/* Quizzes Dropdown */}
+              <div className="relative" ref={quizzesMenuRef}>
+                <button
+                  onClick={() => setQuizzesMenuOpen(!quizzesMenuOpen)}
+                  className={`text-sm font-semibold transition-colors flex items-center gap-1 ${
+                    pathname?.startsWith('/teacher/quizzes')
+                      ? 'text-violet-600'
+                      : 'text-gray-700 hover:text-gray-900'
+                  }`}
+                >
+                  Quizzes
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                {quizzesMenuOpen && (
+                  <div className="absolute left-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-50">
+                    <Link
+                      href="/teacher/quizzes"
+                      onClick={() => setQuizzesMenuOpen(false)}
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-violet-50 hover:text-violet-600 transition-colors"
+                    >
+                      <div className="font-semibold">All Quizzes</div>
+                      <div className="text-xs text-gray-500">View custom quizzes</div>
+                    </Link>
+                    <Link
+                      href="/teacher/quizzes/create"
+                      onClick={() => setQuizzesMenuOpen(false)}
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-violet-50 hover:text-violet-600 transition-colors"
+                    >
+                      <div className="font-semibold">Create Quiz</div>
+                      <div className="text-xs text-gray-500">Build a custom quiz</div>
+                    </Link>
+                  </div>
+                )}
+              </div>
+
+              {/* Assignments Dropdown */}
+              <div className="relative" ref={assignmentsMenuRef}>
+                <button
+                  onClick={() => setAssignmentsMenuOpen(!assignmentsMenuOpen)}
+                  className={`text-sm font-semibold transition-colors flex items-center gap-1 ${
+                    pathname?.startsWith('/teacher/assignments')
+                      ? 'text-violet-600'
+                      : 'text-gray-700 hover:text-gray-900'
+                  }`}
+                >
+                  Assignments
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                {assignmentsMenuOpen && (
+                  <div className="absolute left-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-50">
+                    <Link
+                      href="/teacher/assignments"
+                      onClick={() => setAssignmentsMenuOpen(false)}
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-violet-50 hover:text-violet-600 transition-colors"
+                    >
+                      <div className="font-semibold">All Assignments</div>
+                      <div className="text-xs text-gray-500">View all assignments</div>
+                    </Link>
+                    <Link
+                      href="/teacher/assignments/new"
+                      onClick={() => setAssignmentsMenuOpen(false)}
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-violet-50 hover:text-violet-600 transition-colors"
+                    >
+                      <div className="font-semibold">Create Assignment</div>
+                      <div className="text-xs text-gray-500">Assign work to students</div>
+                    </Link>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 

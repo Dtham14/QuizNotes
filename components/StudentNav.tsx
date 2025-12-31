@@ -51,7 +51,11 @@ export default function StudentNav({ user, level, xp }: StudentNavProps) {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [learnMenuOpen, setLearnMenuOpen] = useState(false);
+  const [classesMenuOpen, setClassesMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const learnMenuRef = useRef<HTMLDivElement>(null);
+  const classesMenuRef = useRef<HTMLDivElement>(null);
 
   // Check if user has a custom avatar image
   const hasCustomAvatar = !!user?.avatarUrl;
@@ -65,22 +69,30 @@ export default function StudentNav({ user, level, xp }: StudentNavProps) {
     : undefined;
   const gradientClass = hasCustomAvatar ? '' : `bg-gradient-to-br ${avatarData.color}`;
 
-  // Close dropdown when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
+      }
+      if (learnMenuRef.current && !learnMenuRef.current.contains(event.target as Node)) {
+        setLearnMenuOpen(false);
+      }
+      if (classesMenuRef.current && !classesMenuRef.current.contains(event.target as Node)) {
+        setClassesMenuOpen(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Close dropdown on escape key
+  // Close dropdowns on escape key
   useEffect(() => {
     function handleEscape(event: KeyboardEvent) {
       if (event.key === 'Escape') {
         setIsOpen(false);
+        setLearnMenuOpen(false);
+        setClassesMenuOpen(false);
       }
     }
     document.addEventListener('keydown', handleEscape);
@@ -110,6 +122,7 @@ export default function StudentNav({ user, level, xp }: StudentNavProps) {
               <span className="text-xl font-bold text-gray-900">QuizNotes</span>
             </Link>
             <div className="hidden md:flex items-center gap-6">
+              {/* Dashboard Link */}
               <Link
                 href="/student/dashboard"
                 className={`text-sm font-semibold transition-colors ${
@@ -120,35 +133,99 @@ export default function StudentNav({ user, level, xp }: StudentNavProps) {
               >
                 Dashboard
               </Link>
+
+              {/* Classes Dropdown */}
+              <div className="relative" ref={classesMenuRef}>
+                <button
+                  onClick={() => setClassesMenuOpen(!classesMenuOpen)}
+                  className={`text-sm font-semibold transition-colors flex items-center gap-1 ${
+                    pathname?.startsWith('/student/classes') || pathname?.startsWith('/class/') || pathname?.startsWith('/student/assignments')
+                      ? 'text-violet-600'
+                      : 'text-gray-700 hover:text-gray-900'
+                  }`}
+                >
+                  Classes
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                {classesMenuOpen && (
+                  <div className="absolute left-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-50">
+                    <Link
+                      href="/student/classes"
+                      onClick={() => setClassesMenuOpen(false)}
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-violet-50 hover:text-violet-600 transition-colors"
+                    >
+                      <div className="font-semibold">My Classes</div>
+                      <div className="text-xs text-gray-500">View all enrolled classes</div>
+                    </Link>
+                    <Link
+                      href="/student/assignments"
+                      onClick={() => setClassesMenuOpen(false)}
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-violet-50 hover:text-violet-600 transition-colors"
+                    >
+                      <div className="font-semibold">Assignments</div>
+                      <div className="text-xs text-gray-500">View all assignments</div>
+                    </Link>
+                  </div>
+                )}
+              </div>
+
+              {/* Learn Dropdown */}
+              <div className="relative" ref={learnMenuRef}>
+                <button
+                  onClick={() => setLearnMenuOpen(!learnMenuOpen)}
+                  className={`text-sm font-semibold transition-colors flex items-center gap-1 ${
+                    pathname === '/quiz' || pathname === '/learning' || pathname === '/leaderboard'
+                      ? 'text-violet-600'
+                      : 'text-gray-700 hover:text-gray-900'
+                  }`}
+                >
+                  Learn
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                {learnMenuOpen && (
+                  <div className="absolute left-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-50">
+                    <Link
+                      href="/quiz"
+                      onClick={() => setLearnMenuOpen(false)}
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-violet-50 hover:text-violet-600 transition-colors"
+                    >
+                      <div className="font-semibold">Practice Quizzes</div>
+                      <div className="text-xs text-gray-500">Improve your skills</div>
+                    </Link>
+                    <Link
+                      href="/learning"
+                      onClick={() => setLearnMenuOpen(false)}
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-violet-50 hover:text-violet-600 transition-colors"
+                    >
+                      <div className="font-semibold">Learning Materials</div>
+                      <div className="text-xs text-gray-500">Study resources</div>
+                    </Link>
+                    <Link
+                      href="/leaderboard"
+                      onClick={() => setLearnMenuOpen(false)}
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-violet-50 hover:text-violet-600 transition-colors"
+                    >
+                      <div className="font-semibold">Leaderboard</div>
+                      <div className="text-xs text-gray-500">Top performers</div>
+                    </Link>
+                  </div>
+                )}
+              </div>
+
+              {/* Forum Link */}
               <Link
-                href="/student/classes"
+                href="/forum"
                 className={`text-sm font-semibold transition-colors ${
-                  pathname?.startsWith('/student/classes') || pathname?.startsWith('/class/')
+                  pathname === '/forum'
                     ? 'text-violet-600'
                     : 'text-gray-700 hover:text-gray-900'
                 }`}
               >
-                My Classes
-              </Link>
-              <Link
-                href="/student/assignments"
-                className={`text-sm font-semibold transition-colors ${
-                  pathname?.startsWith('/student/assignments')
-                    ? 'text-violet-600'
-                    : 'text-gray-700 hover:text-gray-900'
-                }`}
-              >
-                Assignments
-              </Link>
-              <Link
-                href="/quiz"
-                className={`text-sm font-semibold transition-colors ${
-                  pathname === '/quiz'
-                    ? 'text-violet-600'
-                    : 'text-gray-700 hover:text-gray-900'
-                }`}
-              >
-                Practice
+                Forum
               </Link>
             </div>
           </div>
