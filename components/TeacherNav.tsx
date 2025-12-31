@@ -254,6 +254,42 @@ export default function TeacherNav({ user, stats }: TeacherNavProps) {
                   </div>
                 )}
               </div>
+
+              {/* Forum Link */}
+              <Link
+                href="/forum"
+                className={`text-sm font-semibold transition-colors ${
+                  pathname === '/forum'
+                    ? 'text-violet-600'
+                    : 'text-gray-700 hover:text-gray-900'
+                }`}
+              >
+                Forum
+              </Link>
+
+              {/* Learning Plans Link */}
+              <Link
+                href="/pricing"
+                className={`text-sm font-semibold transition-colors ${
+                  pathname === '/pricing'
+                    ? 'text-violet-600'
+                    : 'text-gray-700 hover:text-gray-900'
+                }`}
+              >
+                Learning Plans
+              </Link>
+
+              {/* Contact Link */}
+              <Link
+                href="/contact"
+                className={`text-sm font-semibold transition-colors ${
+                  pathname === '/contact'
+                    ? 'text-violet-600'
+                    : 'text-gray-700 hover:text-gray-900'
+                }`}
+              >
+                Contact
+              </Link>
             </div>
           </div>
 
