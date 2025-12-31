@@ -5,7 +5,6 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { createServiceClient } from '@/lib/supabase/service'
 import { getSession } from '@/lib/auth'
-import ForumNav from '@/components/ForumNav'
 import PostActions from './PostActions'
 import CommentForm from './CommentForm'
 import CommentDisplay from './CommentDisplay'
@@ -99,9 +98,6 @@ export default async function ForumPostPage({ params }: PageProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-purple-50">
-      {/* Navigation */}
-      <ForumNav user={user} />
-
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Back button */}
         <Link

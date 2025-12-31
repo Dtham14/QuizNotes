@@ -57,7 +57,7 @@ export default function ToolsLayout({ children }: { children: React.ReactNode })
         }
 
         if (data.user.role !== 'student') {
-          router.push('/profile')
+          router.push('/dashboard')
           return
         }
 
@@ -113,7 +113,7 @@ export default function ToolsLayout({ children }: { children: React.ReactNode })
                 <span className="text-xl font-bold text-gray-900">QuizNotes</span>
               </Link>
               <div className="hidden md:flex items-center gap-6">
-                <Link href="/profile" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors">
+                <Link href="/dashboard" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors">
                   Dashboard
                 </Link>
                 <Link href="/quiz" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors">

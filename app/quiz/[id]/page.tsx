@@ -180,7 +180,7 @@ function CustomQuizContent() {
                 <h1 className="text-2xl font-bold text-brand cursor-pointer">QuizNotes</h1>
               </Link>
               <Link
-                href="/profile"
+                href="/dashboard"
                 className="px-4 py-2 text-brand hover:text-brand-dark transition-colors"
               >
                 Dashboard
@@ -229,7 +229,7 @@ function CustomQuizContent() {
 
             <div className="flex flex-col gap-3">
               <Link
-                href="/profile"
+                href="/dashboard"
                 className="px-6 py-3 bg-brand text-white font-semibold rounded-lg hover:bg-brand-dark transition-colors"
               >
                 Back to Dashboard
@@ -332,7 +332,7 @@ function CustomQuizContent() {
               <h1 className="text-2xl font-bold text-brand cursor-pointer">QuizNotes</h1>
             </Link>
             <Link
-              href="/profile"
+              href="/dashboard"
               className="px-4 py-2 text-brand hover:text-brand-dark transition-colors"
             >
               Exit Quiz

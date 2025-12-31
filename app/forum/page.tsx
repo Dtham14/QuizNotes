@@ -2,7 +2,6 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { createServiceClient } from '@/lib/supabase/service'
 import { getSession } from '@/lib/auth'
-import ForumNav from '@/components/ForumNav'
 import type { ForumPost, ForumTag } from '@/lib/types/forum'
 
 export const metadata = {
@@ -60,9 +59,6 @@ export default async function ForumPage({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-purple-50">
-      {/* Navigation */}
-      <ForumNav user={user} />
-
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

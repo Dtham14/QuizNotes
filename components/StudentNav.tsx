@@ -39,8 +39,8 @@ interface StudentNavProps {
     email: string;
     name?: string | null;
     avatar?: string | null;
-    avatarUrl?: string | null;
-    themeColor?: string | null;
+    avatar_url?: string | null;
+    theme_color?: string | null;
   } | null;
   level?: number;
   xp?: number;
@@ -58,12 +58,12 @@ export default function StudentNav({ user, level, xp }: StudentNavProps) {
   const classesMenuRef = useRef<HTMLDivElement>(null);
 
   // Check if user has a custom avatar image
-  const hasCustomAvatar = !!user?.avatarUrl;
+  const hasCustomAvatar = !!user?.avatar_url;
   const avatarId = user?.avatar || 'conductor';
   const avatarData = AVATAR_OPTIONS[avatarId] || AVATAR_OPTIONS['conductor'];
 
   // Use theme color for custom avatars, or predefined gradient for icon avatars
-  const themeColor = user?.themeColor || DEFAULT_THEME_COLOR;
+  const themeColor = user?.theme_color || DEFAULT_THEME_COLOR;
   const gradientStyle = hasCustomAvatar
     ? { background: `linear-gradient(135deg, ${themeColor}, ${adjustColor(themeColor, -30)})` }
     : undefined;
@@ -242,7 +242,7 @@ export default function StudentNav({ user, level, xp }: StudentNavProps) {
             >
               {hasCustomAvatar ? (
                 <Image
-                  src={user!.avatarUrl!}
+                  src={user!.avatar_url!}
                   alt="Avatar"
                   width={40}
                   height={40}
@@ -261,7 +261,7 @@ export default function StudentNav({ user, level, xp }: StudentNavProps) {
                     <div className="w-14 h-14 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-3xl text-white border-2 border-white/30 overflow-hidden">
                       {hasCustomAvatar ? (
                         <Image
-                          src={user!.avatarUrl!}
+                          src={user!.avatar_url!}
                           alt="Avatar"
                           width={56}
                           height={56}

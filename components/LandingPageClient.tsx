@@ -6,15 +6,23 @@ import Link from 'next/link';
 import Image from 'next/image';
 import AnonymousQuiz from './AnonymousQuiz';
 import ProfileDropdown from './ProfileDropdown';
+import StudentNav from './StudentNav';
+import TeacherNav from './TeacherNav';
 import { QuizType } from '@/lib/quizData';
 
 type User = {
   id: string;
   email: string;
   name?: string | null;
+  role?: string;
   avatar?: string | null;
   avatar_url?: string | null;
   theme_color?: string | null;
+  subscription_status?: string | null;
+  subscription_plan?: string | null;
+  subscription_expires_at?: string | null;
+  stripe_customer_id?: string | null;
+  created_at?: string;
 };
 
 type LandingPageClientProps = {
@@ -40,9 +48,18 @@ export default function LandingPageClient({ user }: LandingPageClientProps) {
     setMobileMenuOpen(false);
   };
 
-  return (
-    <div className="min-h-screen bg-white">
-      {/* Navigation */}
+  // Show role-appropriate navigation for logged-in users
+  const renderNavigation = () => {
+    if (user) {
+      if (user.role === 'student') {
+        return <StudentNav user={user as any} />;
+      } else if (user.role === 'teacher' || user.role === 'admin') {
+        return <TeacherNav user={user as any} />;
+      }
+    }
+
+    // Default navigation for non-logged-in users
+    return (
       <nav className="border-b border-gray-200 bg-white sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
@@ -58,11 +75,6 @@ export default function LandingPageClient({ user }: LandingPageClientProps) {
                 <span className="text-xl font-bold text-gray-900">QuizNotes</span>
               </Link>
               <div className="hidden md:flex items-center gap-6">
-                {user && (
-                  <Link href="/profile" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors">
-                    Dashboard
-                  </Link>
-                )}
                 <button
                   onClick={() => openQuiz()}
                   className="text-gray-700 hover:text-gray-900 text-sm font-semibold"
@@ -81,28 +93,18 @@ export default function LandingPageClient({ user }: LandingPageClientProps) {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              {user ? (
-                <ProfileDropdown user={{
-                  ...user,
-                  avatarUrl: user.avatar_url,
-                  themeColor: user.theme_color,
-                }} />
-              ) : (
-                <>
-                  <Link
-                    href="/login"
-                    className="hidden sm:block px-4 py-2 text-gray-700 text-sm font-semibold hover:text-gray-900"
-                  >
-                    Log in
-                  </Link>
-                  <Link
-                    href="/login?tab=register"
-                    className="hidden sm:block px-4 py-2 bg-brand text-white text-sm font-semibold rounded-lg hover:bg-brand-dark transition-colors"
-                  >
-                    Sign up free
-                  </Link>
-                </>
-              )}
+              <Link
+                href="/login"
+                className="hidden sm:block px-4 py-2 text-gray-700 text-sm font-semibold hover:text-gray-900"
+              >
+                Log in
+              </Link>
+              <Link
+                href="/login?tab=register"
+                className="hidden sm:block px-4 py-2 bg-brand text-white text-sm font-semibold rounded-lg hover:bg-brand-dark transition-colors"
+              >
+                Sign up free
+              </Link>
               {/* Mobile menu button */}
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -125,15 +127,6 @@ export default function LandingPageClient({ user }: LandingPageClientProps) {
         {mobileMenuOpen && (
           <div className="md:hidden border-t border-gray-200 bg-white">
             <div className="px-4 py-3 space-y-3">
-              {user && (
-                <Link
-                  href="/profile"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="block px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg text-sm font-semibold"
-                >
-                  Dashboard
-                </Link>
-              )}
               <button
                 onClick={() => {
                   openQuiz();
@@ -164,30 +157,33 @@ export default function LandingPageClient({ user }: LandingPageClientProps) {
               >
                 Contact Me
               </Link>
-              {!user && (
-                <>
-                  <div className="pt-3 border-t border-gray-200">
-                    <Link
-                      href="/login"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="block px-3 py-2 text-center text-gray-700 hover:bg-gray-50 rounded-lg text-sm font-semibold"
-                    >
-                      Log in
-                    </Link>
-                    <Link
-                      href="/login?tab=register"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="block mt-2 px-3 py-2 text-center bg-brand text-white rounded-lg text-sm font-semibold hover:bg-brand-dark"
-                    >
-                      Sign up free
-                    </Link>
-                  </div>
-                </>
-              )}
+              <div className="pt-3 border-t border-gray-200">
+                <Link
+                  href="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block px-3 py-2 text-center text-gray-700 hover:bg-gray-50 rounded-lg text-sm font-semibold"
+                >
+                  Log in
+                </Link>
+                <Link
+                  href="/login?tab=register"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block mt-2 px-3 py-2 text-center bg-brand text-white rounded-lg text-sm font-semibold hover:bg-brand-dark"
+                >
+                  Sign up free
+                </Link>
+              </div>
             </div>
           </div>
         )}
       </nav>
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-white">
+      {/* Navigation */}
+      {renderNavigation()}
 
       {/* Hero Section */}
       <section className="bg-white">

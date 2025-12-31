@@ -127,7 +127,7 @@ export default function AchievementsPage() {
                 <span className="text-xl font-bold text-gray-900">QuizNotes</span>
               </Link>
               <div className="hidden md:flex items-center gap-6">
-                <Link href="/profile" className="text-gray-700 hover:text-gray-900 text-sm font-semibold">
+                <Link href="/dashboard" className="text-gray-700 hover:text-gray-900 text-sm font-semibold">
                   Dashboard
                 </Link>
                 <Link href="/quiz" className="text-gray-700 hover:text-gray-900 text-sm font-semibold">

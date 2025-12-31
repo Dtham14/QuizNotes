@@ -220,7 +220,7 @@ function AdminPageContent() {
                 <span className="text-xl font-bold text-gray-900">QuizNotes</span>
               </Link>
               <div className="hidden md:flex items-center gap-6">
-                <Link href="/profile" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors">
+                <Link href="/dashboard" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors">
                   Dashboard
                 </Link>
                 <span className="text-brand font-semibold text-sm">Admin Panel</span>
@@ -251,7 +251,7 @@ function AdminPageContent() {
           <div className="md:hidden border-t border-gray-200 bg-white">
             <div className="px-4 py-3 space-y-3">
               <Link
-                href="/profile"
+                href="/dashboard"
                 onClick={() => setMobileMenuOpen(false)}
                 className="block px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg text-sm font-semibold"
               >

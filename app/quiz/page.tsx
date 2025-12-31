@@ -361,7 +361,7 @@ function QuizContent() {
                   <span className="text-xl font-bold text-gray-900">QuizNotes</span>
                 </Link>
                 <div className="hidden md:flex items-center gap-6">
-                  <Link href="/profile" className="text-gray-700 hover:text-gray-900 text-sm font-semibold">
+                  <Link href="/dashboard" className="text-gray-700 hover:text-gray-900 text-sm font-semibold">
                     Dashboard
                   </Link>
                   <span className="text-brand font-semibold text-sm">Quizzes</span>
@@ -1029,7 +1029,7 @@ function QuizContent() {
               </button>
             )}
             <Link
-              href="/profile"
+              href="/dashboard"
               className={`px-6 py-3 font-semibold rounded-lg transition-colors ${
                 assignmentInfo && assignmentInfo.attemptsRemaining > 1
                   ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -1065,7 +1065,7 @@ function QuizContent() {
                 <span className="text-xl font-bold text-gray-900">QuizNotes</span>
               </Link>
               <div className="hidden md:flex items-center gap-6">
-                <Link href="/profile" className="text-gray-700 hover:text-gray-900 text-sm font-semibold">
+                <Link href="/dashboard" className="text-gray-700 hover:text-gray-900 text-sm font-semibold">
                   Dashboard
                 </Link>
                 <span className="text-brand font-semibold text-sm">Quizzes</span>

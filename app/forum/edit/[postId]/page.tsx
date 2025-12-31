@@ -1,7 +1,6 @@
 import { notFound, redirect } from 'next/navigation'
 import { requireAuth } from '@/lib/auth'
 import { createServiceClient } from '@/lib/supabase/service'
-import ForumNav from '@/components/ForumNav'
 import EditPostForm from './EditPostForm'
 
 interface PageProps {
@@ -52,8 +51,6 @@ export default async function EditPostPage({ params }: PageProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-purple-50">
-      <ForumNav user={user} />
-
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-gray-900">Edit Post</h1>

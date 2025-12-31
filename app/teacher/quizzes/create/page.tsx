@@ -610,7 +610,7 @@ export default function CreateQuizPage() {
       });
 
       if (res.ok) {
-        router.push('/profile');
+        router.push('/dashboard');
       } else {
         alert('Failed to create quiz');
       }
@@ -642,7 +642,7 @@ export default function CreateQuizPage() {
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-3xl font-bold text-gray-900">Create Custom Quiz</h2>
             <Link
-              href="/profile"
+              href="/dashboard"
               className="px-4 py-2 text-gray-600 hover:text-gray-900 font-medium transition-colors"
             >
               Cancel

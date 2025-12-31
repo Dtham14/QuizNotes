@@ -2,7 +2,6 @@ import { requireAuth } from '@/lib/auth'
 import { createServiceClient } from '@/lib/supabase/service'
 import CreatePostForm from './CreatePostForm'
 import Link from 'next/link'
-import ForumNav from '@/components/ForumNav'
 
 export const metadata = {
   title: 'Create Post | QuizNotes Forum',
@@ -21,9 +20,6 @@ export default async function CreatePostPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-purple-50">
-      {/* Navigation */}
-      <ForumNav user={user} />
-
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Back button */}
         <Link

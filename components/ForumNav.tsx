@@ -34,7 +34,7 @@ export default function ForumNav({ user }: ForumNavProps) {
             </Link>
             <div className="hidden md:flex items-center gap-6">
               {user && (
-                <Link href="/profile" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors">
+                <Link href="/dashboard" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors">
                   Dashboard
                 </Link>
               )}
