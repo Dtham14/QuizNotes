@@ -190,7 +190,7 @@ export default function StudentNav({ user, level, xp }: StudentNavProps) {
                 <button
                   onClick={() => setLearnMenuOpen(!learnMenuOpen)}
                   className={`text-sm font-semibold transition-colors flex items-center gap-1 ${
-                    pathname === '/quiz' || pathname === '/learning' || pathname === '/leaderboard'
+                    pathname === '/quiz' || pathname === '/learning' || pathname === '/leaderboard' || pathname === '/achievements'
                       ? 'text-violet-600'
                       : 'text-gray-700 hover:text-gray-900'
                   }`}
@@ -225,6 +225,14 @@ export default function StudentNav({ user, level, xp }: StudentNavProps) {
                     >
                       <div className="font-semibold">Leaderboard</div>
                       <div className="text-xs text-gray-500">Top performers</div>
+                    </Link>
+                    <Link
+                      href="/achievements"
+                      onClick={() => setLearnMenuOpen(false)}
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-violet-50 hover:text-violet-600 transition-colors"
+                    >
+                      <div className="font-semibold">Achievements</div>
+                      <div className="text-xs text-gray-500">Earn badges & rewards</div>
                     </Link>
                   </div>
                 )}
@@ -610,7 +618,40 @@ export default function StudentNav({ user, level, xp }: StudentNavProps) {
                   : 'text-gray-700 hover:bg-gray-50'
               }`}
             >
-              Practice
+              Practice Quizzes
+            </Link>
+            <Link
+              href="/learning"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`block px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                pathname === '/learning'
+                  ? 'bg-violet-50 text-violet-600'
+                  : 'text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              Learning Materials
+            </Link>
+            <Link
+              href="/leaderboard"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`block px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                pathname === '/leaderboard'
+                  ? 'bg-violet-50 text-violet-600'
+                  : 'text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              Leaderboard
+            </Link>
+            <Link
+              href="/achievements"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`block px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                pathname === '/achievements'
+                  ? 'bg-violet-50 text-violet-600'
+                  : 'text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              Achievements
             </Link>
           </div>
         </div>
