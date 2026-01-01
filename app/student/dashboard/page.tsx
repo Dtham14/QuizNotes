@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import StatsCard from '@/components/StatsCard';
 import DiscussionPreview from '@/components/DiscussionPreview';
 import ClassCard from '@/components/ClassCard';
 import ProfileCard from '@/components/ProfileCard';
@@ -177,18 +176,23 @@ export default function StudentDashboardPage() {
         <p className="text-gray-600 mt-2">Track your progress and stay on top of your assignments</p>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatsCard value={stats?.level || 1} label="Level" icon="⭐" color="violet" />
-        <StatsCard value={stats?.xp || 0} label="Total XP" icon="🎯" color="emerald" />
-        <StatsCard value={stats?.classCount || 0} label="My Classes" icon="🏫" color="blue" />
-        <StatsCard value={`${stats?.completedAssignments || 0}/${stats?.totalAssignments || 0}`} label="Assignments" icon="📋" color="amber" />
-      </div>
-
       {/* Profile Card */}
       {user && (
         <ProfileCard
           user={user}
+          stats={stats ? {
+            level: stats.level,
+            xp: stats.xp,
+            streak: stats.streak,
+            classCount: stats.classCount,
+            completedAssignments: stats.completedAssignments,
+            totalAssignments: stats.totalAssignments,
+          } : null}
+          quizStats={{
+            totalQuizzes,
+            averageScore,
+          }}
+          achievementCount={earned.length}
           onUpdate={() => {
             fetch('/api/auth/me').then(res => res.json()).then(data => {
               if (data.user) setUser(data.user);

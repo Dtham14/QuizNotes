@@ -37,10 +37,23 @@ interface ProfileCardProps {
     avatarUrl?: string | null;
     themeColor?: string | null;
   };
+  stats?: {
+    level?: number;
+    xp?: number;
+    streak?: number;
+    classCount?: number;
+    completedAssignments?: number;
+    totalAssignments?: number;
+  } | null;
+  quizStats?: {
+    totalQuizzes: number;
+    averageScore: number;
+  } | null;
+  achievementCount?: number;
   onUpdate?: () => void;
 }
 
-export default function ProfileCard({ user, onUpdate }: ProfileCardProps) {
+export default function ProfileCard({ user, stats, quizStats, achievementCount, onUpdate }: ProfileCardProps) {
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState(user.name || '');
   const [savingName, setSavingName] = useState(false);
@@ -252,9 +265,112 @@ export default function ProfileCard({ user, onUpdate }: ProfileCardProps) {
               </button>
             </div>
           )}
-          <p className="text-gray-600">{user.email}</p>
+          <p className="text-gray-600 text-sm">{user.email}</p>
         </div>
       </div>
+
+      {/* Stats Grid - Show if any stats are provided */}
+      {(stats || quizStats || achievementCount !== undefined) && (
+        <div className="mt-6 pt-6 border-t border-gray-200">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {stats?.level !== undefined && (
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-violet-100 flex items-center justify-center">
+                  <span className="text-lg">⭐</span>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Level</p>
+                  <p className="text-lg font-bold text-gray-900">{stats.level}</p>
+                </div>
+              </div>
+            )}
+
+            {stats?.xp !== undefined && (
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
+                  <span className="text-lg">🎯</span>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Total XP</p>
+                  <p className="text-lg font-bold text-gray-900">{stats.xp.toLocaleString()}</p>
+                </div>
+              </div>
+            )}
+
+            {stats?.streak !== undefined && (
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
+                  <span className="text-lg">🔥</span>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Streak</p>
+                  <p className="text-lg font-bold text-gray-900">{stats.streak} {stats.streak === 1 ? 'day' : 'days'}</p>
+                </div>
+              </div>
+            )}
+
+            {stats?.classCount !== undefined && (
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                  <span className="text-lg">🏫</span>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Classes</p>
+                  <p className="text-lg font-bold text-gray-900">{stats.classCount}</p>
+                </div>
+              </div>
+            )}
+
+            {stats?.totalAssignments !== undefined && (
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
+                  <span className="text-lg">📋</span>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Assignments</p>
+                  <p className="text-lg font-bold text-gray-900">{stats.completedAssignments || 0}/{stats.totalAssignments}</p>
+                </div>
+              </div>
+            )}
+
+            {quizStats && (
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center">
+                  <span className="text-lg">📝</span>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Quizzes</p>
+                  <p className="text-lg font-bold text-gray-900">{quizStats.totalQuizzes}</p>
+                </div>
+              </div>
+            )}
+
+            {quizStats && quizStats.totalQuizzes > 0 && (
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
+                  <span className="text-lg">📊</span>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Avg Score</p>
+                  <p className="text-lg font-bold text-gray-900">{quizStats.averageScore}%</p>
+                </div>
+              </div>
+            )}
+
+            {achievementCount !== undefined && achievementCount > 0 && (
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-yellow-100 flex items-center justify-center">
+                  <span className="text-lg">🏆</span>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Achievements</p>
+                  <p className="text-lg font-bold text-gray-900">{achievementCount}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Avatar Picker Modal */}
       {showAvatarPicker && (
