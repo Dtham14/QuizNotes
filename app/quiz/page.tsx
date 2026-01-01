@@ -9,7 +9,7 @@ import AudioPlayer from '@/components/AudioPlayer';
 import XPGainAnimation from '@/components/gamification/XPGainAnimation';
 import LevelUpCelebration from '@/components/gamification/LevelUpCelebration';
 import AchievementUnlockToast from '@/components/gamification/AchievementUnlockToast';
-import ProfileDropdown from '@/components/ProfileDropdown';
+import StudentNav from '@/components/StudentNav';
 import { getQuizQuestions, QuizType, QuizQuestion } from '@/lib/quizData';
 import { getEarTrainingQuestions, EarTrainingQuizQuestion } from '@/lib/earTrainingQuizData';
 import type { GamificationStats } from '@/lib/types/database';
@@ -346,45 +346,7 @@ function QuizContent() {
   if (!quizType) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col">
-        <nav className="border-b border-gray-200 bg-white sticky top-0 z-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between h-16 items-center">
-              <div className="flex items-center gap-8">
-                <Link href="/" className="flex items-center gap-3">
-                  <Image
-                    src="/images/quiznotes logo.jpg"
-                    alt="QuizNotes Logo"
-                    width={36}
-                    height={36}
-                    className="rounded-lg"
-                  />
-                  <span className="text-xl font-bold text-gray-900">QuizNotes</span>
-                </Link>
-                <div className="hidden md:flex items-center gap-6">
-                  <Link href="/dashboard" className="text-gray-700 hover:text-gray-900 text-sm font-semibold">
-                    Dashboard
-                  </Link>
-                  <span className="text-brand font-semibold text-sm">Quizzes</span>
-                  <Link href="/forum" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors">
-                    Forum
-                  </Link>
-                  {user?.role === 'student' && (
-                    <>
-                      <Link href="/learning" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors">
-                        Learning
-                      </Link>
-                      <Link href="/student-premium" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors">
-                        Student Premium
-                      </Link>
-                    </>
-                  )}
-                </div>
-              </div>
-              {/* Profile Dropdown - Right Corner */}
-              {user && <ProfileDropdown user={user} stats={gamificationStats} />}
-            </div>
-          </div>
-        </nav>
+        <StudentNav user={user} level={gamificationStats?.current_level} xp={gamificationStats?.total_xp} />
 
         <main className="max-w-4xl mx-auto px-4 py-16">
           <h2 className="text-4xl font-bold text-center text-gray-900 mb-4">Choose a Quiz Topic</h2>
@@ -1050,43 +1012,11 @@ function QuizContent() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <nav className="border-b border-gray-200 bg-white sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16 items-center">
-            <div className="flex items-center gap-8">
-              <Link href="/" className="flex items-center gap-3">
-                <Image
-                  src="/images/quiznotes logo.jpg"
-                  alt="QuizNotes Logo"
-                  width={36}
-                  height={36}
-                  className="rounded-lg"
-                />
-                <span className="text-xl font-bold text-gray-900">QuizNotes</span>
-              </Link>
-              <div className="hidden md:flex items-center gap-6">
-                <Link href="/dashboard" className="text-gray-700 hover:text-gray-900 text-sm font-semibold">
-                  Dashboard
-                </Link>
-                <span className="text-brand font-semibold text-sm">Quizzes</span>
-                <Link href="/forum" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors">
-                  Forum
-                </Link>
-                {user?.role === 'student' && (
-                  <>
-                    <Link href="/learning" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors">
-                      Learning
-                    </Link>
-                    <Link href="/student-premium" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors">
-                      Student Premium
-                    </Link>
-                  </>
-                )}
-              </div>
-            </div>
-            <div className="flex items-center gap-2 sm:gap-4">
-              {/* Exit Quiz Button */}
-              <button
+      <StudentNav user={user} level={gamificationStats?.current_level} xp={gamificationStats?.total_xp} />
+
+      {/* Exit Quiz Button - Fixed Position */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <button
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
@@ -1149,24 +1079,16 @@ function QuizContent() {
                     }
                   }
                 }}
-                className="relative z-[60] px-4 py-2 text-sm font-semibold text-white bg-red-500 hover:bg-red-600 active:bg-red-700 rounded-lg transition-colors touch-manipulation shadow-sm"
+                className="px-4 py-3 text-sm font-semibold text-white bg-red-500 hover:bg-red-600 active:bg-red-700 rounded-full transition-all touch-manipulation shadow-lg hover:shadow-xl flex items-center gap-2"
                 aria-label="Exit Quiz"
                 type="button"
               >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
                 <span className="hidden sm:inline">Exit Quiz</span>
-                <span className="sm:hidden flex items-center gap-1">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                  Exit
-                </span>
-              </button>
-              {/* Profile Dropdown - Right Corner */}
-              {user && <ProfileDropdown user={user} stats={gamificationStats} />}
-            </div>
-          </div>
-        </div>
-      </nav>
+        </button>
+      </div>
 
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-16">
         <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-6 md:p-8">

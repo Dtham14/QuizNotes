@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import ProfileDropdown from '@/components/ProfileDropdown'
+import StudentNav from '@/components/StudentNav'
 
 // Premium tools with paths
 const PREMIUM_TOOLS = [
@@ -132,40 +132,7 @@ export default function StudentPremiumPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-blue-50 flex flex-col">
       {/* Navigation */}
-      <nav className="border-b border-gray-200/80 bg-white/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16 items-center">
-            <div className="flex items-center gap-8">
-              <Link href="/" className="flex items-center gap-3">
-                <Image
-                  src="/images/quiznotes logo.jpg"
-                  alt="QuizNotes Logo"
-                  width={36}
-                  height={36}
-                  className="rounded-lg"
-                />
-                <span className="text-xl font-bold text-gray-900">QuizNotes</span>
-              </Link>
-              <div className="hidden md:flex items-center gap-6">
-                <Link href="/dashboard" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors">
-                  Dashboard
-                </Link>
-                <Link href="/quiz" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors">
-                  Quizzes
-                </Link>
-                <Link href="/forum" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors">
-                  Forum
-                </Link>
-                <Link href="/learning" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors">
-                  Learning
-                </Link>
-                <span className="text-sm font-semibold" style={{ color: PREMIUM_BLUE }}>Student Premium</span>
-              </div>
-            </div>
-            <ProfileDropdown user={user} />
-          </div>
-        </div>
-      </nav>
+      <StudentNav user={user} />
 
       <main className="flex-grow">
         {/* Hero Section */}

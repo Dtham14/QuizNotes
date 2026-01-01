@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import ProfileDropdown from '@/components/ProfileDropdown'
+import StudentNav from '@/components/StudentNav'
 import { initializeAudio, playNote, playChord } from '@/lib/audio/toneUtils'
 
 interface User {
@@ -1428,7 +1428,6 @@ export default function LearningPage() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [expandedSection, setExpandedSection] = useState<string | null>('intro')
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const sectionRefs = useState<{ [key: string]: HTMLButtonElement | null }>({})[0]
 
   useEffect(() => {
@@ -1499,108 +1498,7 @@ export default function LearningPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-purple-50 flex flex-col">
       {/* Navigation */}
-      <nav className="border-b border-gray-200/80 bg-white/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16 items-center">
-            <div className="flex items-center gap-8">
-              <Link href="/" className="flex items-center gap-3">
-                <Image
-                  src="/images/quiznotes logo.jpg"
-                  alt="QuizNotes Logo"
-                  width={36}
-                  height={36}
-                  className="rounded-lg"
-                />
-                <span className="text-xl font-bold text-gray-900">QuizNotes</span>
-              </Link>
-              <div className="hidden md:flex items-center gap-6">
-                <Link href="/dashboard" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors">
-                  Dashboard
-                </Link>
-                <Link href="/quiz" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors">
-                  Quizzes
-                </Link>
-                <Link href="/forum" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors">
-                  Forum
-                </Link>
-                <span className="text-brand font-semibold text-sm">Learning</span>
-                <Link href="/student-premium" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors">
-                  Student Premium
-                </Link>
-                {user.subscriptionStatus === 'active' && (
-                  <Link href="/tools/piano" className="text-gray-700 hover:text-gray-900 text-sm font-semibold transition-colors flex items-center gap-1">
-                    <span>👑</span>
-                    Premium Tools
-                  </Link>
-                )}
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <ProfileDropdown user={user} />
-              {/* Mobile menu button */}
-              <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="md:hidden p-2 text-gray-700 hover:text-gray-900"
-                aria-label="Toggle mobile menu"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  {mobileMenuOpen ? (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  ) : (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                  )}
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Mobile Menu */}
-        {mobileMenuOpen && (
-          <div className="md:hidden border-t border-gray-200 bg-white">
-            <div className="px-4 py-3 space-y-3">
-              <Link
-                href="/dashboard"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg text-sm font-semibold"
-              >
-                Dashboard
-              </Link>
-              <Link
-                href="/quiz"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg text-sm font-semibold"
-              >
-                Quizzes
-              </Link>
-              <Link
-                href="/forum"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg text-sm font-semibold"
-              >
-                Forum
-              </Link>
-              <Link
-                href="/learning"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block px-3 py-2 text-brand hover:bg-gray-50 rounded-lg text-sm font-semibold"
-              >
-                Learning
-              </Link>
-              {user.subscriptionStatus === 'active' && (
-                <Link
-                  href="/tools/piano"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="block px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg text-sm font-semibold flex items-center gap-1"
-                >
-                  <span>👑</span>
-                  Premium Tools
-                </Link>
-              )}
-            </div>
-          </div>
-        )}
-      </nav>
+      <StudentNav user={user} />
 
       {/* Main Content */}
       <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
