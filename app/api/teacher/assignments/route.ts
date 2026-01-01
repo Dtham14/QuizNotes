@@ -85,22 +85,22 @@ export async function GET() {
         const className = Array.isArray(classes) ? classes[0]?.name : classes?.name;
         return {
           id: assignment.id,
-          classId: assignment.class_id,
-          className,
-          quizId: assignment.quiz_id,
-          quizType: assignment.quiz_type,
+          class_id: assignment.class_id,
+          classes: { name: className || 'Unknown Class' },
+          quiz_id: assignment.quiz_id,
+          quiz_type: assignment.quiz_type,
           title: assignment.title,
           description: assignment.description,
-          dueDate: assignment.due_date,
-          maxAttempts: assignment.max_attempts,
-          createdAt: assignment.created_at,
+          due_date: assignment.due_date,
+          max_attempts: assignment.max_attempts,
+          created_at: assignment.created_at,
           stats: {
-            totalStudents: totalStudents || 0,
-            studentsCompleted,
-            completionRate: totalStudents && totalStudents > 0
+            total_students: totalStudents || 0,
+            completed_count: studentsCompleted,
+            completion_rate: totalStudents && totalStudents > 0
               ? Math.round((studentsCompleted / totalStudents) * 100)
               : 0,
-            averageScore,
+            average_score: averageScore,
           },
         }
       })
