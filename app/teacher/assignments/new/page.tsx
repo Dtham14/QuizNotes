@@ -158,7 +158,7 @@ export default function CreateAssignmentPage() {
             value={selectedClass}
             onChange={(e) => setSelectedClass(e.target.value)}
             required
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 text-gray-900"
           >
             <option value="">Choose a class...</option>
             {classes.map((cls) => (
@@ -204,7 +204,7 @@ export default function CreateAssignmentPage() {
               value={selectedQuizType}
               onChange={(e) => setSelectedQuizType(e.target.value)}
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 text-gray-900"
             >
               <option value="">Choose a quiz type...</option>
               {BUILT_IN_QUIZ_TYPES.map((type) => (
@@ -230,7 +230,7 @@ export default function CreateAssignmentPage() {
                   value={selectedQuizId}
                   onChange={(e) => setSelectedQuizId(e.target.value)}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 text-gray-900"
                 >
                   <option value="">Choose a custom quiz...</option>
                   {customQuizzes.map((quiz) => (
@@ -257,7 +257,7 @@ export default function CreateAssignmentPage() {
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Assignment title *"
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 text-gray-900 placeholder:text-gray-400"
             />
           </div>
 
@@ -267,7 +267,7 @@ export default function CreateAssignmentPage() {
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Description (optional)"
               rows={3}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 resize-none"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 resize-none text-gray-900 placeholder:text-gray-400"
             />
           </div>
 
@@ -278,7 +278,7 @@ export default function CreateAssignmentPage() {
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 text-gray-900"
               />
             </div>
             <div>
@@ -289,7 +289,7 @@ export default function CreateAssignmentPage() {
                 onChange={(e) => setMaxAttempts(e.target.value)}
                 placeholder="Unlimited"
                 min="1"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 text-gray-900 placeholder:text-gray-400"
               />
             </div>
           </div>

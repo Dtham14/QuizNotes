@@ -161,7 +161,7 @@ export default function StudentClassesPage() {
                   placeholder="e.g., ABC123"
                   required
                   maxLength={6}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 uppercase font-mono text-lg text-center tracking-widest"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 uppercase font-mono text-lg text-center tracking-widest text-gray-900 placeholder:text-gray-400"
                 />
                 <p className="text-sm text-gray-500 mt-2">Enter the 6-character code provided by your teacher</p>
               </div>

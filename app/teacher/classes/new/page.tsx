@@ -74,7 +74,7 @@ export default function CreateClassPage() {
               onChange={(e) => setClassName(e.target.value)}
               placeholder="e.g., Music Theory 101"
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent text-gray-900 placeholder:text-gray-400"
             />
             <p className="text-sm text-gray-500 mt-1">Give your class a clear, descriptive name</p>
           </div>
@@ -90,7 +90,7 @@ export default function CreateClassPage() {
               onChange={(e) => setDescription(e.target.value)}
               placeholder="e.g., Introduction to music theory fundamentals including scales, intervals, and basic harmony"
               rows={4}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent resize-none"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent resize-none text-gray-900 placeholder:text-gray-400"
             />
             <p className="text-sm text-gray-500 mt-1">Add a brief description to help students understand what this class is about</p>
           </div>
