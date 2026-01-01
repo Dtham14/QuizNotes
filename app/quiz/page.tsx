@@ -10,6 +10,7 @@ import XPGainAnimation from '@/components/gamification/XPGainAnimation';
 import LevelUpCelebration from '@/components/gamification/LevelUpCelebration';
 import AchievementUnlockToast from '@/components/gamification/AchievementUnlockToast';
 import StudentNav from '@/components/StudentNav';
+import TeacherNav from '@/components/TeacherNav';
 import { getQuizQuestions, QuizType, QuizQuestion } from '@/lib/quizData';
 import { getEarTrainingQuestions, EarTrainingQuizQuestion } from '@/lib/earTrainingQuizData';
 import type { GamificationStats } from '@/lib/types/database';
@@ -346,7 +347,11 @@ function QuizContent() {
   if (!quizType) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col">
-        <StudentNav user={user} level={gamificationStats?.current_level} xp={gamificationStats?.total_xp} />
+        {user?.role === 'student' ? (
+          <StudentNav user={user} level={gamificationStats?.current_level} xp={gamificationStats?.total_xp} />
+        ) : (
+          <TeacherNav user={user} stats={{ classCount: 0, studentCount: 0, quizCount: 0, assignmentCount: 0 }} />
+        )}
 
         <main className="max-w-4xl mx-auto px-4 py-16">
           <h2 className="text-4xl font-bold text-center text-gray-900 mb-4">Choose a Quiz Topic</h2>
@@ -1012,7 +1017,11 @@ function QuizContent() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <StudentNav user={user} level={gamificationStats?.current_level} xp={gamificationStats?.total_xp} />
+      {user?.role === 'student' ? (
+        <StudentNav user={user} level={gamificationStats?.current_level} xp={gamificationStats?.total_xp} />
+      ) : (
+        <TeacherNav user={user} stats={{ classCount: 0, studentCount: 0, quizCount: 0, assignmentCount: 0 }} />
+      )}
 
       {/* Exit Quiz Button - Fixed Position */}
       <div className="fixed bottom-6 right-6 z-50">

@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import StudentNav from '@/components/StudentNav'
+import TeacherNav from '@/components/TeacherNav'
 
 interface User {
   id: string
@@ -28,7 +29,21 @@ export function ContactNav({ user }: ContactNavProps) {
     }} />
   }
 
-  // For non-logged-in users or non-students, show simplified nav
+  // If user is logged in as a teacher, use TeacherNav
+  if (user && (user.role === 'teacher' || user.role === 'admin')) {
+    return <TeacherNav user={{
+      ...user,
+      avatarUrl: user.avatar_url,
+      themeColor: user.theme_color,
+    }} stats={{
+      classCount: 0,
+      studentCount: 0,
+      quizCount: 0,
+      assignmentCount: 0,
+    }} />
+  }
+
+  // For non-logged-in users, show simplified nav
   return (
     <nav className="border-b border-gray-200 bg-white sticky top-0 z-50">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
