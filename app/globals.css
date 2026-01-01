@@ -14,6 +14,20 @@
   --color-brand: var(--brand);
   --color-brand-dark: var(--brand-dark);
   --color-brand-light: var(--brand-light);
+
+  /* Map violet colors to brand blue #439FDD */
+  --color-violet-50: #e8f4fc;
+  --color-violet-100: #d0e8f7;
+  --color-violet-200: #a8d5f0;
+  --color-violet-300: #7fc2e9;
+  --color-violet-400: #5fb3e8;
+  --color-violet-500: #439FDD;
+  --color-violet-600: #3189c7;
+  --color-violet-700: #2573a8;
+  --color-violet-800: #1d5c87;
+  --color-violet-900: #154566;
+  --color-violet-950: #0d2c42;
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
