@@ -3,7 +3,6 @@
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import TeacherNav from '@/components/TeacherNav';
 import ClassDiscussion from './ClassDiscussion';
 
 type Student = {
@@ -113,25 +112,17 @@ export default function ClassDetailPage({ params }: { params: Promise<{ classId:
 
   if (error || !classData) {
     return (
-      <div className="min-h-screen bg-white">
-        <TeacherNav user={user || undefined} />
-        <main className="max-w-7xl mx-auto px-4 py-8">
-          <div className="bg-white rounded-xl shadow-lg p-8 text-center">
-            <p className="text-red-600 mb-4">{error || 'Class not found'}</p>
-            <Link href="/dashboard" className="text-brand hover:text-brand-dark">
-              Back to Dashboard
-            </Link>
-          </div>
-        </main>
+      <div className="bg-white rounded-xl shadow-lg p-8 text-center">
+        <p className="text-red-600 mb-4">{error || 'Class not found'}</p>
+        <Link href="/dashboard" className="text-brand hover:text-brand-dark">
+          Back to Dashboard
+        </Link>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <TeacherNav user={user || undefined} />
-
-      <main className="max-w-7xl mx-auto px-4 py-8">
+    <div>
         {/* Header */}
         <div className="mb-6">
           <Link href="/dashboard" className="text-brand hover:text-brand-dark text-sm mb-2 inline-block">
@@ -355,7 +346,6 @@ export default function ClassDetailPage({ params }: { params: Promise<{ classId:
             </div>
           )}
         </div>
-      </main>
     </div>
   );
 }
