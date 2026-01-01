@@ -57,7 +57,7 @@ function QuizContent() {
   const [showResult, setShowResult] = useState(false);
   const [score, setScore] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [user, setUser] = useState<{ id: string; email: string; name?: string | null; avatar?: string | null; avatarUrl?: string | null; themeColor?: string | null; role?: string } | null>(null);
+  const [user, setUser] = useState<{ id: string; email: string; name?: string | null; avatar?: string | null; avatarUrl?: string | null; themeColor?: string | null; role?: string; subscriptionStatus?: 'none' | 'active' | 'canceled' | 'expired' | null; subscription_status?: 'none' | 'active' | 'canceled' | 'expired' | null } | null>(null);
   const [gamificationStats, setGamificationStats] = useState<GamificationStats | null>(null);
   const [assignmentId, setAssignmentId] = useState<string | null>(null);
   const [assignmentInfo, setAssignmentInfo] = useState<{ maxAttempts: number; attemptsUsed: number; attemptsRemaining: number } | null>(null);

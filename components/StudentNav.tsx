@@ -42,6 +42,7 @@ interface StudentNavProps {
     avatar_url?: string | null;
     theme_color?: string | null;
     subscriptionStatus?: 'none' | 'active' | 'canceled' | 'expired' | null;
+    subscription_status?: 'none' | 'active' | 'canceled' | 'expired' | null;
   } | null;
   level?: number;
   xp?: number;
@@ -60,8 +61,8 @@ export default function StudentNav({ user, level, xp }: StudentNavProps) {
   const classesMenuRef = useRef<HTMLDivElement>(null);
   const premiumMenuRef = useRef<HTMLDivElement>(null);
 
-  // Check if user is premium
-  const isPremium = user?.subscriptionStatus === 'active';
+  // Check if user is premium (handle both property names)
+  const isPremium = user?.subscriptionStatus === 'active' || user?.subscription_status === 'active';
 
   // Check if user has a custom avatar image
   const hasCustomAvatar = !!user?.avatar_url;

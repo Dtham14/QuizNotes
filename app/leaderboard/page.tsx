@@ -19,6 +19,7 @@ interface User {
   avatarUrl?: string | null
   themeColor?: string | null
   subscriptionStatus?: 'none' | 'active' | 'canceled' | 'expired' | null
+  subscription_status?: 'none' | 'active' | 'canceled' | 'expired' | null
 }
 
 interface LeaderboardStats {

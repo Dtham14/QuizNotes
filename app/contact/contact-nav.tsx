@@ -13,6 +13,8 @@ interface User {
   theme_color?: string | null
   avatar?: string | null
   name?: string | null
+  subscriptionStatus?: 'none' | 'active' | 'canceled' | 'expired' | null
+  subscription_status?: 'none' | 'active' | 'canceled' | 'expired' | null
 }
 
 interface ContactNavProps {
