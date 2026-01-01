@@ -7,7 +7,8 @@ import Image from 'next/image'
 import AchievementCard from '@/components/gamification/AchievementCard'
 import LevelBadge from '@/components/gamification/LevelBadge'
 import XPProgressBar from '@/components/gamification/XPProgressBar'
-import ProfileDropdown from '@/components/ProfileDropdown'
+import StudentNav from '@/components/StudentNav'
+import TeacherNav from '@/components/TeacherNav'
 import type { AchievementDefinition, UserAchievementWithDetails, GamificationStats } from '@/lib/types/database'
 
 interface User {
@@ -18,6 +19,7 @@ interface User {
   avatar?: string | null
   avatarUrl?: string | null
   themeColor?: string | null
+  subscriptionStatus?: 'none' | 'active' | 'canceled' | 'expired' | null
 }
 
 type AchievementCategory = 'all' | 'quiz' | 'streak' | 'score' | 'milestone' | 'special'
@@ -112,35 +114,11 @@ export default function AchievementsPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Navigation */}
-      <nav className="border-b border-gray-200 bg-white sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16 items-center">
-            <div className="flex items-center gap-8">
-              <Link href="/" className="flex items-center gap-3">
-                <Image
-                  src="/images/quiznotes logo.jpg"
-                  alt="QuizNotes Logo"
-                  width={36}
-                  height={36}
-                  className="rounded-lg"
-                />
-                <span className="text-xl font-bold text-gray-900">QuizNotes</span>
-              </Link>
-              <div className="hidden md:flex items-center gap-6">
-                <Link href="/dashboard" className="text-gray-700 hover:text-gray-900 text-sm font-semibold">
-                  Dashboard
-                </Link>
-                <Link href="/quiz" className="text-gray-700 hover:text-gray-900 text-sm font-semibold">
-                  Quizzes
-                </Link>
-                <span className="text-brand font-semibold text-sm">Achievements</span>
-              </div>
-            </div>
-            {/* Profile Dropdown - Right Corner */}
-            <ProfileDropdown user={user} stats={stats} />
-          </div>
-        </div>
-      </nav>
+      {user.role === 'student' ? (
+        <StudentNav user={user} level={stats?.current_level} xp={stats?.total_xp} />
+      ) : (
+        <TeacherNav user={user} stats={{ classCount: 0, studentCount: 0, quizCount: 0, assignmentCount: 0 }} />
+      )}
 
       {/* Main content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex-grow w-full">

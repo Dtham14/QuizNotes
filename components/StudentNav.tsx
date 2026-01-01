@@ -41,6 +41,7 @@ interface StudentNavProps {
     avatar?: string | null;
     avatar_url?: string | null;
     theme_color?: string | null;
+    subscriptionStatus?: 'none' | 'active' | 'canceled' | 'expired' | null;
   } | null;
   level?: number;
   xp?: number;
@@ -53,9 +54,14 @@ export default function StudentNav({ user, level, xp }: StudentNavProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [learnMenuOpen, setLearnMenuOpen] = useState(false);
   const [classesMenuOpen, setClassesMenuOpen] = useState(false);
+  const [premiumMenuOpen, setPremiumMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const learnMenuRef = useRef<HTMLDivElement>(null);
   const classesMenuRef = useRef<HTMLDivElement>(null);
+  const premiumMenuRef = useRef<HTMLDivElement>(null);
+
+  // Check if user is premium
+  const isPremium = user?.subscriptionStatus === 'active';
 
   // Check if user has a custom avatar image
   const hasCustomAvatar = !!user?.avatar_url;
@@ -81,6 +87,9 @@ export default function StudentNav({ user, level, xp }: StudentNavProps) {
       if (classesMenuRef.current && !classesMenuRef.current.contains(event.target as Node)) {
         setClassesMenuOpen(false);
       }
+      if (premiumMenuRef.current && !premiumMenuRef.current.contains(event.target as Node)) {
+        setPremiumMenuOpen(false);
+      }
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -93,6 +102,7 @@ export default function StudentNav({ user, level, xp }: StudentNavProps) {
         setIsOpen(false);
         setLearnMenuOpen(false);
         setClassesMenuOpen(false);
+        setPremiumMenuOpen(false);
       }
     }
     document.addEventListener('keydown', handleEscape);
@@ -251,6 +261,54 @@ export default function StudentNav({ user, level, xp }: StudentNavProps) {
               >
                 Contact
               </Link>
+
+              {/* Premium Tools Dropdown - Only for Premium Members */}
+              {isPremium && (
+                <div className="relative" ref={premiumMenuRef}>
+                  <button
+                    onClick={() => setPremiumMenuOpen(!premiumMenuOpen)}
+                    className={`text-sm font-semibold transition-colors flex items-center gap-1 ${
+                      pathname?.startsWith('/tools/')
+                        ? 'text-violet-600'
+                        : 'text-gray-700 hover:text-gray-900'
+                    }`}
+                  >
+                    <span className="text-amber-500">👑</span>
+                    Premium Tools
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  {premiumMenuOpen && (
+                    <div className="absolute left-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-50">
+                      <Link
+                        href="/tools/piano"
+                        onClick={() => setPremiumMenuOpen(false)}
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-violet-50 hover:text-violet-600 transition-colors"
+                      >
+                        <div className="font-semibold">🎹 Interactive Piano</div>
+                        <div className="text-xs text-gray-500">Play and practice melodies</div>
+                      </Link>
+                      <Link
+                        href="/tools/rhythm"
+                        onClick={() => setPremiumMenuOpen(false)}
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-violet-50 hover:text-violet-600 transition-colors"
+                      >
+                        <div className="font-semibold">🎮 Rhythm Game</div>
+                        <div className="text-xs text-gray-500">Test your timing skills</div>
+                      </Link>
+                      <Link
+                        href="/tools/composition"
+                        onClick={() => setPremiumMenuOpen(false)}
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-violet-50 hover:text-violet-600 transition-colors"
+                      >
+                        <div className="font-semibold">🎼 Sandbox Composition</div>
+                        <div className="text-xs text-gray-500">Create your own music</div>
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
@@ -410,6 +468,58 @@ export default function StudentNav({ user, level, xp }: StudentNavProps) {
                       <p className="text-xs text-gray-500">Study materials</p>
                     </div>
                   </Link>
+
+                  {/* Premium Tools - Only for Premium Members */}
+                  {isPremium && (
+                    <>
+                      <div className="border-t border-gray-100 my-2" />
+                      <div className="px-4 py-2">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-amber-500">👑</span>
+                          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Premium Tools</p>
+                        </div>
+                      </div>
+                      <Link
+                        href="/tools/piano"
+                        onClick={() => setIsOpen(false)}
+                        className="flex items-center gap-3 px-4 py-3 hover:bg-amber-50 transition-colors"
+                      >
+                        <div className="w-9 h-9 rounded-lg bg-amber-100 flex items-center justify-center">
+                          <span className="text-lg">🎹</span>
+                        </div>
+                        <div>
+                          <p className="font-semibold text-gray-900">Interactive Piano</p>
+                          <p className="text-xs text-gray-500">Play and practice</p>
+                        </div>
+                      </Link>
+                      <Link
+                        href="/tools/rhythm"
+                        onClick={() => setIsOpen(false)}
+                        className="flex items-center gap-3 px-4 py-3 hover:bg-amber-50 transition-colors"
+                      >
+                        <div className="w-9 h-9 rounded-lg bg-amber-100 flex items-center justify-center">
+                          <span className="text-lg">🎮</span>
+                        </div>
+                        <div>
+                          <p className="font-semibold text-gray-900">Rhythm Game</p>
+                          <p className="text-xs text-gray-500">Test your timing</p>
+                        </div>
+                      </Link>
+                      <Link
+                        href="/tools/composition"
+                        onClick={() => setIsOpen(false)}
+                        className="flex items-center gap-3 px-4 py-3 hover:bg-amber-50 transition-colors"
+                      >
+                        <div className="w-9 h-9 rounded-lg bg-amber-100 flex items-center justify-center">
+                          <span className="text-lg">🎼</span>
+                        </div>
+                        <div>
+                          <p className="font-semibold text-gray-900">Sandbox Composition</p>
+                          <p className="text-xs text-gray-500">Create music</p>
+                        </div>
+                      </Link>
+                    </>
+                  )}
                 </div>
 
                 {/* Logout */}

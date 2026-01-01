@@ -6,7 +6,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import LeaderboardTable from '@/components/gamification/LeaderboardTable'
 import LevelBadge from '@/components/gamification/LevelBadge'
-import ProfileDropdown from '@/components/ProfileDropdown'
+import StudentNav from '@/components/StudentNav'
+import TeacherNav from '@/components/TeacherNav'
 import type { GamificationStats } from '@/lib/types/database'
 
 interface User {
@@ -17,6 +18,7 @@ interface User {
   avatar?: string | null
   avatarUrl?: string | null
   themeColor?: string | null
+  subscriptionStatus?: 'none' | 'active' | 'canceled' | 'expired' | null
 }
 
 interface LeaderboardStats {
@@ -98,35 +100,11 @@ export default function LeaderboardPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Navigation */}
-      <nav className="border-b border-gray-200 bg-white sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16 items-center">
-            <div className="flex items-center gap-8">
-              <Link href="/" className="flex items-center gap-3">
-                <Image
-                  src="/images/quiznotes logo.jpg"
-                  alt="QuizNotes Logo"
-                  width={36}
-                  height={36}
-                  className="rounded-lg"
-                />
-                <span className="text-xl font-bold text-gray-900">QuizNotes</span>
-              </Link>
-              <div className="hidden md:flex items-center gap-6">
-                <Link href="/dashboard" className="text-gray-700 hover:text-gray-900 text-sm font-semibold">
-                  Dashboard
-                </Link>
-                <Link href="/quiz" className="text-gray-700 hover:text-gray-900 text-sm font-semibold">
-                  Quizzes
-                </Link>
-                <span className="text-brand font-semibold text-sm">Leaderboard</span>
-              </div>
-            </div>
-            {/* Profile Dropdown - Right Corner */}
-            <ProfileDropdown user={user} stats={gamificationStats} />
-          </div>
-        </div>
-      </nav>
+      {user.role === 'student' ? (
+        <StudentNav user={user} level={gamificationStats?.current_level} xp={gamificationStats?.total_xp} />
+      ) : (
+        <TeacherNav user={user} stats={{ classCount: 0, studentCount: 0, quizCount: 0, assignmentCount: 0 }} />
+      )}
 
       {/* Main content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex-grow w-full">

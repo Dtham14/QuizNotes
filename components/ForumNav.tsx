@@ -46,7 +46,7 @@ export default function ForumNav({ user }: ForumNavProps) {
                 Learning Plans
               </Link>
               <Link href="/contact" className="text-gray-700 hover:text-gray-900 text-sm font-semibold">
-                Contact Me
+                Contact
               </Link>
             </div>
           </div>
