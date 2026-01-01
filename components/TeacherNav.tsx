@@ -320,9 +320,9 @@ export default function TeacherNav({ user, stats }: TeacherNavProps) {
             </button>
 
             {isOpen && (
-              <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200 max-h-[calc(100vh-5rem)] md:max-h-none flex flex-col">
                 {/* User Header */}
-                <div className={`p-4 ${gradientClass}`} style={gradientStyle ? { background: `linear-gradient(to right, ${themeColor}, ${adjustColor(themeColor, -30)})` } : undefined}>
+                <div className={`p-4 ${gradientClass} flex-shrink-0`} style={gradientStyle ? { background: `linear-gradient(to right, ${themeColor}, ${adjustColor(themeColor, -30)})` } : undefined}>
                   <div className="flex items-center gap-3">
                     <div className="w-14 h-14 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-3xl text-white border-2 border-white/30 overflow-hidden">
                       {hasCustomAvatar ? (
@@ -351,7 +351,7 @@ export default function TeacherNav({ user, stats }: TeacherNavProps) {
 
                 {/* Quick Stats */}
                 {stats && (
-                  <div className="px-4 py-3 bg-gray-50 border-b border-gray-100">
+                  <div className="px-4 py-3 bg-gray-50 border-b border-gray-100 flex-shrink-0">
                     <div className="grid grid-cols-2 gap-2">
                       <div className="text-center">
                         <p className="text-lg font-bold text-gray-900">{stats.classCount}</p>
@@ -373,8 +373,8 @@ export default function TeacherNav({ user, stats }: TeacherNavProps) {
                   </div>
                 )}
 
-                {/* Menu Items */}
-                <div className="py-2">
+                {/* Menu Items - Scrollable on mobile */}
+                <div className="py-2 overflow-y-auto flex-1">
                   <Link
                     href="/dashboard"
                     onClick={() => setIsOpen(false)}
@@ -424,8 +424,8 @@ export default function TeacherNav({ user, stats }: TeacherNavProps) {
                   </Link>
                 </div>
 
-                {/* Logout */}
-                <div className="border-t border-gray-100 py-2">
+                {/* Logout - Fixed at bottom */}
+                <div className="border-t border-gray-100 py-2 flex-shrink-0 bg-white">
                   <button
                     onClick={handleLogout}
                     className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 transition-colors text-left"

@@ -71,13 +71,14 @@ export default function StudentDashboardPage() {
   useEffect(() => {
     async function fetchDashboardData() {
       try {
-        const [userRes, statsRes, classesRes, attemptsRes, achievementsRes, pdfStatsRes] = await Promise.all([
+        const [userRes, statsRes, classesRes, attemptsRes, achievementsRes, pdfStatsRes, gamificationRes] = await Promise.all([
           fetch('/api/auth/me'),
           fetch('/api/student/dashboard/stats'),
           fetch('/api/student/enroll'),
           fetch('/api/quiz/attempts'),
           fetch('/api/gamification/achievements'),
           fetch('/api/quiz/pdf/stats'),
+          fetch('/api/gamification/stats'),
         ]);
 
         if (userRes.ok) {
@@ -87,7 +88,20 @@ export default function StudentDashboardPage() {
 
         if (statsRes.ok) {
           const statsData = await statsRes.json();
-          setStats(statsData.stats);
+          // Override XP with gamification stats if available
+          let dashboardStats = statsData.stats;
+          if (gamificationRes.ok) {
+            const gamificationData = await gamificationRes.json();
+            if (gamificationData.stats) {
+              dashboardStats = {
+                ...dashboardStats,
+                xp: gamificationData.stats.total_xp || 0,
+                level: gamificationData.stats.current_level || 1,
+                streak: gamificationData.stats.current_streak || 0,
+              };
+            }
+          }
+          setStats(dashboardStats);
         }
 
         if (classesRes.ok) {

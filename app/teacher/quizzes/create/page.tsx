@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import TeacherNav from '@/components/TeacherNav';
 import MusicNotation, { Note } from '@/components/MusicNotation';
 import AudioPlayer from '@/components/AudioPlayer';
 import {
@@ -21,13 +20,6 @@ type User = {
   avatar?: string | null;
   avatarUrl?: string | null;
   themeColor?: string | null;
-};
-
-type TeacherStats = {
-  classCount: number;
-  studentCount: number;
-  quizCount: number;
-  assignmentCount: number;
 };
 
 // Chromatic notes - each note separate (no combined enharmonics)
@@ -248,7 +240,6 @@ const EAR_TRAINING_QUIZ_TYPES: BuilderQuizType[] = [
 export default function CreateQuizPage() {
   const router = useRouter();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [teacherStats, setTeacherStats] = useState<TeacherStats | null>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
@@ -286,7 +277,6 @@ export default function CreateQuizPage() {
 
   useEffect(() => {
     fetchCurrentUser();
-    fetchTeacherStats();
   }, []);
 
   const fetchCurrentUser = async () => {
@@ -300,32 +290,6 @@ export default function CreateQuizPage() {
       }
     } catch {
       router.push('/login');
-    }
-  };
-
-  const fetchTeacherStats = async () => {
-    try {
-      const [classesRes, quizzesRes, assignmentsRes] = await Promise.all([
-        fetch('/api/teacher/classes'),
-        fetch('/api/teacher/quizzes'),
-        fetch('/api/teacher/assignments'),
-      ]);
-
-      const classesData = await classesRes.json();
-      const quizzesData = await quizzesRes.json();
-      const assignmentsData = await assignmentsRes.json();
-
-      const classList = classesData.classes || [];
-      const totalStudents = classList.reduce((acc: number, c: { studentCount?: number }) => acc + (c.studentCount || 0), 0);
-
-      setTeacherStats({
-        classCount: classList.length,
-        studentCount: totalStudents,
-        quizCount: quizzesData.quizzes?.length || 0,
-        assignmentCount: assignmentsData.assignments?.length || 0,
-      });
-    } catch {
-      // Stats are optional
     }
   };
 
@@ -634,11 +598,8 @@ export default function CreateQuizPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-violet-50/30">
-      <TeacherNav user={currentUser} stats={teacherStats} />
-
-      <main className="max-w-4xl mx-auto px-4 py-8">
-        <div className="bg-white rounded-xl shadow-lg p-8">
+    <div className="max-w-4xl mx-auto">
+      <div className="bg-white rounded-xl shadow-lg p-8">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-3xl font-bold text-gray-900">Create Custom Quiz</h2>
             <Link
@@ -773,7 +734,6 @@ export default function CreateQuizPage() {
             </div>
           </div>
         </div>
-      </main>
 
       {/* Quick Add Modal */}
       {showQuickAdd && (
