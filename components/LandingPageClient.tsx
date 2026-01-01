@@ -88,7 +88,7 @@ export default function LandingPageClient({ user }: LandingPageClientProps) {
                   Learning Plans
                 </Link>
                 <Link href="/contact" className="text-gray-700 hover:text-gray-900 text-sm font-semibold">
-                  Contact Me
+                  Contact
                 </Link>
               </div>
             </div>
@@ -155,7 +155,7 @@ export default function LandingPageClient({ user }: LandingPageClientProps) {
                 onClick={() => setMobileMenuOpen(false)}
                 className="block px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg text-sm font-semibold"
               >
-                Contact Me
+                Contact
               </Link>
               <div className="pt-3 border-t border-gray-200">
                 <Link

@@ -22,20 +22,12 @@ interface PricingNavProps {
 export function PricingNav({ user }: PricingNavProps) {
   // If user is logged in as a student, use StudentNav
   if (user && user.role === 'student') {
-    return <StudentNav user={{
-      ...user,
-      avatarUrl: user.avatar_url,
-      themeColor: user.theme_color,
-    }} />
+    return <StudentNav user={user} />
   }
 
   // If user is logged in as a teacher, use TeacherNav
   if (user && (user.role === 'teacher' || user.role === 'admin')) {
-    return <TeacherNav user={{
-      ...user,
-      avatarUrl: user.avatar_url,
-      themeColor: user.theme_color,
-    }} stats={{
+    return <TeacherNav user={user} stats={{
       classCount: 0,
       studentCount: 0,
       quizCount: 0,
