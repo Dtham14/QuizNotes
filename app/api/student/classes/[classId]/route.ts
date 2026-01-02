@@ -32,7 +32,7 @@ export async function GET(
 
     // Verify student is enrolled in this class
     const { data: enrollment, error: enrollmentError } = await supabase
-      .from('enrollments')
+      .from('class_enrollments')
       .select('*')
       .eq('student_id', user.id)
       .eq('class_id', classId)
