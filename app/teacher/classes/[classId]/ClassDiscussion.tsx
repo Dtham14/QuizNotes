@@ -9,6 +9,7 @@ interface Message {
   content: string
   timestamp: Date
   avatar?: string
+  themeColor?: string
 }
 
 interface ClassDiscussionProps {
@@ -24,6 +25,7 @@ export default function ClassDiscussion({
 }: ClassDiscussionProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [newMessage, setNewMessage] = useState('')
+  const [replyingTo, setReplyingTo] = useState<Message | null>(null)
   const [isPosting, setIsPosting] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -66,12 +68,18 @@ export default function ClassDiscussion({
     setIsPosting(true)
 
     try {
+      // Format message with reply prefix if replying
+      let messageContent = newMessage.trim()
+      if (replyingTo) {
+        messageContent = `@${replyingTo.author}: ${messageContent}`
+      }
+
       const res = await fetch(`/api/classes/${classId}/messages`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ content: newMessage.trim() }),
+        body: JSON.stringify({ content: messageContent }),
       })
 
       const data = await res.json()
@@ -88,6 +96,7 @@ export default function ClassDiscussion({
 
       setMessages([...messages, formattedMessage])
       setNewMessage('')
+      setReplyingTo(null)
     } catch (err) {
       console.error('Error posting message:', err)
       alert(err instanceof Error ? err.message : 'Failed to post message')
@@ -120,18 +129,16 @@ export default function ClassDiscussion({
       .slice(0, 2)
   }
 
-  const getAvatarGradient = (role: string) => {
-    if (role === 'teacher') {
+  const getAvatarStyle = (message: Message) => {
+    if (message.role === 'teacher') {
       return 'from-blue-500 to-cyan-600'
     }
-    const gradients = [
-      'from-violet-500 to-purple-600',
-      'from-emerald-500 to-teal-600',
-      'from-amber-500 to-orange-600',
-      'from-rose-500 to-pink-600',
-      'from-indigo-500 to-blue-600'
-    ]
-    return gradients[Math.floor(Math.random() * gradients.length)]
+    // Use theme color if available
+    if (message.themeColor) {
+      return ''
+    }
+    // Default gradient for students
+    return 'from-violet-500 to-purple-600'
   }
 
   return (
@@ -174,6 +181,24 @@ export default function ClassDiscussion({
         </div>
 
         <div className="relative">
+          {/* Reply indicator */}
+          {replyingTo && (
+            <div className="mb-3 p-3 bg-blue-50 border-l-4 border-blue-500 rounded-r-lg flex items-center justify-between">
+              <div>
+                <p className="text-xs text-blue-600 font-semibold">Replying to {replyingTo.author}</p>
+                <p className="text-sm text-gray-600 truncate">{replyingTo.content.slice(0, 60)}...</p>
+              </div>
+              <button
+                onClick={() => setReplyingTo(null)}
+                className="text-blue-500 hover:text-blue-700"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          )}
+
           <label className="block text-sm font-semibold text-gray-700 mb-3">
             {currentUserRole === 'teacher' ? 'Post an Announcement' : 'Send a Message'}
           </label>
@@ -285,16 +310,25 @@ export default function ClassDiscussion({
 
               <div className="flex gap-4">
                 {/* Avatar */}
-                <div
-                  className={`
-                    flex-shrink-0 w-12 h-12 rounded-xl
-                    bg-gradient-to-br ${getAvatarGradient(message.role)}
-                    flex items-center justify-center text-white font-bold text-sm
-                    shadow-md
-                  `}
-                >
-                  {getInitials(message.author)}
-                </div>
+                {message.avatar ? (
+                  <img
+                    src={message.avatar}
+                    alt={message.author}
+                    className="flex-shrink-0 w-12 h-12 rounded-xl object-cover shadow-md"
+                  />
+                ) : (
+                  <div
+                    className={`
+                      flex-shrink-0 w-12 h-12 rounded-xl
+                      ${message.themeColor ? '' : `bg-gradient-to-br ${getAvatarStyle(message)}`}
+                      flex items-center justify-center text-white font-bold text-sm
+                      shadow-md
+                    `}
+                    style={message.themeColor ? { backgroundColor: message.themeColor } : {}}
+                  >
+                    {getInitials(message.author)}
+                  </div>
+                )}
 
                 {/* Message Content */}
                 <div className="flex-1 min-w-0">
@@ -327,6 +361,17 @@ export default function ClassDiscussion({
                   <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
                     {message.content}
                   </p>
+
+                  {/* Reply Button */}
+                  <button
+                    onClick={() => setReplyingTo(message)}
+                    className="mt-3 text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                    </svg>
+                    Reply
+                  </button>
                 </div>
               </div>
             </div>
