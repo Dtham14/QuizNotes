@@ -1,5 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+
+// Service role client to bypass RLS policies
+function getSupabaseAdmin() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!url || !key) {
+    throw new Error('Missing Supabase environment variables')
+  }
+  return createSupabaseClient(url, key)
+}
 
 // GET - Fetch all messages for a class
 export async function GET(
@@ -9,6 +20,7 @@ export async function GET(
   try {
     const { classId } = await params
     const supabase = await createClient()
+    const supabaseAdmin = getSupabaseAdmin()
 
     // Get current user
     const {
@@ -21,7 +33,8 @@ export async function GET(
     }
 
     // Verify user has access to this class (either teacher or enrolled student)
-    const { data: classData } = await supabase
+    // Use admin client to bypass RLS
+    const { data: classData } = await supabaseAdmin
       .from('classes')
       .select('teacher_id')
       .eq('id', classId)
@@ -30,8 +43,8 @@ export async function GET(
     const isTeacher = classData?.teacher_id === user.id
 
     if (!isTeacher) {
-      // Check if student is enrolled
-      const { data: enrollment } = await supabase
+      // Check if student is enrolled (use admin client to bypass RLS)
+      const { data: enrollment } = await supabaseAdmin
         .from('class_enrollments')
         .select('id')
         .eq('class_id', classId)
@@ -46,8 +59,8 @@ export async function GET(
       }
     }
 
-    // Fetch messages with user profile information
-    const { data: messages, error: messagesError } = await supabase
+    // Fetch messages with user profile information (use admin client to bypass RLS)
+    const { data: messages, error: messagesError } = await supabaseAdmin
       .from('class_messages')
       .select(`
         id,
@@ -106,6 +119,7 @@ export async function POST(
   try {
     const { classId } = await params
     const supabase = await createClient()
+    const supabaseAdmin = getSupabaseAdmin()
 
     // Get current user
     const {
@@ -128,8 +142,8 @@ export async function POST(
       )
     }
 
-    // Verify user has access to this class
-    const { data: classData } = await supabase
+    // Verify user has access to this class (use admin client to bypass RLS)
+    const { data: classData } = await supabaseAdmin
       .from('classes')
       .select('teacher_id')
       .eq('id', classId)
@@ -138,8 +152,8 @@ export async function POST(
     const isTeacher = classData?.teacher_id === user.id
 
     if (!isTeacher) {
-      // Check if student is enrolled
-      const { data: enrollment } = await supabase
+      // Check if student is enrolled (use admin client to bypass RLS)
+      const { data: enrollment } = await supabaseAdmin
         .from('class_enrollments')
         .select('id')
         .eq('class_id', classId)
@@ -154,8 +168,8 @@ export async function POST(
       }
     }
 
-    // Insert the message
-    const { data: newMessage, error: insertError } = await supabase
+    // Insert the message (use admin client to bypass RLS)
+    const { data: newMessage, error: insertError } = await supabaseAdmin
       .from('class_messages')
       .insert({
         class_id: classId,

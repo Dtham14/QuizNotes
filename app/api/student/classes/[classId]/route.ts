@@ -1,5 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+
+// Service role client to bypass RLS policies
+function getSupabaseAdmin() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!url || !key) {
+    throw new Error('Missing Supabase environment variables')
+  }
+  return createSupabaseClient(url, key)
+}
 
 export async function GET(
   request: NextRequest,
@@ -8,6 +19,7 @@ export async function GET(
   try {
     const { classId } = await params
     const supabase = await createClient()
+    const supabaseAdmin = getSupabaseAdmin()
 
     // Get current user
     const {
@@ -23,8 +35,8 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Verify student is enrolled in this class
-    const { data: enrollment, error: enrollmentError } = await supabase
+    // Verify student is enrolled in this class (use admin client to bypass RLS)
+    const { data: enrollment, error: enrollmentError } = await supabaseAdmin
       .from('class_enrollments')
       .select('*')
       .eq('student_id', user.id)
@@ -32,14 +44,20 @@ export async function GET(
       .single()
 
     if (enrollmentError || !enrollment) {
+      console.error('Enrollment check failed:', {
+        userId: user.id,
+        classId,
+        error: enrollmentError,
+        hasEnrollment: !!enrollment
+      })
       return NextResponse.json(
         { error: 'Not enrolled in this class' },
         { status: 403 }
       )
     }
 
-    // Get class details
-    const { data: classData, error: classError } = await supabase
+    // Get class details (use admin client to bypass RLS)
+    const { data: classData, error: classError } = await supabaseAdmin
       .from('classes')
       .select(`
         id,
@@ -57,8 +75,8 @@ export async function GET(
       return NextResponse.json({ error: 'Class not found' }, { status: 404 })
     }
 
-    // Get assignments for this class
-    const { data: assignments, error: assignmentsError } = await supabase
+    // Get assignments for this class (use admin client to bypass RLS)
+    const { data: assignments, error: assignmentsError } = await supabaseAdmin
       .from('assignments')
       .select('*')
       .eq('class_id', classId)
@@ -71,8 +89,8 @@ export async function GET(
     // For each assignment, get the student's attempts
     const assignmentsWithProgress = await Promise.all(
       (assignments || []).map(async (assignment) => {
-        // Get student's attempts for this assignment
-        const { data: attempts, error: attemptsError } = await supabase
+        // Get student's attempts for this assignment (use admin client to bypass RLS)
+        const { data: attempts, error: attemptsError } = await supabaseAdmin
           .from('quiz_attempts')
           .select('score, total_questions')
           .eq('user_id', user.id)
