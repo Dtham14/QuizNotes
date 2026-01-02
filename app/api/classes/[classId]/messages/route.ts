@@ -67,6 +67,7 @@ export async function GET(
         content,
         created_at,
         updated_at,
+        parent_message_id,
         user:profiles!class_messages_user_id_fkey (
           id,
           name,
@@ -98,6 +99,7 @@ export async function GET(
         timestamp: msg.created_at,
         avatar: userProfile?.avatar_url,
         themeColor: userProfile?.theme_color,
+        parentMessageId: msg.parent_message_id,
       }
     })
 
@@ -133,7 +135,7 @@ export async function POST(
 
     // Get request body
     const body = await request.json()
-    const { content } = body
+    const { content, parentMessageId } = body
 
     if (!content || typeof content !== 'string' || content.trim().length === 0) {
       return NextResponse.json(
@@ -169,18 +171,26 @@ export async function POST(
     }
 
     // Insert the message (use admin client to bypass RLS)
+    const insertData: any = {
+      class_id: classId,
+      user_id: user.id,
+      content: content.trim(),
+    }
+
+    // Add parent message ID if this is a reply
+    if (parentMessageId) {
+      insertData.parent_message_id = parentMessageId
+    }
+
     const { data: newMessage, error: insertError } = await supabaseAdmin
       .from('class_messages')
-      .insert({
-        class_id: classId,
-        user_id: user.id,
-        content: content.trim(),
-      })
+      .insert(insertData)
       .select(`
         id,
         content,
         created_at,
         updated_at,
+        parent_message_id,
         user:profiles!class_messages_user_id_fkey (
           id,
           name,
@@ -210,6 +220,7 @@ export async function POST(
       timestamp: newMessage.created_at,
       avatar: userProfile?.avatar_url,
       themeColor: userProfile?.theme_color,
+      parentMessageId: newMessage.parent_message_id,
     }
 
     return NextResponse.json({ message: formattedMessage }, { status: 201 })

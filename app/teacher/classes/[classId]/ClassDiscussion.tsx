@@ -10,6 +10,7 @@ interface Message {
   timestamp: Date
   avatar?: string
   themeColor?: string
+  parentMessageId?: string | null
 }
 
 interface ClassDiscussionProps {
@@ -68,18 +69,15 @@ export default function ClassDiscussion({
     setIsPosting(true)
 
     try {
-      // Format message with reply prefix if replying
-      let messageContent = newMessage.trim()
-      if (replyingTo) {
-        messageContent = `@${replyingTo.author}: ${messageContent}`
-      }
-
       const res = await fetch(`/api/classes/${classId}/messages`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ content: messageContent }),
+        body: JSON.stringify({
+          content: newMessage.trim(),
+          parentMessageId: replyingTo?.id || null
+        }),
       })
 
       const data = await res.json()
@@ -140,6 +138,110 @@ export default function ClassDiscussion({
     // Default gradient for students
     return 'from-violet-500 to-purple-600'
   }
+
+  // Organize messages into threads
+  const organizeThreads = () => {
+    const rootMessages = messages.filter(m => !m.parentMessageId)
+    const messageMap = new Map<string, Message[]>()
+
+    // Group replies by parent ID
+    messages.forEach(msg => {
+      if (msg.parentMessageId) {
+        if (!messageMap.has(msg.parentMessageId)) {
+          messageMap.set(msg.parentMessageId, [])
+        }
+        messageMap.get(msg.parentMessageId)!.push(msg)
+      }
+    })
+
+    return { rootMessages, messageMap }
+  }
+
+  const renderMessage = (message: Message, isReply: boolean = false) => (
+    <div
+      key={message.id}
+      className={`bg-white rounded-2xl shadow-md border border-gray-100 p-6 hover:shadow-lg transition-all duration-200 relative overflow-hidden group ${
+        isReply ? 'ml-12 mt-3' : ''
+      }`}
+    >
+      {/* Teacher Message Special Styling */}
+      {message.role === 'teacher' && !isReply && (
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-cyan-600"></div>
+      )}
+
+      {/* Hover Effect - Musical Note */}
+      <div className="absolute -right-4 top-1/2 -translate-y-1/2 text-6xl opacity-0 group-hover:opacity-5 transition-opacity duration-300 select-none">
+        ♩
+      </div>
+
+      <div className="flex gap-4">
+        {/* Avatar */}
+        {message.avatar ? (
+          <img
+            src={message.avatar}
+            alt={message.author}
+            className="flex-shrink-0 w-12 h-12 rounded-xl object-cover shadow-md"
+          />
+        ) : (
+          <div
+            className={`
+              flex-shrink-0 w-12 h-12 rounded-xl
+              ${message.themeColor ? '' : `bg-gradient-to-br ${getAvatarStyle(message)}`}
+              flex items-center justify-center text-white font-bold text-sm
+              shadow-md
+            `}
+            style={message.themeColor ? { backgroundColor: message.themeColor } : {}}
+          >
+            {getInitials(message.author)}
+          </div>
+        )}
+
+        {/* Message Content */}
+        <div className="flex-1 min-w-0">
+          {/* Header */}
+          <div className="flex items-center gap-3 mb-2 flex-wrap">
+            <span className="font-semibold text-gray-900">
+              {message.author}
+            </span>
+
+            {/* Role Badge */}
+            {message.role === 'teacher' ? (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-gradient-to-r from-blue-500 to-cyan-600 text-white text-xs font-semibold rounded-lg shadow-sm">
+                <span>𝄞</span>
+                Teacher
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-lg">
+                <span>♪</span>
+                Student
+              </span>
+            )}
+
+            {/* Timestamp */}
+            <span className="text-xs text-gray-500">
+              {formatTimestamp(message.timestamp)}
+            </span>
+          </div>
+
+          {/* Message Text */}
+          <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+            {message.content}
+          </p>
+
+          {/* Reply Button */}
+          <button
+            onClick={() => setReplyingTo(message)}
+            className="mt-3 text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+            </svg>
+            Reply
+          </button>
+        </div>
+      </div>
+    </div>
+  )
 
   return (
     <div className="space-y-6">
@@ -290,92 +392,22 @@ export default function ClassDiscussion({
             </p>
           </div>
         ) : (
-          messages.map((message, index) => (
-            <div
-              key={message.id}
-              className="bg-white rounded-2xl shadow-md border border-gray-100 p-6 hover:shadow-lg transition-all duration-200 relative overflow-hidden group"
-              style={{
-                animation: `slideUp 0.4s ease-out ${index * 0.1}s both`
-              }}
-            >
-              {/* Teacher Message Special Styling */}
-              {message.role === 'teacher' && (
-                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-cyan-600"></div>
-              )}
+          (() => {
+            const { rootMessages, messageMap } = organizeThreads()
+            return rootMessages.map((rootMessage, index) => (
+              <div key={rootMessage.id} className="space-y-3">
+                {/* Render root message */}
+                {renderMessage(rootMessage)}
 
-              {/* Hover Effect - Musical Note */}
-              <div className="absolute -right-4 top-1/2 -translate-y-1/2 text-6xl opacity-0 group-hover:opacity-5 transition-opacity duration-300 select-none">
-                ♩
-              </div>
-
-              <div className="flex gap-4">
-                {/* Avatar */}
-                {message.avatar ? (
-                  <img
-                    src={message.avatar}
-                    alt={message.author}
-                    className="flex-shrink-0 w-12 h-12 rounded-xl object-cover shadow-md"
-                  />
-                ) : (
-                  <div
-                    className={`
-                      flex-shrink-0 w-12 h-12 rounded-xl
-                      ${message.themeColor ? '' : `bg-gradient-to-br ${getAvatarStyle(message)}`}
-                      flex items-center justify-center text-white font-bold text-sm
-                      shadow-md
-                    `}
-                    style={message.themeColor ? { backgroundColor: message.themeColor } : {}}
-                  >
-                    {getInitials(message.author)}
+                {/* Render replies */}
+                {messageMap.has(rootMessage.id) && (
+                  <div className="space-y-3">
+                    {messageMap.get(rootMessage.id)!.map(reply => renderMessage(reply, true))}
                   </div>
                 )}
-
-                {/* Message Content */}
-                <div className="flex-1 min-w-0">
-                  {/* Header */}
-                  <div className="flex items-center gap-3 mb-2 flex-wrap">
-                    <span className="font-semibold text-gray-900">
-                      {message.author}
-                    </span>
-
-                    {/* Role Badge */}
-                    {message.role === 'teacher' ? (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-gradient-to-r from-blue-500 to-cyan-600 text-white text-xs font-semibold rounded-lg shadow-sm">
-                        <span>𝄞</span>
-                        Teacher
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-lg">
-                        <span>♪</span>
-                        Student
-                      </span>
-                    )}
-
-                    {/* Timestamp */}
-                    <span className="text-xs text-gray-500">
-                      {formatTimestamp(message.timestamp)}
-                    </span>
-                  </div>
-
-                  {/* Message Text */}
-                  <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                    {message.content}
-                  </p>
-
-                  {/* Reply Button */}
-                  <button
-                    onClick={() => setReplyingTo(message)}
-                    className="mt-3 text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-                    </svg>
-                    Reply
-                  </button>
-                </div>
               </div>
-            </div>
-          ))
+            ))
+          })()
         )}
       </div>
 
