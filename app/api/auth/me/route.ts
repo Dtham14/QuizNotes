@@ -23,6 +23,11 @@ export async function GET() {
       .single()
 
     if (profileError || !profile) {
+      console.error('Profile lookup error:', {
+        userId: user.id,
+        error: profileError,
+        hasProfile: !!profile
+      })
       return NextResponse.json(
         { error: 'Profile not found' },
         { status: 404 }

@@ -16,6 +16,10 @@ export async function GET(
     } = await supabase.auth.getUser()
 
     if (authError || !user) {
+      console.error('Auth error in student classes:', {
+        authError: authError?.message,
+        hasUser: !!user
+      })
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
