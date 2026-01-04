@@ -42,6 +42,20 @@ type AnonymousAttempt = {
   createdAt: string;
 };
 
+type ContactSubmission = {
+  id: string;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  created_at: string;
+  user_id: string | null;
+  profiles?: {
+    user_name: string;
+    email: string;
+  } | null;
+};
+
 type Analytics = {
   anonymous: {
     totalAttempts: number;
@@ -70,16 +84,19 @@ function AdminPageContent() {
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
+  const [contactSubmissions, setContactSubmissions] = useState<ContactSubmission[]>([]);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Get initial tab from URL params
   const tabParam = searchParams.get('tab');
-  const [activeTab, setActiveTab] = useState<'users' | 'analytics'>('analytics');
+  const [activeTab, setActiveTab] = useState<'users' | 'analytics' | 'contact'>('analytics');
 
   // Sync tab with URL params
   useEffect(() => {
     if (tabParam === 'users') {
       setActiveTab('users');
+    } else if (tabParam === 'contact') {
+      setActiveTab('contact');
     } else {
       setActiveTab('analytics');
     }
@@ -100,9 +117,10 @@ function AdminPageContent() {
         setCurrentUser(userData.user);
 
         // Now fetch admin data in parallel
-        const [usersRes, analyticsRes] = await Promise.all([
+        const [usersRes, analyticsRes, contactRes] = await Promise.all([
           fetch('/api/admin/users'),
           fetch('/api/admin/analytics'),
+          fetch('/api/admin/contact-submissions'),
         ]);
 
         const usersData = await usersRes.json();
@@ -117,6 +135,11 @@ function AdminPageContent() {
           // Session expired or user lost admin access - redirect silently
           router.push('/login');
           return;
+        }
+
+        const contactData = await contactRes.json();
+        if (contactRes.ok && contactData.submissions) {
+          setContactSubmissions(contactData.submissions);
         }
       } catch (error) {
         console.error('Failed to initialize admin page:', error);
@@ -287,6 +310,16 @@ function AdminPageContent() {
             }`}
           >
             User Management
+          </button>
+          <button
+            onClick={() => setActiveTab('contact')}
+            className={`pb-3 px-1 font-semibold transition-colors ${
+              activeTab === 'contact'
+                ? 'text-brand border-b-2 border-brand'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Contact Submissions
           </button>
         </div>
 
@@ -550,6 +583,111 @@ function AdminPageContent() {
                 </p>
               </div>
             </div>
+          </>
+        )}
+
+        {activeTab === 'contact' && (
+          <>
+            <div className="mb-6">
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">Contact Submissions</h2>
+              <p className="text-gray-600">View and manage contact form submissions</p>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+              {contactSubmissions.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="text-left py-4 px-6 font-semibold text-gray-700">Name</th>
+                        <th className="text-left py-4 px-6 font-semibold text-gray-700">Email</th>
+                        <th className="text-left py-4 px-6 font-semibold text-gray-700">Subject</th>
+                        <th className="text-left py-4 px-6 font-semibold text-gray-700">Message</th>
+                        <th className="text-left py-4 px-6 font-semibold text-gray-700">Submitted</th>
+                        <th className="text-left py-4 px-6 font-semibold text-gray-700">User</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {contactSubmissions.map((submission) => (
+                        <tr key={submission.id} className="border-t hover:bg-gray-50">
+                          <td className="py-4 px-6 text-gray-900 font-medium">{submission.name}</td>
+                          <td className="py-4 px-6">
+                            <a
+                              href={`mailto:${submission.email}`}
+                              className="text-brand hover:underline"
+                            >
+                              {submission.email}
+                            </a>
+                          </td>
+                          <td className="py-4 px-6">
+                            <span className="px-2 py-1 bg-brand/10 text-brand text-sm rounded-full font-medium">
+                              {submission.subject}
+                            </span>
+                          </td>
+                          <td className="py-4 px-6 text-gray-700 max-w-md">
+                            <details className="cursor-pointer">
+                              <summary className="text-sm text-gray-600 hover:text-gray-900">
+                                {submission.message.substring(0, 50)}
+                                {submission.message.length > 50 ? '...' : ''}
+                              </summary>
+                              <p className="mt-2 text-sm whitespace-pre-wrap">{submission.message}</p>
+                            </details>
+                          </td>
+                          <td className="py-4 px-6 text-gray-900 text-sm">
+                            {new Date(submission.created_at).toLocaleString()}
+                          </td>
+                          <td className="py-4 px-6 text-gray-700 text-sm">
+                            {submission.user_id ? (
+                              <span className="flex items-center gap-1">
+                                <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                                Registered
+                              </span>
+                            ) : (
+                              <span className="text-gray-500">Anonymous</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="p-12 text-center">
+                  <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">No Contact Submissions</h3>
+                  <p className="text-gray-600">
+                    Contact form submissions will appear here when users submit the form.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {contactSubmissions.length > 0 && (
+              <div className="mt-8 grid md:grid-cols-3 gap-6">
+                <div className="bg-white p-6 rounded-xl shadow-lg">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Total Submissions</h3>
+                  <p className="text-4xl font-bold text-brand">{contactSubmissions.length}</p>
+                </div>
+                <div className="bg-white p-6 rounded-xl shadow-lg">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">From Registered Users</h3>
+                  <p className="text-4xl font-bold text-brand">
+                    {contactSubmissions.filter((s) => s.user_id !== null).length}
+                  </p>
+                </div>
+                <div className="bg-white p-6 rounded-xl shadow-lg">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Anonymous</h3>
+                  <p className="text-4xl font-bold text-brand">
+                    {contactSubmissions.filter((s) => s.user_id === null).length}
+                  </p>
+                </div>
+              </div>
+            )}
           </>
         )}
       </main>
