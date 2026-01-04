@@ -121,7 +121,7 @@ async function createDailyQuiz(date, format = 'standard') {
       quiz_format: 'standard',
       quiz_type: 'noteIdentification',
       difficulty: 'intermediate',
-      questions: JSON.stringify(sampleStandardQuiz),
+      questions: sampleStandardQuiz,
       metadata: null,
     }
   } else if (format === 'connections') {
@@ -153,8 +153,8 @@ async function createDailyQuiz(date, format = 'standard') {
       quiz_format: 'connections',
       quiz_type: null,
       difficulty: 'intermediate',
-      questions: JSON.stringify([]),
-      metadata: JSON.stringify({ groups }),
+      questions: [],
+      metadata: { groups },
     }
   } else if (format === 'wordle') {
     const wordleData = {
@@ -172,8 +172,8 @@ async function createDailyQuiz(date, format = 'standard') {
       quiz_format: 'wordle',
       quiz_type: null,
       difficulty: 'intermediate',
-      questions: JSON.stringify([]),
-      metadata: JSON.stringify(wordleData),
+      questions: [],
+      metadata: wordleData,
     }
   }
 

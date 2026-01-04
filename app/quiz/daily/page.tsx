@@ -345,8 +345,19 @@ export default function DailyQuizPage() {
   }
 
   // Standard quiz format
-  if (!currentQuestion) {
-    return null
+  if (!currentQuestion || !currentQuestion.options || !Array.isArray(currentQuestion.options)) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Invalid Quiz Data</h2>
+          <p className="text-gray-600">The quiz questions are not properly formatted.</p>
+          <Link href="/" className="mt-4 inline-block px-6 py-3 bg-violet-600 text-white rounded-lg hover:bg-violet-700">
+            Go Home
+          </Link>
+        </div>
+      </div>
+    )
   }
 
   const correctAnswerIndex =
