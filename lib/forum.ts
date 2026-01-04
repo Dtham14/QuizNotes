@@ -47,26 +47,7 @@ export async function createPost(
 
     if (tagError) throw tagError
 
-    // Increment post_count for each tag
-    for (const tag_id of data.tag_ids) {
-      const { error: rpcError } = await supabase.rpc('increment_tag_post_count', { p_tag_id: tag_id })
-
-      // If RPC doesn't exist, use manual update
-      if (rpcError) {
-        const { data: tag } = await supabase
-          .from('forum_tags')
-          .select('post_count')
-          .eq('id', tag_id)
-          .single()
-
-        if (tag) {
-          await supabase
-            .from('forum_tags')
-            .update({ post_count: tag.post_count + 1 })
-            .eq('id', tag_id)
-        }
-      }
-    }
+    // Tag post counts are automatically updated by database trigger
   }
 
   // Update user reputation
@@ -131,38 +112,10 @@ export async function updatePost(
 
   // Update tags if provided
   if (data.tag_ids) {
-    // Get existing tags before deletion
-    const { data: oldPostTags } = await supabase
-      .from('forum_post_tags')
-      .select('tag_id')
-      .eq('post_id', postId)
-
-    const oldTagIds = oldPostTags?.map(pt => pt.tag_id) || []
-
-    // Remove existing tags
+    // Remove existing tags and add new ones
+    // Tag post counts are automatically updated by database trigger
     await supabase.from('forum_post_tags').delete().eq('post_id', postId)
 
-    // Decrement post_count for old tags
-    for (const tag_id of oldTagIds) {
-      const { error: rpcError } = await supabase.rpc('decrement_tag_post_count', { p_tag_id: tag_id })
-
-      if (rpcError) {
-        const { data: tag } = await supabase
-          .from('forum_tags')
-          .select('post_count')
-          .eq('id', tag_id)
-          .single()
-
-        if (tag) {
-          await supabase
-            .from('forum_tags')
-            .update({ post_count: Math.max(0, tag.post_count - 1) })
-            .eq('id', tag_id)
-        }
-      }
-    }
-
-    // Add new tags
     if (data.tag_ids.length > 0) {
       const tagInserts = data.tag_ids.map((tag_id) => ({
         post_id: postId,
@@ -170,26 +123,6 @@ export async function updatePost(
       }))
 
       await supabase.from('forum_post_tags').insert(tagInserts)
-
-      // Increment post_count for new tags
-      for (const tag_id of data.tag_ids) {
-        const { error: rpcError } = await supabase.rpc('increment_tag_post_count', { p_tag_id: tag_id })
-
-        if (rpcError) {
-          const { data: tag } = await supabase
-            .from('forum_tags')
-            .select('post_count')
-            .eq('id', tag_id)
-            .single()
-
-          if (tag) {
-            await supabase
-              .from('forum_tags')
-              .update({ post_count: tag.post_count + 1 })
-              .eq('id', tag_id)
-          }
-        }
-      }
     }
   }
 
@@ -225,13 +158,7 @@ export async function deletePost(postId: string, userId: string): Promise<void> 
     throw new Error('Unauthorized to delete this post')
   }
 
-  // Get the tags associated with this post before deletion
-  const { data: postTags } = await supabase
-    .from('forum_post_tags')
-    .select('tag_id')
-    .eq('post_id', postId)
-
-  // Soft delete
+  // Soft delete - tag post counts are automatically updated by database trigger
   const { error } = await supabase
     .from('forum_posts')
     .update({
@@ -242,29 +169,6 @@ export async function deletePost(postId: string, userId: string): Promise<void> 
     .eq('id', postId)
 
   if (error) throw error
-
-  // Decrement post_count for each tag
-  if (postTags && postTags.length > 0) {
-    for (const { tag_id } of postTags) {
-      const { error: rpcError } = await supabase.rpc('decrement_tag_post_count', { p_tag_id: tag_id })
-
-      // If RPC doesn't exist, use manual update
-      if (rpcError) {
-        const { data: tag } = await supabase
-          .from('forum_tags')
-          .select('post_count')
-          .eq('id', tag_id)
-          .single()
-
-        if (tag) {
-          await supabase
-            .from('forum_tags')
-            .update({ post_count: Math.max(0, tag.post_count - 1) })
-            .eq('id', tag_id)
-        }
-      }
-    }
-  }
 
   // Decrement user reputation if deleting own post
   if (isAuthor) {

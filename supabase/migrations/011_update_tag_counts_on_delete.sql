@@ -69,7 +69,9 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Create trigger for tag assignment changes
+-- Drop both old trigger names in case they exist
 DROP TRIGGER IF EXISTS trigger_update_tag_count ON public.forum_post_tags;
+DROP TRIGGER IF EXISTS trigger_update_tag_post_count ON public.forum_post_tags;
 CREATE TRIGGER trigger_update_tag_count
 AFTER INSERT OR DELETE ON public.forum_post_tags
 FOR EACH ROW

@@ -30,6 +30,7 @@ INSERT INTO public.forum_tags (name, slug, description, color, icon) VALUES
   ('Quiz Help', 'quiz-help', 'Help with specific quiz questions', 'red', '❓'),
   ('Resources', 'resources', 'Recommended books, videos, tools', 'cyan', '🔗'),
   ('Practice Techniques', 'practice-techniques', 'Effective practice methods', 'indigo', '🎯'),
+  ('Bug Reports', 'bug-reports', 'Report bugs and technical issues', 'rose', '🐛'),
   ('General Discussion', 'general', 'General music theory discussions', 'gray', '💬');
 
 -- ============================================
@@ -281,27 +282,8 @@ AFTER INSERT OR DELETE ON public.forum_comments
 FOR EACH ROW
 EXECUTE FUNCTION update_post_reply_count();
 
--- Function to update tag post count
-CREATE OR REPLACE FUNCTION update_tag_post_count()
-RETURNS TRIGGER AS $$
-BEGIN
-  IF TG_OP = 'INSERT' THEN
-    UPDATE public.forum_tags
-    SET post_count = post_count + 1
-    WHERE id = NEW.tag_id;
-  ELSIF TG_OP = 'DELETE' THEN
-    UPDATE public.forum_tags
-    SET post_count = GREATEST(post_count - 1, 0)
-    WHERE id = OLD.tag_id;
-  END IF;
-  RETURN NULL;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trigger_update_tag_post_count
-AFTER INSERT OR DELETE ON public.forum_post_tags
-FOR EACH ROW
-EXECUTE FUNCTION update_tag_post_count();
+-- Tag post count update is handled by trigger in 011_update_tag_counts_on_delete.sql
+-- This ensures proper handling of deleted posts
 
 -- Function to initialize user forum reputation
 CREATE OR REPLACE FUNCTION initialize_user_forum_reputation()
