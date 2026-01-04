@@ -7,7 +7,8 @@ interface Assignment {
   id: string;
   title: string;
   description: string | null;
-  quiz_type: string;
+  quiz_type: string | null;
+  quiz_id: string | null;
   due_date: string | null;
   max_attempts: number | null;
   class_name: string;
@@ -122,6 +123,7 @@ export default function StudentAssignmentsPage() {
               description={assignment.description}
               className={assignment.class_name}
               quizType={assignment.quiz_type}
+              quizId={assignment.quiz_id}
               dueDate={assignment.due_date}
               maxAttempts={assignment.max_attempts}
               attemptCount={assignment.attempt_count}

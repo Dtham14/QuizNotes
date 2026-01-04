@@ -10,9 +10,9 @@ export type QuizQuestion = {
   clef?: 'treble' | 'bass';
 };
 
-export type QuizType = 'intervals' | 'chords' | 'scales' | 'noteIdentification' | 'keySignature' | 'intervalIdentification' | 'chordIdentification' | 'scaleIdentification' | 'ear-training' | 'earTrainingNote' | 'earTrainingInterval' | 'earTrainingChord' | 'mixed';
+export type QuizType = 'intervals' | 'chords' | 'scales' | 'noteIdentification' | 'keySignature' | 'intervalIdentification' | 'chordIdentification' | 'scaleIdentification' | 'ear-training' | 'earTrainingNote' | 'earTrainingInterval' | 'earTrainingChord' | 'mixed' | 'custom';
 
-export const quizzes: Record<QuizType, QuizQuestion[]> = {
+export const quizzes: Record<Exclude<QuizType, 'custom'>, QuizQuestion[]> = {
   intervals: [
     // === TREBLE CLEF INTERVALS - Natural Notes ===
     {
@@ -1169,6 +1169,10 @@ export function getQuizQuestions(type: QuizType, count: number = 10): QuizQuesti
 
   if (type === 'ear-training') {
     return []; // Ear training handled separately
+  }
+
+  if (type === 'custom') {
+    return []; // Custom quizzes loaded separately via API
   }
 
   const questions = quizzes[type] || [];

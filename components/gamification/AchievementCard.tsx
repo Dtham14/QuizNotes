@@ -73,6 +73,14 @@ export default function AchievementCard({
     ? Math.min(100, Math.floor((progress.current / progress.required) * 100))
     : 0
 
+  // Determine progress bar color based on completion percentage
+  const getProgressBarColor = () => {
+    if (progressPercent >= 80) return 'bg-green-500'
+    if (progressPercent >= 50) return 'bg-yellow-500'
+    if (progressPercent >= 25) return 'bg-orange-500'
+    return 'bg-red-400'
+  }
+
   if (compact) {
     return (
       <div
@@ -145,13 +153,16 @@ export default function AchievementCard({
             <div className="mt-2">
               <div className="flex justify-between text-xs text-gray-500 mb-1">
                 <span>Progress</span>
-                <span>{progress.current} / {progress.required}</span>
+                <span className="font-semibold">{progress.current} / {progress.required}</span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-1.5">
+              <div className="w-full bg-gray-200 rounded-full h-2">
                 <div
-                  className="bg-gray-400 h-1.5 rounded-full transition-all"
+                  className={`${getProgressBarColor()} h-2 rounded-full transition-all duration-300`}
                   style={{ width: `${progressPercent}%` }}
                 />
+              </div>
+              <div className="text-xs text-gray-400 mt-1">
+                {progressPercent}% complete
               </div>
             </div>
           )}

@@ -108,7 +108,19 @@ export default function AchievementsPage() {
   ]
 
   const filteredEarned = filterByCategory(earned) as UserAchievementWithDetails[]
-  const filteredAvailable = filterByCategory(available) as AchievementDefinition[]
+  const filteredAvailable = (filterByCategory(available) as AchievementDefinition[])
+    .sort((a, b) => {
+      // Sort by completion percentage (highest first)
+      const aProgress = progress[a.id]
+      const bProgress = progress[b.id]
+
+      if (!aProgress || !bProgress) return 0
+
+      const aPercent = aProgress.required > 0 ? (aProgress.current / aProgress.required) * 100 : 0
+      const bPercent = bProgress.required > 0 ? (bProgress.current / bProgress.required) * 100 : 0
+
+      return bPercent - aPercent
+    })
 
   const totalXpFromAchievements = earned.reduce((sum, ua) => sum + (ua.achievement.xp_reward || 0), 0)
 
@@ -169,67 +181,6 @@ export default function AchievementsPage() {
                     </div>
                   )}
                 </div>
-              </div>
-            </div>
-
-            {/* Activity Streak Section */}
-            <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl p-6 mb-6 border border-orange-100">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <span className="text-3xl">🔥</span>
-                  <div>
-                    <p className="font-bold text-gray-800 text-lg">Activity Streak</p>
-                    <p className="text-sm text-gray-500">Complete quizzes daily to build your streak</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-4xl font-bold text-orange-500">{stats.current_streak}</p>
-                  <p className="text-sm text-gray-500">day{stats.current_streak !== 1 ? 's' : ''}</p>
-                </div>
-              </div>
-
-              {/* Visual streak indicator - last 7 days */}
-              <div className="flex gap-2 mb-3">
-                {[...Array(7)].map((_, i) => {
-                  const dayIndex = 6 - i
-                  const isCompleted = dayIndex < stats.current_streak
-                  const today = new Date().toISOString().split('T')[0]
-                  const isActiveToday = stats.last_activity_date === today
-                  const isToday = dayIndex === 0
-                  return (
-                    <div key={i} className="flex-1 flex flex-col items-center">
-                      <div
-                        className={`w-full h-10 rounded-lg flex items-center justify-center text-sm font-bold transition-all ${
-                          isCompleted
-                            ? 'bg-orange-500 text-white'
-                            : isToday && !isActiveToday
-                            ? 'bg-orange-200 text-orange-600 border-2 border-dashed border-orange-400'
-                            : 'bg-gray-200 text-gray-400'
-                        }`}
-                      >
-                        {isCompleted ? '✓' : isToday ? '?' : ''}
-                      </div>
-                      <span className="text-xs text-gray-500 mt-1">
-                        {isToday ? 'Today' : dayIndex === 1 ? 'Yesterday' : `${dayIndex} days ago`}
-                      </span>
-                    </div>
-                  )
-                })}
-              </div>
-
-              <div className="flex items-center justify-between text-sm pt-2 border-t border-orange-100">
-                <span className="text-gray-600">
-                  {stats.last_activity_date === new Date().toISOString().split('T')[0] ? (
-                    <span className="text-green-600 font-medium">✓ Active today!</span>
-                  ) : stats.current_streak > 0 ? (
-                    <span className="text-orange-600 font-medium animate-pulse">⚠️ Complete a quiz to keep your streak!</span>
-                  ) : (
-                    <span className="text-gray-500">Start your streak today!</span>
-                  )}
-                </span>
-                <span className="text-gray-600">
-                  Best streak: <span className="font-bold text-orange-600">{stats.longest_streak} days</span>
-                </span>
               </div>
             </div>
 

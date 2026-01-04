@@ -110,6 +110,7 @@ function QuizContent() {
     if (initialized || !user) return;
 
     const typeParam = searchParams.get('type');
+    const quizIdParam = searchParams.get('quizId');
     const assignmentIdParam = searchParams.get('assignmentId');
 
     if (assignmentIdParam) {
@@ -130,22 +131,39 @@ function QuizContent() {
         .catch(err => console.error('Failed to fetch assignment info:', err));
     }
 
-    if (typeParam) {
+    // Handle custom quiz loading
+    if (quizIdParam) {
+      fetch(`/api/quiz/${quizIdParam}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.quiz && data.quiz.questions) {
+            setQuizType('custom');
+            setQuestions(data.quiz.questions);
+            setAnswers(new Array(data.quiz.questions.length).fill(null));
+          } else {
+            console.error('Custom quiz not found or has no questions');
+          }
+        })
+        .catch(err => console.error('Failed to fetch custom quiz:', err));
+    } else if (typeParam) {
       // Map URL params to Quiz Builder types for consistent experience
       const builderTypeMap: Record<string, BuilderQuizType> = {
         'noteIdentification': 'noteIdentification',
         'note-identification': 'noteIdentification',
         'keySignature': 'keySignature',
         'key-signature': 'keySignature',
+        'key-signature-quiz': 'keySignature',
         'intervals': 'intervalIdentification',
         'intervalIdentification': 'intervalIdentification',
         'interval-identification': 'intervalIdentification',
+        'interval-quiz': 'intervalIdentification',
         'chords': 'chordIdentification',
         'chordIdentification': 'chordIdentification',
         'chord-identification': 'chordIdentification',
         'scales': 'scaleIdentification',
         'scaleIdentification': 'scaleIdentification',
         'scale-identification': 'scaleIdentification',
+        'scale-quiz': 'scaleIdentification',
         'earTrainingNote': 'earTrainingNote',
         'ear-training-note': 'earTrainingNote',
         'earTrainingInterval': 'earTrainingInterval',

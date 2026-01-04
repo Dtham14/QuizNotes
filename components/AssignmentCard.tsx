@@ -8,7 +8,8 @@ interface AssignmentCardProps {
   title: string;
   description?: string | null;
   className?: string;
-  quizType?: string;
+  quizType?: string | null;
+  quizId?: string | null;
   dueDate?: string | null;
   role: 'teacher' | 'student';
   // Teacher-specific props
@@ -29,6 +30,7 @@ export default function AssignmentCard({
   description,
   className,
   quizType,
+  quizId,
   dueDate,
   role,
   completionRate,
@@ -191,7 +193,7 @@ export default function AssignmentCard({
             </div>
           )}
           <Link
-            href={`/quiz?assignmentId=${id}${quizType ? `&type=${quizType}` : ''}`}
+            href={`/quiz?assignmentId=${id}${quizId ? `&quizId=${quizId}` : quizType ? `&type=${quizType}` : ''}`}
             className={`block w-full text-center px-4 py-2 rounded-lg transition-colors text-sm font-semibold ${
               canAttempt
                 ? 'bg-violet-600 text-white hover:bg-violet-700'
