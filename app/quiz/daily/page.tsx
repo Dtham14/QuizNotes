@@ -46,20 +46,21 @@ export default function DailyQuizPage() {
 
         const data: DailyQuizData = await response.json()
 
+        setQuizData(data)
+
+        // Parse questions from JSONB (needed for displaying results too)
+        const parsedQuestions = data.quiz.questions as any as GeneratedQuestion[]
+        setQuestions(parsedQuestions)
+
         if (data.userAttempt.completed) {
           // Already completed, show completion screen
-          setQuizData(data)
           setShowResult(true)
           setScore(data.userAttempt.score || 0)
           setLoading(false)
           return
         }
 
-        setQuizData(data)
-
-        // Parse questions from JSONB
-        const parsedQuestions = data.quiz.questions as any as GeneratedQuestion[]
-        setQuestions(parsedQuestions)
+        // Not completed yet, set up for taking the quiz
         setAnswers(new Array(parsedQuestions.length).fill(null))
         setLoading(false)
       } catch (error) {
@@ -304,6 +305,17 @@ export default function DailyQuizPage() {
   if (quizData && !showResult) {
     if (quizData.quiz.quiz_format === 'connections') {
       const metadata = quizData.quiz.metadata as any
+      if (!metadata || !metadata.groups) {
+        return (
+          <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+            <div className="text-center">
+              <div className="text-6xl mb-4">⚠️</div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Quiz Data Error</h2>
+              <p className="text-gray-600">The quiz data is incomplete. Please try again later.</p>
+            </div>
+          </div>
+        )
+      }
       return (
         <div className="min-h-screen bg-gray-50 py-8 px-4">
           <ConnectionsGame
@@ -316,6 +328,17 @@ export default function DailyQuizPage() {
 
     if (quizData.quiz.quiz_format === 'wordle') {
       const metadata = quizData.quiz.metadata as any
+      if (!metadata || !metadata.answer) {
+        return (
+          <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+            <div className="text-center">
+              <div className="text-6xl mb-4">⚠️</div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Quiz Data Error</h2>
+              <p className="text-gray-600">The quiz data is incomplete. Please try again later.</p>
+            </div>
+          </div>
+        )
+      }
       return (
         <div className="min-h-screen bg-gray-50 py-8 px-4">
           <WordleGame
