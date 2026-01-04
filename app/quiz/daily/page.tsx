@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import MusicNotation from '@/components/MusicNotation'
 import AudioPlayer from '@/components/AudioPlayer'
+import ConnectionsGame from '@/components/games/ConnectionsGame'
+import WordleGame from '@/components/games/WordleGame'
+import DailyQuizLeaderboard from '@/components/DailyQuizLeaderboard'
 import type { DailyQuiz } from '@/lib/types/database'
 import type { GeneratedQuestion } from '@/lib/quizBuilder/types'
 
@@ -145,6 +148,67 @@ export default function DailyQuizPage() {
     }
   }
 
+  // Handlers for Connections and Wordle games
+  const handleConnectionsComplete = async (finalScore: number, mistakes: number) => {
+    if (!quizData) return
+
+    setScore(finalScore)
+    setSubmitting(true)
+
+    try {
+      const response = await fetch('/api/quiz/daily/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          dailyQuizId: quizData.quiz.id,
+          score: finalScore,
+          totalQuestions: 10, // Max score for connections
+          answers: [], // Not applicable for connections
+        }),
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        setGamification(result.gamification)
+      }
+    } catch (error) {
+      console.error('Error submitting quiz:', error)
+    } finally {
+      setSubmitting(false)
+      setShowResult(true)
+    }
+  }
+
+  const handleWordleComplete = async (finalScore: number, attempts: number) => {
+    if (!quizData) return
+
+    setScore(finalScore)
+    setSubmitting(true)
+
+    try {
+      const response = await fetch('/api/quiz/daily/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          dailyQuizId: quizData.quiz.id,
+          score: finalScore,
+          totalQuestions: 10, // Max score for wordle
+          answers: [], // Not applicable for wordle
+        }),
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        setGamification(result.gamification)
+      }
+    } catch (error) {
+      console.error('Error submitting quiz:', error)
+    } finally {
+      setSubmitting(false)
+      setShowResult(true)
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -161,73 +225,112 @@ export default function DailyQuizPage() {
 
     return (
       <div className="min-h-screen bg-gradient-to-br from-violet-50 to-purple-50 py-12 px-4">
-        <div className="max-w-2xl mx-auto">
-          <div className="bg-white rounded-xl shadow-xl p-8">
-            <div className="text-center mb-8">
-              <div className="text-6xl mb-4">
-                {percentage === 100 ? '🎉' : percentage >= 80 ? '🌟' : percentage >= 60 ? '👍' : '📚'}
+        <div className="max-w-6xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-6">
+            {/* Results Card */}
+            <div className="bg-white rounded-xl shadow-xl p-8">
+              <div className="text-center mb-8">
+                <div className="text-6xl mb-4">
+                  {percentage === 100 ? '🎉' : percentage >= 80 ? '🌟' : percentage >= 60 ? '👍' : '📚'}
+                </div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                  {percentage === 100
+                    ? 'Perfect Score!'
+                    : percentage >= 80
+                    ? 'Great Job!'
+                    : percentage >= 60
+                    ? 'Good Effort!'
+                    : 'Keep Practicing!'}
+                </h1>
+                <p className="text-xl text-gray-600">
+                  You scored {score} out of {questions.length} ({percentage}%)
+                </p>
               </div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                {percentage === 100
-                  ? 'Perfect Score!'
-                  : percentage >= 80
-                  ? 'Great Job!'
-                  : percentage >= 60
-                  ? 'Good Effort!'
-                  : 'Keep Practicing!'}
-              </h1>
-              <p className="text-xl text-gray-600">
-                You scored {score} out of {questions.length} ({percentage}%)
-              </p>
-            </div>
 
-            {gamification && (
-              <div className="bg-violet-50 rounded-lg p-6 mb-6 border-2 border-violet-200">
-                <h3 className="font-bold text-lg text-violet-900 mb-3">🎯 Rewards Earned</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-white rounded-lg p-3">
-                    <p className="text-2xl font-bold text-violet-600">+{gamification.xpAwarded} XP</p>
-                    <p className="text-xs text-gray-500">2x Daily Bonus!</p>
+              {gamification && (
+                <div className="bg-violet-50 rounded-lg p-6 mb-6 border-2 border-violet-200">
+                  <h3 className="font-bold text-lg text-violet-900 mb-3">🎯 Rewards Earned</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-white rounded-lg p-3">
+                      <p className="text-2xl font-bold text-violet-600">+{gamification.xpAwarded} XP</p>
+                      <p className="text-xs text-gray-500">2x Daily Bonus!</p>
+                    </div>
+                    {gamification.leveledUp && (
+                      <div className="bg-yellow-50 rounded-lg p-3 border border-yellow-200">
+                        <p className="text-lg font-bold text-yellow-700">Level {gamification.newLevel}!</p>
+                        <p className="text-xs text-gray-600">You leveled up!</p>
+                      </div>
+                    )}
                   </div>
-                  {gamification.leveledUp && (
-                    <div className="bg-yellow-50 rounded-lg p-3 border border-yellow-200">
-                      <p className="text-lg font-bold text-yellow-700">Level {gamification.newLevel}!</p>
-                      <p className="text-xs text-gray-600">You leveled up!</p>
+                  {gamification.streak && (
+                    <div className="mt-3 text-sm text-gray-600">
+                      🔥 Current Streak: {gamification.streak.current} days
                     </div>
                   )}
                 </div>
-                {gamification.streak && (
-                  <div className="mt-3 text-sm text-gray-600">
-                    🔥 Current Streak: {gamification.streak.current} days
-                  </div>
-                )}
-              </div>
-            )}
+              )}
 
-            <div className="flex gap-4">
-              <Link
-                href="/"
-                className="flex-1 px-6 py-3 bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300 transition-colors text-center"
-              >
-                Back to Home
-              </Link>
-              <Link
-                href="/student/dashboard"
-                className="flex-1 px-6 py-3 bg-violet-600 text-white font-semibold rounded-lg hover:bg-violet-700 transition-colors text-center"
-              >
-                View Dashboard
-              </Link>
+              <div className="flex gap-4">
+                <Link
+                  href="/"
+                  className="flex-1 px-6 py-3 bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300 transition-colors text-center"
+                >
+                  Back to Home
+                </Link>
+                <Link
+                  href="/student/dashboard"
+                  className="flex-1 px-6 py-3 bg-violet-600 text-white font-semibold rounded-lg hover:bg-violet-700 transition-colors text-center"
+                >
+                  View Dashboard
+                </Link>
+              </div>
+
+              <p className="text-center text-sm text-gray-500 mt-6">
+                Come back tomorrow for a new daily quiz!
+              </p>
             </div>
 
-            <p className="text-center text-sm text-gray-500 mt-6">
-              Come back tomorrow for a new daily quiz!
-            </p>
+            {/* Leaderboard Card */}
+            <div className="lg:row-span-2">
+              <DailyQuizLeaderboard />
+            </div>
           </div>
         </div>
       </div>
     )
   }
 
+  // Route to appropriate game based on format
+  if (quizData && !showResult) {
+    if (quizData.quiz.quiz_format === 'connections') {
+      const metadata = quizData.quiz.metadata as any
+      return (
+        <div className="min-h-screen bg-gray-50 py-8 px-4">
+          <ConnectionsGame
+            groups={metadata.groups}
+            onComplete={handleConnectionsComplete}
+          />
+        </div>
+      )
+    }
+
+    if (quizData.quiz.quiz_format === 'wordle') {
+      const metadata = quizData.quiz.metadata as any
+      return (
+        <div className="min-h-screen bg-gray-50 py-8 px-4">
+          <WordleGame
+            answer={metadata.answer}
+            answerType={metadata.answerType}
+            maxAttempts={metadata.maxAttempts}
+            hints={metadata.hints}
+            onComplete={handleWordleComplete}
+          />
+        </div>
+      )
+    }
+  }
+
+  // Standard quiz format
   if (!currentQuestion) {
     return null
   }

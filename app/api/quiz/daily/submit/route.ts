@@ -25,6 +25,88 @@ function getOrCreateSessionId(request: NextRequest): string {
   return 'anon_' + crypto.randomUUID()
 }
 
+// Check and award daily quiz achievements
+async function checkDailyQuizAchievements(
+  userId: string,
+  score: number,
+  totalQuestions: number
+): Promise<void> {
+  const supabase = getSupabaseAdmin()
+
+  // Get user's gamification data
+  const { data: gamification } = await supabase
+    .from('user_gamification')
+    .select('*')
+    .eq('user_id', userId)
+    .single()
+
+  if (!gamification) return
+
+  // Get daily quiz attempts count
+  const { count: attemptsCount } = await supabase
+    .from('daily_quiz_attempts')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId)
+
+  const totalAttempts = attemptsCount || 0
+
+  // Check for achievements
+  const achievementsToAward: string[] = []
+
+  // Daily Starter: Complete 3 daily quizzes
+  if (totalAttempts >= 3) {
+    achievementsToAward.push('daily_quiz_3')
+  }
+
+  // Weekly Warrior: 7 day streak
+  if (gamification.daily_quiz_streak >= 7) {
+    achievementsToAward.push('daily_quiz_7_streak')
+  }
+
+  // Connections Master: Perfect connections (score 10)
+  if (score === totalQuestions && totalQuestions === 10) {
+    achievementsToAward.push('connections_master')
+  }
+
+  // Wordle Wizard: High score on wordle (8+ means 3 or fewer attempts)
+  if (score >= 8 && totalQuestions === 10) {
+    achievementsToAward.push('wordle_wizard')
+  }
+
+  // Award achievements
+  for (const achievementId of achievementsToAward) {
+    // Check if already earned
+    const { data: existing } = await supabase
+      .from('user_achievements')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('achievement_id', achievementId)
+      .single()
+
+    if (!existing) {
+      // Get achievement details
+      const { data: achievement } = await supabase
+        .from('achievement_definitions')
+        .select('*')
+        .eq('id', achievementId)
+        .single()
+
+      if (achievement) {
+        // Award achievement
+        await supabase.from('user_achievements').insert({
+          user_id: userId,
+          achievement_id: achievementId,
+        })
+
+        // Award XP
+        if (achievement.xp_reward > 0) {
+          await awardXP(userId, achievement.xp_reward, 'achievement')
+        }
+      }
+    }
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = getSupabaseAdmin()
@@ -146,6 +228,22 @@ export async function POST(request: NextRequest) {
           reason: 'daily_quiz_bonus',
           amount: bonusXP,
         })
+
+        // Update daily quiz leaderboard
+        const isPerfect = score === totalQuestions
+        await supabase.rpc('update_daily_quiz_leaderboard', {
+          p_user_id: user.id,
+          p_score: score,
+          p_is_perfect: isPerfect,
+        })
+
+        // Update daily quiz streak
+        await supabase.rpc('update_daily_quiz_streak', {
+          p_user_id: user.id,
+        })
+
+        // Check for daily quiz achievements
+        await checkDailyQuizAchievements(user.id, score, totalQuestions)
       } catch (gamificationError) {
         console.error('Gamification processing error:', gamificationError)
       }
