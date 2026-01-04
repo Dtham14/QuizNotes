@@ -13,6 +13,7 @@ interface Assignment {
   max_attempts: number | null;
   class_name: string;
   best_score: number | null;
+  totalQuestions: number | null;
   attempt_count: number;
   attemptsRemaining: number;
   completed: boolean;
@@ -130,6 +131,7 @@ export default function StudentAssignmentsPage() {
               maxAttempts={assignment.max_attempts}
               attemptCount={assignment.attempt_count}
               bestScore={assignment.best_score}
+              totalQuestions={assignment.totalQuestions}
               attemptsRemaining={assignment.attemptsRemaining}
               completed={assignment.completed}
               role="student"

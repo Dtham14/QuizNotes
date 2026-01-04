@@ -21,6 +21,7 @@ interface AssignmentCardProps {
   maxAttempts?: number | null;
   attemptCount?: number;
   bestScore?: number | null;
+  totalQuestions?: number | null;
   attemptsRemaining?: number;
   completed?: boolean;
   onDelete?: () => void;
@@ -42,6 +43,7 @@ export default function AssignmentCard({
   maxAttempts,
   attemptCount = 0,
   bestScore,
+  totalQuestions,
   attemptsRemaining = 0,
   completed = false,
   onDelete,
@@ -87,6 +89,11 @@ export default function AssignmentCard({
 
   const canAttempt = attemptsRemaining > 0;
   const isReviewMode = completed && attemptsRemaining === 0;
+
+  // Calculate percentage score
+  const bestScorePercentage = bestScore !== null && bestScore !== undefined && totalQuestions
+    ? Math.round((bestScore / totalQuestions) * 100)
+    : null;
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-all group">
@@ -181,13 +188,13 @@ export default function AssignmentCard({
       {/* Student View: Progress and Action */}
       {role === 'student' && (
         <div className="space-y-3">
-          {bestScore !== null && bestScore !== undefined ? (
+          {bestScorePercentage !== null ? (
             <div className="flex items-center justify-between text-sm">
               <span className="text-gray-600">Best Score</span>
               <span className={`font-bold ${
-                bestScore >= 80 ? 'text-green-600' : bestScore >= 60 ? 'text-amber-600' : 'text-red-600'
+                bestScorePercentage >= 80 ? 'text-green-600' : bestScorePercentage >= 60 ? 'text-amber-600' : 'text-red-600'
               }`}>
-                {bestScore}%
+                {bestScorePercentage}%
               </span>
             </div>
           ) : null}
@@ -207,7 +214,7 @@ export default function AssignmentCard({
                 : 'bg-gray-300 text-gray-500 cursor-not-allowed pointer-events-none'
             }`}
           >
-            {isReviewMode ? 'Review Assignment' : bestScore !== null && bestScore !== undefined ? 'Retry' : 'Start'} {isReviewMode ? '' : 'Assignment'}
+            {isReviewMode ? 'Review Assignment' : bestScorePercentage !== null ? 'Retry' : 'Start'} {isReviewMode ? '' : 'Assignment'}
           </Link>
           {!canAttempt && !isReviewMode && (
             <p className="text-xs text-red-600 text-center">Maximum attempts reached</p>

@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
 
 interface LeaderboardEntry {
   rank: number
@@ -100,18 +99,13 @@ export default function DailyQuizLeaderboard() {
           </div>
         ) : leaderboard && leaderboard.leaderboard.length > 0 ? (
           <div className="space-y-3">
-            <AnimatePresence mode="wait">
-              {leaderboard.leaderboard.map((entry, index) => (
-                <motion.div
-                  key={entry.userId}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ delay: index * 0.05 }}
-                  className={`flex items-center gap-4 p-4 rounded-lg border-2 transition-all hover:shadow-md ${getRankStyle(
-                    entry.rank
-                  )}`}
-                >
+            {leaderboard.leaderboard.map((entry, index) => (
+              <div
+                key={entry.userId}
+                className={`flex items-center gap-4 p-4 rounded-lg border-2 transition-all hover:shadow-md ${getRankStyle(
+                  entry.rank
+                )}`}
+              >
                   {/* Rank */}
                   <div className="flex items-center justify-center w-12 h-12 flex-shrink-0">
                     {getRankBadge(entry.rank) ? (
@@ -170,9 +164,8 @@ export default function DailyQuizLeaderboard() {
                       </div>
                     </div>
                   )}
-                </motion.div>
+                </div>
               ))}
-            </AnimatePresence>
           </div>
         ) : (
           <div className="text-center py-12">
