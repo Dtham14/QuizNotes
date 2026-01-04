@@ -21,6 +21,8 @@ interface AssignmentCardProps {
   maxAttempts?: number | null;
   attemptCount?: number;
   bestScore?: number | null;
+  attemptsRemaining?: number;
+  completed?: boolean;
   onDelete?: () => void;
 }
 
@@ -40,6 +42,8 @@ export default function AssignmentCard({
   maxAttempts,
   attemptCount = 0,
   bestScore,
+  attemptsRemaining = 0,
+  completed = false,
   onDelete,
 }: AssignmentCardProps) {
   const [isDeleting, setIsDeleting] = useState(false);
@@ -81,7 +85,8 @@ export default function AssignmentCard({
   const isDueSoon = dueDate && new Date(dueDate) <= new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
   const isOverdue = dueDate && new Date(dueDate) < new Date();
 
-  const canAttempt = !maxAttempts || attemptCount < maxAttempts;
+  const canAttempt = attemptsRemaining > 0;
+  const isReviewMode = completed && attemptsRemaining === 0;
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-all group">
@@ -193,16 +198,18 @@ export default function AssignmentCard({
             </div>
           )}
           <Link
-            href={`/quiz?assignmentId=${id}${quizId ? `&quizId=${quizId}` : quizType ? `&type=${quizType}` : ''}`}
+            href={`/quiz?assignmentId=${id}${quizId ? `&quizId=${quizId}` : quizType ? `&type=${quizType}` : ''}${isReviewMode ? '&review=true' : ''}`}
             className={`block w-full text-center px-4 py-2 rounded-lg transition-colors text-sm font-semibold ${
-              canAttempt
-                ? 'bg-violet-600 text-white hover:bg-violet-700'
-                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              canAttempt || isReviewMode
+                ? isReviewMode
+                  ? 'bg-blue-600 text-white hover:bg-blue-700'
+                  : 'bg-violet-600 text-white hover:bg-violet-700'
+                : 'bg-gray-300 text-gray-500 cursor-not-allowed pointer-events-none'
             }`}
           >
-            {bestScore !== null && bestScore !== undefined ? 'Retry' : 'Start'} Assignment
+            {isReviewMode ? 'Review Assignment' : bestScore !== null && bestScore !== undefined ? 'Retry' : 'Start'} {isReviewMode ? '' : 'Assignment'}
           </Link>
-          {!canAttempt && (
+          {!canAttempt && !isReviewMode && (
             <p className="text-xs text-red-600 text-center">Maximum attempts reached</p>
           )}
         </div>

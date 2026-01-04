@@ -502,3 +502,36 @@ export type GamificationStats = UserGamification & {
   recent_achievements: UserAchievementWithDetails[]
   daily_goal_streak: number // Consecutive days meeting daily goal
 }
+
+// Daily Quiz types (manual until migration is run and types are regenerated)
+export type DailyQuiz = {
+  id: string
+  quiz_date: string // DATE as string
+  quiz_format: 'standard' | 'connections' | 'wordle'
+  quiz_type: string | null // For standard format
+  difficulty: 'beginner' | 'intermediate' | 'advanced'
+  questions: Json // JSONB - array of GeneratedQuestion for standard format
+  metadata: Json | null // JSONB - format-specific data (connections groups, wordle config)
+  created_at: string
+}
+
+export type DailyQuizAttempt = {
+  id: string
+  daily_quiz_id: string
+  user_id: string | null
+  session_id: string | null
+  score: number
+  total_questions: number
+  answers: Json | null // JSONB - array of user answers
+  time_taken_seconds: number | null
+  completed_at: string
+}
+
+// Helper type for daily quiz with attempt status
+export type DailyQuizWithAttempt = DailyQuiz & {
+  userAttempt?: {
+    completed: boolean
+    score?: number
+    completedAt?: string
+  }
+}

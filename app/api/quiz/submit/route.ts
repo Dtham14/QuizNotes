@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { quizType, score, totalQuestions, answers, assignmentId } = await request.json()
+    const { quizType, score, totalQuestions, answers, questions, assignmentId } = await request.json()
 
     if (!quizType || score === undefined || !totalQuestions || !answers) {
       return NextResponse.json(
@@ -70,6 +70,7 @@ export async function POST(request: NextRequest) {
         score,
         total_questions: totalQuestions,
         answers,
+        questions: questions || null,
         assignment_id: assignmentId || null,
       })
       .select()

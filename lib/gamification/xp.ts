@@ -13,6 +13,8 @@ export const XP_REWARDS = {
   DAILY_GOAL_MET: 15,
   FIRST_QUIZ_OF_DAY: 5,
   ACHIEVEMENT_BONUS: 0, // Achievements have their own XP rewards
+  // Daily quiz rewards
+  DAILY_QUIZ_MULTIPLIER: 2, // 2x XP for daily quiz
   // Forum rewards
   FORUM_FIRST_POST: 25,
   FORUM_POST_CREATED: 15,
@@ -30,6 +32,7 @@ export type XPReason =
   | 'daily_goal'
   | 'first_quiz_of_day'
   | 'achievement'
+  | 'daily_quiz_bonus'
   | 'forum_first_post'
   | 'forum_post_created'
   | 'forum_comment_created'

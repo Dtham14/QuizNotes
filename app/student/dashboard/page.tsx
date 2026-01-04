@@ -5,6 +5,7 @@ import Link from 'next/link';
 import DiscussionPreview from '@/components/DiscussionPreview';
 import ClassCard from '@/components/ClassCard';
 import ProfileCard from '@/components/ProfileCard';
+import DailyQuizWidget from '@/components/DailyQuizWidget';
 import { formatQuizType } from '@/lib/quizBuilder/utils';
 import type { UserAchievementWithDetails } from '@/lib/types/database';
 
@@ -213,6 +214,13 @@ export default function StudentDashboardPage() {
             });
           }}
         />
+      )}
+
+      {/* Daily Quiz Widget */}
+      {user && (
+        <div className="mb-8">
+          <DailyQuizWidget user={user} />
+        </div>
       )}
 
       {/* Quick Actions */}

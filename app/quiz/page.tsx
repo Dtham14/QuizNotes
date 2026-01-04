@@ -77,6 +77,9 @@ function QuizContent() {
   const [timerEnabled, setTimerEnabled] = useState(false);
   const [timeLimitSeconds, setTimeLimitSeconds] = useState(60);
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
+  // Review mode state
+  const [isReviewMode, setIsReviewMode] = useState(false);
+  const [reviewAttemptId, setReviewAttemptId] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadUserData() {
@@ -112,9 +115,33 @@ function QuizContent() {
     const typeParam = searchParams.get('type');
     const quizIdParam = searchParams.get('quizId');
     const assignmentIdParam = searchParams.get('assignmentId');
+    const reviewParam = searchParams.get('review');
 
     if (assignmentIdParam) {
       setAssignmentId(assignmentIdParam);
+
+      // Handle review mode
+      if (reviewParam === 'true') {
+        setIsReviewMode(true);
+        // Fetch the quiz attempt for review
+        fetch(`/api/quiz/attempts/assignment/${assignmentIdParam}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.attempt) {
+              const attempt = data.attempt;
+              setReviewAttemptId(attempt.id);
+              setQuizType(attempt.quizType);
+              setQuestions(attempt.questions || []);
+              setAnswers(attempt.answers || []);
+              setScore(attempt.score);
+              setShowResult(true);
+              setInitialized(true);
+            }
+          })
+          .catch(err => console.error('Failed to fetch quiz attempt for review:', err));
+        return;
+      }
+
       // Fetch assignment info to get attempt counts and quiz details
       fetch('/api/student/assignments')
         .then(res => res.json())
@@ -122,8 +149,8 @@ function QuizContent() {
           const assignment = data.assignments?.find((a: { id: string }) => a.id === assignmentIdParam);
           if (assignment) {
             setAssignmentInfo({
-              maxAttempts: assignment.maxAttempts,
-              attemptsUsed: assignment.attemptsUsed,
+              maxAttempts: assignment.max_attempts,
+              attemptsUsed: assignment.attempt_count,
               attemptsRemaining: assignment.attemptsRemaining,
             });
 
@@ -780,6 +807,7 @@ function QuizContent() {
           score: calculatedScore,
           totalQuestions: questions.length,
           answers: finalAnswers,
+          questions: questions,
           assignmentId: assignmentId,
         }),
       });
@@ -896,9 +924,11 @@ function QuizContent() {
         <div className="max-w-2xl w-full bg-white rounded-2xl shadow-xl p-4 sm:p-6 md:p-8">
           <div className="text-center mb-8">
             <div className="w-20 h-20 bg-brand/20 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-4xl">{percentage >= 70 ? '🎉' : '📚'}</span>
+              <span className="text-4xl">{isReviewMode ? '📝' : percentage >= 70 ? '🎉' : '📚'}</span>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Quiz Complete!</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+              {isReviewMode ? 'Assignment Review' : 'Quiz Complete!'}
+            </h2>
             <p className="text-lg sm:text-xl text-gray-600">
               You scored <span className="font-bold text-brand">{score}</span> out of{' '}
               <span className="font-bold">{questions.length}</span>
@@ -907,7 +937,7 @@ function QuizContent() {
           </div>
 
           {/* Gamification Stats Summary */}
-          {gamificationResult && (
+          {!isReviewMode && gamificationResult && (
             <div className="bg-gradient-to-r from-brand/10 to-brand/5 rounded-xl p-4 mb-6">
               <div className="grid grid-cols-3 gap-4 text-center">
                 <div>
@@ -947,7 +977,8 @@ function QuizContent() {
             {/* Hide correct answers in results if assignment has more than 1 attempt remaining (show answers on last attempt or perfect score) */}
             {(() => {
               const isPerfectScore = score === questions.length;
-              const hideAnswersInResults = assignmentInfo && assignmentInfo.maxAttempts > 1 && assignmentInfo.attemptsRemaining > 1 && !isPerfectScore;
+              // Always show correct answers in review mode
+              const hideAnswersInResults = !isReviewMode && assignmentInfo && assignmentInfo.maxAttempts > 1 && assignmentInfo.attemptsRemaining > 1 && !isPerfectScore;
               return questions.map((question, index) => {
               const userAnswer = answers[index];
               const correctIdx = getCorrectAnswerIndex(question);
@@ -1035,8 +1066,17 @@ function QuizContent() {
           </div>
 
           <div className="flex flex-wrap gap-3 justify-center">
-            {/* Show Retry button for assignments with attempts remaining */}
-            {assignmentInfo && assignmentInfo.attemptsRemaining > 1 && (
+            {/* In review mode, show Back to Assignments button */}
+            {isReviewMode && (
+              <Link
+                href="/student/assignments"
+                className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Back to Assignments
+              </Link>
+            )}
+            {/* Show Retry button for assignments with attempts remaining (not in review mode) */}
+            {!isReviewMode && assignmentInfo && assignmentInfo.attemptsRemaining > 1 && (
               <button
                 onClick={() => {
                   // Reset quiz state but keep assignment context
@@ -1069,8 +1109,8 @@ function QuizContent() {
                 Retry Quiz ({assignmentInfo.attemptsRemaining - 1} left)
               </button>
             )}
-            {/* Show Submit button for assignments (to finalize score) */}
-            {assignmentInfo && assignmentInfo.attemptsRemaining > 1 && (
+            {/* Show Submit button for assignments (to finalize score, not in review mode) */}
+            {!isReviewMode && assignmentInfo && assignmentInfo.attemptsRemaining > 1 && (
               <button
                 onClick={async () => {
                   try {
@@ -1096,8 +1136,8 @@ function QuizContent() {
                 Submit & Finish
               </button>
             )}
-            {/* Show Take Another Quiz for non-assignments or when no retries left */}
-            {(!assignmentInfo || assignmentInfo.attemptsRemaining <= 1) && (
+            {/* Show Take Another Quiz for non-assignments or when no retries left (not in review mode) */}
+            {!isReviewMode && (!assignmentInfo || assignmentInfo.attemptsRemaining <= 1) && (
               <button
                 onClick={() => {
                   setQuizType(null);

@@ -8,6 +8,7 @@ import AnonymousQuiz from './AnonymousQuiz';
 import ProfileDropdown from './ProfileDropdown';
 import StudentNav from './StudentNav';
 import TeacherNav from './TeacherNav';
+import DailyQuizWidget from './DailyQuizWidget';
 import { QuizType } from '@/lib/quizData';
 
 type User = {
@@ -230,6 +231,11 @@ export default function LandingPageClient({ user }: LandingPageClientProps) {
             <p className="text-gray-600">
               Click any topic to start a free quiz instantly
             </p>
+          </div>
+
+          {/* Daily Quiz Widget */}
+          <div className="mb-12">
+            <DailyQuizWidget user={user} />
           </div>
 
           {/* Quick Start */}

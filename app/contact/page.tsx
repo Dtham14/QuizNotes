@@ -2,6 +2,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { getSession } from '@/lib/auth'
 import { ContactNav } from './contact-nav'
+import { ContactForm } from './contact-form'
 
 export const dynamic = 'force-dynamic'
 
@@ -61,74 +62,62 @@ export default async function ContactPage() {
             </div>
           </div>
 
-          {/* Contact Information */}
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 mb-8 sm:mb-12">
-            {/* Email Card */}
-            <div className="bg-white rounded-xl p-6 sm:p-8 shadow-lg border border-gray-200">
-              <div className="w-12 h-12 sm:w-14 sm:h-14 bg-blue-100 rounded-full flex items-center justify-center mb-3 sm:mb-4">
-                <svg className="w-6 h-6 sm:w-7 sm:h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">Email Me</h3>
-              <p className="text-sm sm:text-base text-gray-600 mb-3 sm:mb-4">
-                Send me your questions, feature requests, or feedback
-              </p>
-              <a
-                href="mailto:daniel@quiznotes.ca"
-                className="inline-flex items-center gap-2 text-sm sm:text-base text-brand hover:text-brand-dark font-semibold transition-colors break-all min-h-[44px]"
-              >
-                daniel@quiznotes.ca
-                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
-              </a>
-            </div>
+          {/* Contact Form */}
+          <div className="mb-8 sm:mb-12">
+            <ContactForm />
+          </div>
 
-            {/* LinkedIn Card */}
-            <div className="bg-white rounded-xl p-6 sm:p-8 shadow-lg border border-gray-200">
-              <div className="w-12 h-12 sm:w-14 sm:h-14 bg-sky-100 rounded-full flex items-center justify-center mb-3 sm:mb-4">
-                <svg className="w-6 h-6 sm:w-7 sm:h-7 text-sky-600" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-                </svg>
+          {/* Alternative Contact Methods */}
+          <div className="mb-8 sm:mb-12">
+            <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-6 text-center">
+              Other Ways to Connect
+            </h3>
+            <div className="grid sm:grid-cols-2 gap-6 max-w-3xl mx-auto">
+              {/* Direct Email Card */}
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
+                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-3">
+                  <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <h4 className="text-lg font-semibold text-gray-900 mb-2">Prefer Email?</h4>
+                <p className="text-sm text-gray-600 mb-3">
+                  You can also reach me directly at
+                </p>
+                <a
+                  href="mailto:daniel@quiznotes.ca"
+                  className="inline-flex items-center gap-2 text-brand hover:text-brand-dark font-semibold transition-colors break-all"
+                >
+                  daniel@quiznotes.ca
+                  <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
+                </a>
               </div>
-              <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">Connect on LinkedIn</h3>
-              <p className="text-sm sm:text-base text-gray-600 mb-3 sm:mb-4">
-                Let's connect professionally
-              </p>
-              <a
-                href="https://www.linkedin.com/in/dtham14/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-sm sm:text-base text-brand hover:text-brand-dark font-semibold transition-colors min-h-[44px]"
-              >
-                View Profile
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
-              </a>
-            </div>
 
-            {/* Feedback Card */}
-            <div className="bg-white rounded-xl p-6 sm:p-8 shadow-lg border border-gray-200">
-              <div className="w-12 h-12 sm:w-14 sm:h-14 bg-green-100 rounded-full flex items-center justify-center mb-3 sm:mb-4">
-                <svg className="w-6 h-6 sm:w-7 sm:h-7 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                </svg>
+              {/* LinkedIn Card */}
+              <div className="bg-gradient-to-br from-sky-50 to-blue-50 rounded-xl p-6 border border-sky-100">
+                <div className="w-12 h-12 bg-sky-100 rounded-full flex items-center justify-center mb-3">
+                  <svg className="w-6 h-6 text-sky-600" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                  </svg>
+                </div>
+                <h4 className="text-lg font-semibold text-gray-900 mb-2">Connect on LinkedIn</h4>
+                <p className="text-sm text-gray-600 mb-3">
+                  Let's connect professionally
+                </p>
+                <a
+                  href="https://www.linkedin.com/in/dtham14/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-brand hover:text-brand-dark font-semibold transition-colors"
+                >
+                  View Profile
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a>
               </div>
-              <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">Share Your Ideas</h3>
-              <p className="text-sm sm:text-base text-gray-600 mb-3 sm:mb-4">
-                Have suggestions for new features or improvements?
-              </p>
-              <a
-                href="mailto:daniel@quiznotes.ca?subject=Feature Suggestion"
-                className="inline-flex items-center gap-2 text-sm sm:text-base text-brand hover:text-brand-dark font-semibold transition-colors min-h-[44px]"
-              >
-                Send a suggestion
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
-              </a>
             </div>
           </div>
 
