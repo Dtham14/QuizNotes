@@ -7,7 +7,9 @@ import MusicNotation from '@/components/MusicNotation'
 import AudioPlayer from '@/components/AudioPlayer'
 import ConnectionsGame from '@/components/games/ConnectionsGame'
 import WordleGame from '@/components/games/WordleGame'
-import type { DailyQuiz } from '@/lib/types/database'
+import StudentNav from '@/components/StudentNav'
+import TeacherNav from '@/components/TeacherNav'
+import type { DailyQuiz, GamificationStats } from '@/lib/types/database'
 import type { GeneratedQuestion } from '@/lib/quizBuilder/types'
 
 interface DailyQuizData {
@@ -32,6 +34,33 @@ export default function DailyQuizPage() {
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [gamification, setGamification] = useState<any>(null)
+  const [user, setUser] = useState<{ id: string; email: string; name?: string | null; avatar?: string | null; avatarUrl?: string | null; themeColor?: string | null; role?: string } | null>(null)
+  const [gamificationStats, setGamificationStats] = useState<GamificationStats | null>(null)
+
+  useEffect(() => {
+    async function loadUserData() {
+      try {
+        const [userRes, statsRes] = await Promise.all([
+          fetch('/api/auth/me'),
+          fetch('/api/gamification/stats'),
+        ])
+
+        const userData = await userRes.json()
+        if (userData.user) {
+          setUser(userData.user)
+        }
+
+        if (statsRes.ok) {
+          const stats = await statsRes.json()
+          setGamificationStats(stats)
+        }
+      } catch (error) {
+        console.error('Error loading user data:', error)
+      }
+    }
+
+    loadUserData()
+  }, [])
 
   useEffect(() => {
     async function fetchDailyQuiz() {
@@ -74,23 +103,27 @@ export default function DailyQuizPage() {
   const currentQuestion = questions[currentQuestionIndex]
 
   const handleAnswerSelect = (answerIndex: number) => {
+    if (showFeedback) return // Don't allow changing answer after feedback shown
     setSelectedAnswer(answerIndex)
-    setShowFeedback(true)
-
-    // Update answers array
-    const newAnswers = [...answers]
-    newAnswers[currentQuestionIndex] = answerIndex
-    setAnswers(newAnswers)
   }
 
   const handleNext = () => {
-    if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1)
-      setSelectedAnswer(answers[currentQuestionIndex + 1])
-      setShowFeedback(answers[currentQuestionIndex + 1] !== null)
+    if (!showFeedback) {
+      // First click: show feedback and record answer
+      setShowFeedback(true)
+      const newAnswers = [...answers]
+      newAnswers[currentQuestionIndex] = selectedAnswer
+      setAnswers(newAnswers)
     } else {
-      // Last question, submit the quiz
-      submitQuiz()
+      // Second click: move to next question or finish
+      if (currentQuestionIndex < questions.length - 1) {
+        setCurrentQuestionIndex(currentQuestionIndex + 1)
+        setSelectedAnswer(null)
+        setShowFeedback(false)
+      } else {
+        // Last question, submit the quiz
+        submitQuiz()
+      }
     }
   }
 
@@ -98,7 +131,7 @@ export default function DailyQuizPage() {
     if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex(currentQuestionIndex - 1)
       setSelectedAnswer(answers[currentQuestionIndex - 1])
-      setShowFeedback(answers[currentQuestionIndex - 1] !== null)
+      setShowFeedback(false) // Don't show feedback when navigating back
     }
   }
 
@@ -211,10 +244,17 @@ export default function DailyQuizPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-violet-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading daily quiz...</p>
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        {user?.role === 'student' ? (
+          <StudentNav user={user} level={gamificationStats?.current_level} xp={gamificationStats?.total_xp} />
+        ) : user?.role === 'teacher' ? (
+          <TeacherNav user={user} stats={{ classCount: 0, studentCount: 0, quizCount: 0, assignmentCount: 0 }} />
+        ) : null}
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-violet-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading daily quiz...</p>
+          </div>
         </div>
       </div>
     )
@@ -224,8 +264,13 @@ export default function DailyQuizPage() {
     const percentage = questions.length > 0 ? Math.round((score / questions.length) * 100) : 0
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-violet-50 to-purple-50 py-12 px-4">
-        <div className="max-w-2xl mx-auto">
+      <div className="min-h-screen bg-gradient-to-br from-violet-50 to-purple-50 flex flex-col">
+        {user?.role === 'student' ? (
+          <StudentNav user={user} level={gamificationStats?.current_level} xp={gamificationStats?.total_xp} />
+        ) : user?.role === 'teacher' ? (
+          <TeacherNav user={user} stats={{ classCount: 0, studentCount: 0, quizCount: 0, assignmentCount: 0 }} />
+        ) : null}
+        <div className="max-w-2xl mx-auto py-12 px-4 w-full">
           <div className="bg-white rounded-xl shadow-xl p-8">
               <div className="text-center mb-8">
                 <div className="text-6xl mb-4">
@@ -298,21 +343,54 @@ export default function DailyQuizPage() {
       const metadata = quizData.quiz.metadata as any
       if (!metadata || !metadata.groups) {
         return (
-          <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-            <div className="text-center">
-              <div className="text-6xl mb-4">⚠️</div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Quiz Data Error</h2>
-              <p className="text-gray-600">The quiz data is incomplete. Please try again later.</p>
+          <div className="min-h-screen bg-gray-50 flex flex-col">
+            {user?.role === 'student' ? (
+              <StudentNav user={user} level={gamificationStats?.current_level} xp={gamificationStats?.total_xp} />
+            ) : user?.role === 'teacher' ? (
+              <TeacherNav user={user} stats={{ classCount: 0, studentCount: 0, quizCount: 0, assignmentCount: 0 }} />
+            ) : null}
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center">
+                <div className="text-6xl mb-4">⚠️</div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Quiz Data Error</h2>
+                <p className="text-gray-600">The quiz data is incomplete. Please try again later.</p>
+              </div>
             </div>
           </div>
         )
       }
       return (
-        <div className="min-h-screen bg-gray-50 py-8 px-4">
-          <ConnectionsGame
-            groups={metadata.groups}
-            onComplete={handleConnectionsComplete}
-          />
+        <div className="min-h-screen bg-gray-50 flex flex-col">
+          {user?.role === 'student' ? (
+            <StudentNav user={user} level={gamificationStats?.current_level} xp={gamificationStats?.total_xp} />
+          ) : user?.role === 'teacher' ? (
+            <TeacherNav user={user} stats={{ classCount: 0, studentCount: 0, quizCount: 0, assignmentCount: 0 }} />
+          ) : null}
+
+          {/* Exit Quiz Button */}
+          <div className="fixed bottom-6 right-6 z-50">
+            <button
+              onClick={() => {
+                const confirmExit = confirm('Are you sure you want to exit? Your progress will be lost.')
+                if (confirmExit) {
+                  router.push('/')
+                }
+              }}
+              className="px-4 py-3 text-sm font-semibold text-white bg-red-500 hover:bg-red-600 rounded-full shadow-lg flex items-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              <span className="hidden sm:inline">Exit Quiz</span>
+            </button>
+          </div>
+
+          <div className="py-8 px-4">
+            <ConnectionsGame
+              groups={metadata.groups}
+              onComplete={handleConnectionsComplete}
+            />
+          </div>
         </div>
       )
     }
@@ -321,24 +399,57 @@ export default function DailyQuizPage() {
       const metadata = quizData.quiz.metadata as any
       if (!metadata || !metadata.answer) {
         return (
-          <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-            <div className="text-center">
-              <div className="text-6xl mb-4">⚠️</div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Quiz Data Error</h2>
-              <p className="text-gray-600">The quiz data is incomplete. Please try again later.</p>
+          <div className="min-h-screen bg-gray-50 flex flex-col">
+            {user?.role === 'student' ? (
+              <StudentNav user={user} level={gamificationStats?.current_level} xp={gamificationStats?.total_xp} />
+            ) : user?.role === 'teacher' ? (
+              <TeacherNav user={user} stats={{ classCount: 0, studentCount: 0, quizCount: 0, assignmentCount: 0 }} />
+            ) : null}
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center">
+                <div className="text-6xl mb-4">⚠️</div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Quiz Data Error</h2>
+                <p className="text-gray-600">The quiz data is incomplete. Please try again later.</p>
+              </div>
             </div>
           </div>
         )
       }
       return (
-        <div className="min-h-screen bg-gray-50 py-8 px-4">
-          <WordleGame
-            answer={metadata.answer}
-            answerType={metadata.answerType}
-            maxAttempts={metadata.maxAttempts}
-            hints={metadata.hints}
-            onComplete={handleWordleComplete}
-          />
+        <div className="min-h-screen bg-gray-50 flex flex-col">
+          {user?.role === 'student' ? (
+            <StudentNav user={user} level={gamificationStats?.current_level} xp={gamificationStats?.total_xp} />
+          ) : user?.role === 'teacher' ? (
+            <TeacherNav user={user} stats={{ classCount: 0, studentCount: 0, quizCount: 0, assignmentCount: 0 }} />
+          ) : null}
+
+          {/* Exit Quiz Button */}
+          <div className="fixed bottom-6 right-6 z-50">
+            <button
+              onClick={() => {
+                const confirmExit = confirm('Are you sure you want to exit? Your progress will be lost.')
+                if (confirmExit) {
+                  router.push('/')
+                }
+              }}
+              className="px-4 py-3 text-sm font-semibold text-white bg-red-500 hover:bg-red-600 rounded-full shadow-lg flex items-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              <span className="hidden sm:inline">Exit Quiz</span>
+            </button>
+          </div>
+
+          <div className="py-8 px-4">
+            <WordleGame
+              answer={metadata.answer}
+              answerType={metadata.answerType}
+              maxAttempts={metadata.maxAttempts}
+              hints={metadata.hints}
+              onComplete={handleWordleComplete}
+            />
+          </div>
         </div>
       )
     }
@@ -368,8 +479,34 @@ export default function DailyQuizPage() {
   const isCorrect = selectedAnswer === correctAnswerIndex
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {user?.role === 'student' ? (
+        <StudentNav user={user} level={gamificationStats?.current_level} xp={gamificationStats?.total_xp} />
+      ) : user?.role === 'teacher' ? (
+        <TeacherNav user={user} stats={{ classCount: 0, studentCount: 0, quizCount: 0, assignmentCount: 0 }} />
+      ) : null}
+
+      {/* Exit Quiz Button - Fixed Position */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <button
+          onClick={() => {
+            const confirmExit = confirm('Are you sure you want to exit? Your progress will be lost.')
+            if (confirmExit) {
+              router.push('/')
+            }
+          }}
+          className="px-4 py-3 text-sm font-semibold text-white bg-red-500 hover:bg-red-600 active:bg-red-700 rounded-full transition-all shadow-lg hover:shadow-xl flex items-center gap-2"
+          aria-label="Exit Quiz"
+          type="button"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+          <span className="hidden sm:inline">Exit Quiz</span>
+        </button>
+      </div>
+
+      <div className="max-w-4xl mx-auto py-8 px-4 w-full">
         {/* Header */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
@@ -496,14 +633,14 @@ export default function DailyQuizPage() {
             )}
             <button
               onClick={handleNext}
-              disabled={!showFeedback || submitting}
+              disabled={selectedAnswer === null}
               className="flex-1 px-6 py-3 bg-violet-600 text-white font-semibold rounded-lg hover:bg-violet-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
             >
-              {submitting
-                ? 'Submitting...'
-                : currentQuestionIndex === questions.length - 1
-                ? 'Finish Quiz'
-                : 'Next Question'}
+              {showFeedback
+                ? currentQuestionIndex === questions.length - 1
+                  ? 'Finish Quiz'
+                  : 'Next Question'
+                : 'Check Answer'}
             </button>
           </div>
         </div>
