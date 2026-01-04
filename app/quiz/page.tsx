@@ -115,7 +115,7 @@ function QuizContent() {
 
     if (assignmentIdParam) {
       setAssignmentId(assignmentIdParam);
-      // Fetch assignment info to get attempt counts
+      // Fetch assignment info to get attempt counts and quiz details
       fetch('/api/student/assignments')
         .then(res => res.json())
         .then(data => {
@@ -126,6 +126,74 @@ function QuizContent() {
               attemptsUsed: assignment.attemptsUsed,
               attemptsRemaining: assignment.attemptsRemaining,
             });
+
+            // If no type or quizId in URL, get it from the assignment
+            if (!typeParam && !quizIdParam) {
+              if (assignment.quiz_id) {
+                // Custom quiz - fetch it
+                fetch(`/api/quiz/${assignment.quiz_id}`)
+                  .then(res => res.json())
+                  .then(data => {
+                    if (data.quiz && data.quiz.questions) {
+                      setQuizType('custom');
+                      setQuestions(data.quiz.questions);
+                      setAnswers(new Array(data.quiz.questions.length).fill(null));
+                      setInitialized(true);
+                    }
+                  })
+                  .catch(err => console.error('Failed to fetch custom quiz:', err));
+              } else if (assignment.quiz_type) {
+                // Built-in quiz - generate questions
+                const builderTypeMap: Record<string, BuilderQuizType> = {
+                  'noteIdentification': 'noteIdentification',
+                  'note-identification': 'noteIdentification',
+                  'keySignature': 'keySignature',
+                  'key-signature': 'keySignature',
+                  'key-signature-quiz': 'keySignature',
+                  'intervals': 'intervalIdentification',
+                  'intervalIdentification': 'intervalIdentification',
+                  'interval-identification': 'intervalIdentification',
+                  'interval-quiz': 'intervalIdentification',
+                  'chords': 'chordIdentification',
+                  'chordIdentification': 'chordIdentification',
+                  'chord-identification': 'chordIdentification',
+                  'scales': 'scaleIdentification',
+                  'scaleIdentification': 'scaleIdentification',
+                  'scale-identification': 'scaleIdentification',
+                  'scale-quiz': 'scaleIdentification',
+                  'earTrainingNote': 'earTrainingNote',
+                  'ear-training-note': 'earTrainingNote',
+                  'earTrainingInterval': 'earTrainingInterval',
+                  'ear-training-interval': 'earTrainingInterval',
+                  'earTrainingChord': 'earTrainingChord',
+                  'ear-training-chord': 'earTrainingChord',
+                };
+
+                const mappedType = builderTypeMap[assignment.quiz_type];
+                if (mappedType) {
+                  try {
+                    const defaultSettings = getDefaultSettings(mappedType, 'intermediate');
+                    const generatedQuestions = generateQuestions(defaultSettings);
+                    const typeMap: Record<BuilderQuizType, QuizType> = {
+                      'noteIdentification': 'noteIdentification',
+                      'keySignature': 'keySignature',
+                      'intervalIdentification': 'intervalIdentification',
+                      'chordIdentification': 'chordIdentification',
+                      'scaleIdentification': 'scaleIdentification',
+                      'earTrainingNote': 'earTrainingNote',
+                      'earTrainingInterval': 'earTrainingInterval',
+                      'earTrainingChord': 'earTrainingChord',
+                    };
+                    setQuizType(typeMap[mappedType] || 'mixed');
+                    setQuestions(generatedQuestions);
+                    setAnswers(new Array(generatedQuestions.length).fill(null));
+                    setInitialized(true);
+                  } catch (error) {
+                    console.error('Failed to generate quiz from assignment:', error);
+                  }
+                }
+              }
+            }
           }
         })
         .catch(err => console.error('Failed to fetch assignment info:', err));
@@ -221,7 +289,10 @@ function QuizContent() {
       }
     }
 
-    setInitialized(true);
+    // Only set initialized if not loading from assignment data
+    if (!assignmentIdParam || typeParam || quizIdParam) {
+      setInitialized(true);
+    }
   }, [searchParams, user, initialized]);
 
   // Auto-generate PDF after quiz submission
