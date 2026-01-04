@@ -123,6 +123,8 @@ function QuizContent() {
       // Handle review mode
       if (reviewParam === 'true') {
         setIsReviewMode(true);
+        setInitialized(true); // Set initialized immediately to prevent quiz selection from showing
+        setLoading(true); // Show loading state
         // Fetch the quiz attempt for review
         fetch(`/api/quiz/attempts/assignment/${assignmentIdParam}`)
           .then(res => res.json())
@@ -135,10 +137,16 @@ function QuizContent() {
               setAnswers(attempt.answers || []);
               setScore(attempt.score);
               setShowResult(true);
-              setInitialized(true);
+              setLoading(false);
+            } else {
+              console.error('No quiz attempt found');
+              setLoading(false);
             }
           })
-          .catch(err => console.error('Failed to fetch quiz attempt for review:', err));
+          .catch(err => {
+            console.error('Failed to fetch quiz attempt for review:', err);
+            setLoading(false);
+          });
         return;
       }
 
