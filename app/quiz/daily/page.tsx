@@ -7,7 +7,6 @@ import MusicNotation from '@/components/MusicNotation'
 import AudioPlayer from '@/components/AudioPlayer'
 import ConnectionsGame from '@/components/games/ConnectionsGame'
 import WordleGame from '@/components/games/WordleGame'
-import DailyQuizLeaderboard from '@/components/DailyQuizLeaderboard'
 import type { DailyQuiz } from '@/lib/types/database'
 import type { GeneratedQuestion } from '@/lib/quizBuilder/types'
 
@@ -226,10 +225,8 @@ export default function DailyQuizPage() {
 
     return (
       <div className="min-h-screen bg-gradient-to-br from-violet-50 to-purple-50 py-12 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-6">
-            {/* Results Card */}
-            <div className="bg-white rounded-xl shadow-xl p-8">
+        <div className="max-w-2xl mx-auto">
+          <div className="bg-white rounded-xl shadow-xl p-8">
               <div className="text-center mb-8">
                 <div className="text-6xl mb-4">
                   {percentage === 100 ? '🎉' : percentage >= 80 ? '🌟' : percentage >= 60 ? '👍' : '📚'}
@@ -290,12 +287,6 @@ export default function DailyQuizPage() {
                 Come back tomorrow for a new daily quiz!
               </p>
             </div>
-
-            {/* Leaderboard Card */}
-            <div className="lg:row-span-2">
-              <DailyQuizLeaderboard />
-            </div>
-          </div>
         </div>
       </div>
     )

@@ -34,9 +34,13 @@ export default function DailyQuizLeaderboard() {
         if (response.ok) {
           const data: LeaderboardData = await response.json()
           setLeaderboard(data)
+        } else {
+          console.error('Leaderboard fetch failed:', response.status)
+          setLeaderboard(null)
         }
       } catch (error) {
         console.error('Error fetching leaderboard:', error)
+        setLeaderboard(null)
       } finally {
         setLoading(false)
       }
@@ -97,7 +101,7 @@ export default function DailyQuizLeaderboard() {
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-violet-600 mx-auto"></div>
             <p className="mt-4 text-gray-600">Loading leaderboard...</p>
           </div>
-        ) : leaderboard && leaderboard.leaderboard.length > 0 ? (
+        ) : leaderboard && leaderboard.leaderboard && leaderboard.leaderboard.length > 0 ? (
           <div className="space-y-3">
             {leaderboard.leaderboard.map((entry, index) => (
               <div
