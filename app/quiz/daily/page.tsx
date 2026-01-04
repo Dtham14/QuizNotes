@@ -276,7 +276,10 @@ export default function DailyQuizPage() {
           {currentQuestion.notes && currentQuestion.notes.length > 0 && (
             <div className="mb-6 flex justify-center">
               <MusicNotation
-                notes={currentQuestion.notes}
+                notes={currentQuestion.notes.map(note => ({
+                  keys: [note],
+                  duration: 'w'
+                }))}
                 clef={currentQuestion.clef || 'treble'}
                 keySignature={currentQuestion.keySignature}
               />
@@ -286,7 +289,10 @@ export default function DailyQuizPage() {
           {/* Audio Player */}
           {currentQuestion.audioData && (
             <div className="mb-6">
-              <AudioPlayer audioData={currentQuestion.audioData} />
+              <AudioPlayer
+                subtype={currentQuestion.audioData.subtype}
+                audioData={currentQuestion.audioData}
+              />
             </div>
           )}
 

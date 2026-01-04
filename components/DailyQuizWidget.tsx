@@ -8,7 +8,7 @@ interface User {
   id: string
   email: string
   name?: string | null
-  role: string
+  role?: string
 }
 
 interface DailyQuizWidgetProps {

@@ -15,7 +15,7 @@ function getSupabaseAdmin() {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { attemptId: string } }
+  { params }: { params: Promise<{ attemptId: string }> }
 ) {
   try {
     const user = await getSession()
@@ -24,7 +24,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { attemptId } = params
+    const { attemptId } = await params
 
     const supabase = getSupabaseAdmin()
 
