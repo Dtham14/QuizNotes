@@ -44,16 +44,17 @@ export async function middleware(request: NextRequest) {
   // Protected routes that require authentication
   const protectedPaths = [
     '/profile',
-    '/quiz',
     '/teacher',
     '/achievements',
     '/leaderboard',
     '/forum/create', // Creating posts requires authentication
     '/forum/edit', // Editing posts requires authentication
   ]
+
+  // Allow /quiz/daily for anonymous users, but protect /quiz (the main quiz page)
   const isProtectedPath = protectedPaths.some((path) =>
     request.nextUrl.pathname.startsWith(path)
-  )
+  ) || (request.nextUrl.pathname.startsWith('/quiz') && !request.nextUrl.pathname.startsWith('/quiz/daily'))
 
   // Redirect to login if accessing protected route without auth
   if (isProtectedPath && !user) {

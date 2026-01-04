@@ -538,7 +538,16 @@ export default function DailyQuizPage() {
           <h2 className="text-xl font-semibold text-gray-900 mb-6">{currentQuestion.question}</h2>
 
           {/* Music Notation */}
-          {currentQuestion.notes && currentQuestion.notes.length > 0 && (
+          {currentQuestion.keySignature && !currentQuestion.notes ? (
+            // Key signature questions - show staff with clef and key signature only
+            <div className="mb-6 flex justify-center">
+              <MusicNotation
+                clef={currentQuestion.clef || 'treble'}
+                keySignature={currentQuestion.keySignature}
+              />
+            </div>
+          ) : currentQuestion.notes && currentQuestion.notes.length > 0 ? (
+            // Note/interval/chord questions - show notes
             <div className="mb-6 flex justify-center">
               <MusicNotation
                 notes={currentQuestion.notes.map(note => ({
@@ -549,7 +558,7 @@ export default function DailyQuizPage() {
                 keySignature={currentQuestion.keySignature}
               />
             </div>
-          )}
+          ) : null}
 
           {/* Audio Player */}
           {currentQuestion.audioData && (
