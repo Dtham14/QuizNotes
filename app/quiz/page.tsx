@@ -73,6 +73,10 @@ function QuizContent() {
   const [quizAttemptId, setQuizAttemptId] = useState<string | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [pdfGenerating, setPdfGenerating] = useState(false);
+  // Timer state
+  const [timerEnabled, setTimerEnabled] = useState(false);
+  const [timeLimitSeconds, setTimeLimitSeconds] = useState(60);
+  const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
 
   useEffect(() => {
     async function loadUserData() {
@@ -252,6 +256,35 @@ function QuizContent() {
     generatePdfInBackground();
   }, [quizAttemptId, showResult, pdfUrl, pdfGenerating, questions, quizType, score, answers]);
 
+  // Timer countdown logic
+  useEffect(() => {
+    if (!timerEnabled || timeRemaining === null || showFeedback || showResult) {
+      return;
+    }
+
+    if (timeRemaining <= 0) {
+      // Time's up! Record answer and show feedback
+      const newAnswers = [...answers];
+      newAnswers[currentQuestionIndex] = selectedAnswer;
+      setAnswers(newAnswers);
+      setShowFeedback(true);
+      return;
+    }
+
+    const timerId = setInterval(() => {
+      setTimeRemaining(prev => (prev !== null ? Math.max(0, prev - 1) : null));
+    }, 1000);
+
+    return () => clearInterval(timerId);
+  }, [timerEnabled, timeRemaining, showFeedback, showResult, answers, currentQuestionIndex, selectedAnswer]);
+
+  // Reset timer when moving to next question
+  useEffect(() => {
+    if (timerEnabled && !showFeedback && !showResult) {
+      setTimeRemaining(timeLimitSeconds);
+    }
+  }, [currentQuestionIndex, timerEnabled, timeLimitSeconds, showFeedback, showResult]);
+
   // Legacy start quiz (fallback for URL-based navigation)
   const startQuiz = (type: QuizType) => {
     let quizQuestions: CombinedQuestion[];
@@ -328,6 +361,12 @@ function QuizContent() {
       setScore(0);
       setIsModalOpen(false);
       setSelectedBuilderType(null);
+      // Set timer settings
+      setTimerEnabled(settings.timerEnabled ?? false);
+      setTimeLimitSeconds(settings.timeLimitSeconds ?? 60);
+      if (settings.timerEnabled) {
+        setTimeRemaining(settings.timeLimitSeconds ?? 60);
+      }
     } catch (error) {
       console.error('Failed to generate questions:', error);
       alert('Failed to generate quiz questions. Please try again.');
@@ -1265,6 +1304,35 @@ function QuizContent() {
               </div>
             );
           })()}
+
+          {/* Timer display */}
+          {timerEnabled && timeRemaining !== null && !showFeedback && (
+            <div className="mb-4 p-3 bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200 rounded-xl">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="text-sm font-medium text-gray-700">Time Remaining</span>
+                </div>
+                <div className={`text-2xl font-bold ${
+                  timeRemaining <= 10 ? 'text-red-600 animate-pulse' :
+                  timeRemaining <= 30 ? 'text-amber-600' : 'text-blue-600'
+                }`}>
+                  {Math.floor(timeRemaining / 60)}:{(timeRemaining % 60).toString().padStart(2, '0')}
+                </div>
+              </div>
+              <div className="mt-2 w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                <div
+                  className={`h-full transition-all duration-1000 ${
+                    timeRemaining <= 10 ? 'bg-red-500' :
+                    timeRemaining <= 30 ? 'bg-amber-500' : 'bg-blue-500'
+                  }`}
+                  style={{ width: `${(timeRemaining / timeLimitSeconds) * 100}%` }}
+                />
+              </div>
+            </div>
+          )}
 
           <div className="flex justify-between items-center">
             <p className="text-sm text-gray-500">

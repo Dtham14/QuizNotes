@@ -191,7 +191,7 @@ export default function AssignmentCard({
             </div>
           )}
           <Link
-            href={`/quiz?assignmentId=${id}`}
+            href={`/quiz?assignmentId=${id}${quizType ? `&type=${quizType}` : ''}`}
             className={`block w-full text-center px-4 py-2 rounded-lg transition-colors text-sm font-semibold ${
               canAttempt
                 ? 'bg-violet-600 text-white hover:bg-violet-700'

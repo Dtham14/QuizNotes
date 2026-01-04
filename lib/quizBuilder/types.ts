@@ -90,6 +90,8 @@ export interface BaseQuizSettings {
   questionCount: number; // 5-25 questions
   answerChoices: number;
   difficulty: Difficulty;
+  timerEnabled?: boolean;
+  timeLimitSeconds?: number; // seconds per question
 }
 
 // Note Identification settings
@@ -172,6 +174,13 @@ export interface GeneratedQuestion {
 
 // Pitch range definitions
 export const PITCH_RANGES = {
+  C2: { note: 'C2', vex: 'c/2', midi: 36 },
+  D2: { note: 'D2', vex: 'd/2', midi: 38 },
+  E2: { note: 'E2', vex: 'e/2', midi: 40 },
+  F2: { note: 'F2', vex: 'f/2', midi: 41 },
+  G2: { note: 'G2', vex: 'g/2', midi: 43 },
+  A2: { note: 'A2', vex: 'a/2', midi: 45 },
+  B2: { note: 'B2', vex: 'b/2', midi: 47 },
   C3: { note: 'C3', vex: 'c/3', midi: 48 },
   D3: { note: 'D3', vex: 'd/3', midi: 50 },
   E3: { note: 'E3', vex: 'e/3', midi: 52 },

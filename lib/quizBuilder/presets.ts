@@ -23,6 +23,8 @@ export function getDefaultSettings(quizType: QuizType, difficulty: Difficulty = 
     questionCount: 10,
     answerChoices: 4,
     difficulty,
+    timerEnabled: false,
+    timeLimitSeconds: 60,
   } as QuizSettings;
 }
 

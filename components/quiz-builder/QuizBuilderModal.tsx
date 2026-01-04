@@ -207,6 +207,52 @@ export default function QuizBuilderModal({
             </div>
           </div>
 
+          <hr className="border-gray-200" />
+
+          {/* Timer Settings */}
+          <div className="space-y-3">
+            <label className="flex items-center justify-between cursor-pointer group">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold text-gray-700">Timer</span>
+                <span className="text-xs text-gray-500">(per question)</span>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={settings.timerEnabled ?? false}
+                  onChange={(e) => handleSettingsChange({ timerEnabled: e.target.checked })}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#439FDD]"></div>
+              </label>
+            </label>
+
+            {settings.timerEnabled && (
+              <div>
+                <div className="flex justify-between items-center mb-3">
+                  <h3 className="text-sm text-gray-600">Time Limit</h3>
+                  <span className="text-base font-bold text-[#439FDD]">{settings.timeLimitSeconds ?? 60}s</span>
+                </div>
+                <input
+                  type="range"
+                  min={30}
+                  max={300}
+                  step={10}
+                  value={settings.timeLimitSeconds ?? 60}
+                  onChange={(e) => handleSettingsChange({ timeLimitSeconds: parseInt(e.target.value) })}
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#439FDD]"
+                />
+                <div className="flex justify-between text-xs text-gray-500 mt-1">
+                  <span>30s</span>
+                  <span>1m</span>
+                  <span>2m</span>
+                  <span>3m</span>
+                  <span>5m</span>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Save as Default */}
           <label className="flex items-center gap-3 cursor-pointer group">
             <input
