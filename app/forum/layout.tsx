@@ -3,6 +3,8 @@ import StudentNav from '@/components/StudentNav';
 import TeacherNav from '@/components/TeacherNav';
 import ForumNav from '@/components/ForumNav';
 
+export const dynamic = 'force-dynamic';
+
 export default async function ForumLayout({
   children,
 }: {

@@ -3,6 +3,8 @@ import { getSession } from '@/lib/auth';
 import StudentNav from '@/components/StudentNav';
 import { createClient } from '@/lib/supabase/server';
 
+export const dynamic = 'force-dynamic';
+
 export default async function StudentLayout({
   children,
 }: {
