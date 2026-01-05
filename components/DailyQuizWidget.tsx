@@ -93,21 +93,19 @@ export default function DailyQuizWidget({ user }: DailyQuizWidgetProps) {
           </div>
         </div>
         <div className="flex gap-4 mt-4">
-          <div className="bg-white rounded-lg p-3 flex-1">
-            {quiz.quiz_format === 'wordle' || quiz.quiz_format === 'connections' ? (
-              <>
-                <p className="text-2xl font-bold text-green-600">Completed!</p>
-                <p className="text-xs text-gray-500">Score: {userAttempt.score}/10</p>
-              </>
-            ) : (
-              <>
-                <p className="text-2xl font-bold text-green-600">
-                  {userAttempt.score}/{quiz.questions ? (quiz.questions as any[]).length : 10}
-                </p>
-                <p className="text-xs text-gray-500">Your Score</p>
-              </>
-            )}
-          </div>
+          {quiz.quiz_format === 'wordle' || quiz.quiz_format === 'connections' ? (
+            <div className="bg-white rounded-lg p-3 flex-1">
+              <p className="text-2xl font-bold text-green-600">Completed!</p>
+              <p className="text-xs text-gray-500">Nice work!</p>
+            </div>
+          ) : (
+            <div className="bg-white rounded-lg p-3 flex-1">
+              <p className="text-2xl font-bold text-green-600">
+                {userAttempt.score}/{quiz.questions ? (quiz.questions as any[]).length : 10}
+              </p>
+              <p className="text-xs text-gray-500">Your Score</p>
+            </div>
+          )}
           {!user && (
             <div className="bg-blue-50 rounded-lg p-3 flex-1 border border-blue-200">
               <p className="text-sm font-semibold text-blue-900">Sign up to earn 2x XP!</p>
