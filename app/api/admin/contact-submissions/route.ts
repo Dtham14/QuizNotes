@@ -28,13 +28,7 @@ export async function GET(request: NextRequest) {
     // Fetch all contact submissions
     const { data: submissions, error } = await supabase
       .from('contact_submissions')
-      .select(`
-        *,
-        profiles:user_id (
-          user_name,
-          email
-        )
-      `)
+      .select('*')
       .order('created_at', { ascending: false })
 
     if (error) {

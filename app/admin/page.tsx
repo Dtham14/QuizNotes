@@ -50,10 +50,6 @@ type ContactSubmission = {
   message: string;
   created_at: string;
   user_id: string | null;
-  profiles?: {
-    user_name: string;
-    email: string;
-  } | null;
 };
 
 type Analytics = {
