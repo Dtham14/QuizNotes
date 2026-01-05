@@ -94,10 +94,19 @@ export default function DailyQuizWidget({ user }: DailyQuizWidgetProps) {
         </div>
         <div className="flex gap-4 mt-4">
           <div className="bg-white rounded-lg p-3 flex-1">
-            <p className="text-2xl font-bold text-green-600">
-              {userAttempt.score}/{quiz.questions ? (quiz.questions as any[]).length : 10}
-            </p>
-            <p className="text-xs text-gray-500">Your Score</p>
+            {quiz.quiz_format === 'wordle' || quiz.quiz_format === 'connections' ? (
+              <>
+                <p className="text-2xl font-bold text-green-600">Completed!</p>
+                <p className="text-xs text-gray-500">Score: {userAttempt.score}/10</p>
+              </>
+            ) : (
+              <>
+                <p className="text-2xl font-bold text-green-600">
+                  {userAttempt.score}/{quiz.questions ? (quiz.questions as any[]).length : 10}
+                </p>
+                <p className="text-xs text-gray-500">Your Score</p>
+              </>
+            )}
           </div>
           {!user && (
             <div className="bg-blue-50 rounded-lg p-3 flex-1 border border-blue-200">
