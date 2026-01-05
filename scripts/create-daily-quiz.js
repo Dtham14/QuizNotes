@@ -1,6 +1,7 @@
 // Script to create a daily quiz for testing
 // Run with: node scripts/create-daily-quiz.js [format]
 // Formats: standard, connections, wordle (default: standard)
+// Note: The API route now auto-generates quizzes, so this script is mainly for testing
 
 require('dotenv').config({ path: '.env.local' })
 const { createClient } = require('@supabase/supabase-js')

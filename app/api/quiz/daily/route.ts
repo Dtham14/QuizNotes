@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { getSession } from '@/lib/auth'
 import type { DailyQuiz, DailyQuizAttempt } from '@/lib/types/database'
+import { generateDailyQuizData, getQuizFormatForDate } from '@/lib/dailyQuizGenerator'
 
 // Create admin client for bypassing RLS
 function getSupabaseAdmin() {
@@ -24,17 +25,37 @@ export async function GET(request: NextRequest) {
     const today = new Date().toISOString().split('T')[0]
 
     // Fetch today's daily quiz
-    const { data: quiz, error: quizError } = await supabase
+    let { data: quiz, error: quizError } = await supabase
       .from('daily_quizzes')
       .select('*')
       .eq('quiz_date', today)
       .single()
 
+    // If no quiz exists for today, auto-generate one
     if (quizError || !quiz) {
-      return NextResponse.json(
-        { error: 'No daily quiz available for today' },
-        { status: 404 }
-      )
+      console.log(`No quiz found for ${today}, auto-generating...`)
+
+      // Determine format based on date
+      const format = getQuizFormatForDate(today)
+      const quizData = generateDailyQuizData(today, format)
+
+      // Insert the new quiz
+      const { data: newQuiz, error: insertError } = await supabase
+        .from('daily_quizzes')
+        .insert(quizData)
+        .select()
+        .single()
+
+      if (insertError || !newQuiz) {
+        console.error('Error auto-generating daily quiz:', insertError)
+        return NextResponse.json(
+          { error: 'Failed to generate daily quiz' },
+          { status: 500 }
+        )
+      }
+
+      console.log(`Auto-generated ${format} quiz for ${today}`)
+      quiz = newQuiz
     }
 
     // Check if user/session already completed this quiz
