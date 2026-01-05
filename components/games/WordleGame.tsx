@@ -94,7 +94,7 @@ export default function WordleGame({
 
     // Validate guess (simplified - just check if it's in our list for chords)
     if (answerType === 'chord' && !VALID_CHORDS.includes(currentGuess)) {
-      setErrorMessage('Not a valid chord. Try again!')
+      setErrorMessage('Invalid chord format! Check examples below for correct spelling.')
       return
     }
 
@@ -149,6 +149,17 @@ export default function WordleGame({
         <div className="text-center mb-6">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Music Theory Wordle</h1>
           <p className="text-gray-600">Guess the {answerType} in {maxAttempts} tries!</p>
+
+          {/* Instructions */}
+          <div className="mt-4 bg-blue-50 border-2 border-blue-200 rounded-lg p-4 text-left">
+            <p className="text-sm font-semibold text-blue-900 mb-2">📖 How to Play:</p>
+            <ul className="text-xs text-gray-700 space-y-1">
+              <li>• Type your guess and press Enter or click Submit</li>
+              <li>• <span className="inline-block w-4 h-4 bg-green-500 rounded align-middle"></span> <strong className="text-green-700">Green</strong> = correct letter in correct position</li>
+              <li>• <span className="inline-block w-4 h-4 bg-yellow-500 rounded align-middle"></span> <strong className="text-yellow-700">Yellow</strong> = correct letter in wrong position</li>
+              <li>• <span className="inline-block w-4 h-4 bg-gray-400 rounded align-middle"></span> <strong className="text-gray-700">Gray</strong> = letter not in answer</li>
+            </ul>
+          </div>
         </div>
 
         {/* Attempts Display */}
@@ -238,8 +249,8 @@ export default function WordleGame({
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') handleSubmit()
                 }}
-                placeholder={`Enter a ${answerType}...`}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-violet-500 focus:outline-none text-center text-lg font-semibold uppercase"
+                placeholder={answerType === 'chord' ? 'e.g., Cmaj7, Dm, G7...' : `Enter a ${answerType}...`}
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-violet-500 focus:outline-none text-center text-lg font-semibold text-gray-900"
                 maxLength={answer.length}
               />
 
@@ -258,13 +269,27 @@ export default function WordleGame({
 
             {/* Examples */}
             <div className="mt-6 bg-gray-50 rounded-lg p-4">
-              <p className="text-xs font-semibold text-gray-700 mb-2">Examples:</p>
-              <p className="text-xs text-gray-600">
-                {answerType === 'chord' && 'Cmaj7, Dm, G7, etc.'}
-                {answerType === 'note' && 'C, D#, Eb, etc.'}
-                {answerType === 'interval' && 'M3, P5, m7, etc.'}
-                {answerType === 'scale' && 'C Major, D minor, etc.'}
+              <p className="text-xs font-semibold text-gray-700 mb-2">
+                {answerType === 'chord' ? '🎹 Chord Format Examples:' : 'Examples:'}
               </p>
+              {answerType === 'chord' && (
+                <div className="text-xs text-gray-600 space-y-1">
+                  <p><strong>Major triads:</strong> C, D, E, F, G, A, B</p>
+                  <p><strong>Minor triads:</strong> Cm, Dm, Em (lowercase "m")</p>
+                  <p><strong>7th chords:</strong> C7, Cmaj7, Cmin7</p>
+                  <p><strong>Others:</strong> Cdim, Caug</p>
+                  <p className="text-amber-700 mt-2">⚠️ Match exact spelling & capitalization!</p>
+                </div>
+              )}
+              {answerType === 'note' && (
+                <p className="text-xs text-gray-600">C, D#, Eb, F, G#, etc.</p>
+              )}
+              {answerType === 'interval' && (
+                <p className="text-xs text-gray-600">M3, P5, m7, etc.</p>
+              )}
+              {answerType === 'scale' && (
+                <p className="text-xs text-gray-600">C Major, D minor, etc.</p>
+              )}
             </div>
           </>
         )}

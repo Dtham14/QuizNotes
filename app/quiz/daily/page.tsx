@@ -45,11 +45,15 @@ export default function DailyQuizPage() {
           fetch('/api/gamification/stats'),
         ])
 
-        const userData = await userRes.json()
-        if (userData.user) {
-          setUser(userData.user)
+        // Only process user data if authenticated (not 401)
+        if (userRes.ok) {
+          const userData = await userRes.json()
+          if (userData.user) {
+            setUser(userData.user)
+          }
         }
 
+        // Only process stats if authenticated (not 401)
         if (statsRes.ok) {
           const stats = await statsRes.json()
           setGamificationStats(stats)
